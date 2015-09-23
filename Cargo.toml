@@ -1,0 +1,4 @@
+[package]
+name = "jsrs"
+version = "0.1.0"
+authors = [ "Terry Sun <terrynsun@gmail.com>" ]
