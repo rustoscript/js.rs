@@ -4,4 +4,4 @@ version = "0.1.0"
 authors = [ "Terry Sun <terrynsun@gmail.com>" ]
 
 [dependencies]
-jsrs-parser ={ git = "https://github.com/saghm/jsrs-parser.git", branch = "arith" }
+jsrs-parser = { git = "https://github.com/rustoscript/js.rs-parser.git" }
