@@ -17,12 +17,13 @@ pub fn eval_stmt(s: Stmt, mut state: &mut HashMap<String, Exp>) -> Exp {
         Assign(var_string, exp) => {
             let eval = eval_exp(exp, state);
             state.insert(var_string, eval);
-            Float(std::f64::NAN)
+            // TODO: this returns the Exp instead of Undefined
+            Undefined
         },
         Decl(var_string, exp) => {
             let eval = eval_exp(exp, state);
             state.insert(var_string, eval);
-            Float(std::f64::NAN)
+            Undefined
         },
         BareExp(exp) => eval_exp(exp, &mut state),
     }
@@ -65,11 +66,12 @@ pub fn eval_exp(e: Exp, mut state: &mut HashMap<String, Exp>) -> Exp {
             if state.contains_key(&var) {
                 match state[&var] {
                     Float(f) => Float(f),
-                    _ => Float(std::f64::NAN),
+                    _ => Undefined
                 }
             } else {
-                Float(std::f64::NAN)
+                Undefined
             }
         }
+        Undefined => Undefined
     }
 }
