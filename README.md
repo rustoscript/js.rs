@@ -8,7 +8,7 @@ David Mally and Professor Steve Zdancewic. Currently very in-progress.
 ## Structure
 
 The parser and AST are currently defined in a secondary package at
-[saghm/jsrs-parser][parser]. We are using [lalrpop][lalrpop] as our parser
+[rustoscript/js.rs-parser][parser]. We are using [lalrpop][lalrpop] as our parser
 generator.
 
   [parser]: https://github.com/saghm/jsrs-parser
