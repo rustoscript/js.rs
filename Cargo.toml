@@ -5,4 +5,4 @@ authors = [ "Terry Sun <terrynsun@gmail.com>" ]
 
 [dependencies.jsrs-parser]
 git = "https://github.com/rustoscript/js.rs-parser.git"
-rev = "1430dc7"
+rev = "5a2911a"

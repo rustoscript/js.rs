@@ -1,5 +1,8 @@
 extern crate jsrs_parser;
 
+#[macro_use]
+mod macros;
+
 mod eval;
 
 use std::io::{self, Write};
@@ -23,6 +26,8 @@ fn main() {
         if input == "\n" {
             continue;
         }
+
+        input = String::from(input.trim());
 
         if !input.ends_with(";") && !input.ends_with("}") {
             input.push_str(";");
