@@ -19,8 +19,13 @@ fn main() {
         // read input
         let mut input = String::new();
         stdin.read_line(&mut input).unwrap();
-        if input.len() == 0 {
-            break;
+
+        if input == "\n" {
+            continue;
+        }
+
+        if !input.ends_with(";") && !input.ends_with("}") {
+            input.push_str(";");
         }
 
         println!("=> {:?}", eval_string(&input, &mut state));
