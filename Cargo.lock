@@ -2,7 +2,7 @@
 name = "jsrs"
 version = "0.1.0"
 dependencies = [
- "jsrs-parser 0.1.0 (git+https://github.com/rustoscript/js.rs-parser.git)",
+ "jsrs-parser 0.1.0 (git+https://github.com/rustoscript/js.rs-parser.git?rev=5a2911a)",
 ]
 
 [[package]]
@@ -35,7 +35,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "jsrs-parser"
 version = "0.1.0"
-source = "git+https://github.com/rustoscript/js.rs-parser.git#1430dc76dc0d25b66b0b77b42ae99e8c292f79bd"
+source = "git+https://github.com/rustoscript/js.rs-parser.git?rev=5a2911a#5a2911a01e9eba9383f0118e384f8580d45f3f68"
 dependencies = [
  "lalrpop 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "lalrpop-util 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",

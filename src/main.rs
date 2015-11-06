@@ -1,23 +1,39 @@
 extern crate jsrs_parser;
 
+#[macro_use]
+mod macros;
+
 mod eval;
 
-use std::io;
+use std::io::{self, Write};
 use std::collections::HashMap;
 use eval::eval_string;
 
 fn main() {
     let mut state = HashMap::new();
+    let stdin = io::stdin();
+    let mut stdout = io::stdout();
 
     loop {
+        // prompt
+        print!(">> ");
+        stdout.flush().unwrap();
+
         // read input
         let mut input = String::new();
-        io::stdin().read_line(&mut input).unwrap();
-        if input.len() == 0 {
-            break;
+        stdin.read_line(&mut input).unwrap();
+
+        if input == "\n" {
+            continue;
         }
 
-        println!("{:?}", eval_string(&input, &mut state));
-        println!("{:?}", state);
+        input = String::from(input.trim());
+
+        if !input.ends_with(";") && !input.ends_with("}") {
+            input.push_str(";");
+        }
+
+        println!("=> {:?}", eval_string(&input, &mut state));
+        println!("** {:?}", state);
     }
 }

@@ -3,5 +3,6 @@ name = "jsrs"
 version = "0.1.0"
 authors = [ "Terry Sun <terrynsun@gmail.com>" ]
 
-[dependencies]
-jsrs-parser = { git = "https://github.com/rustoscript/js.rs-parser.git" }
+[dependencies.jsrs-parser]
+git = "https://github.com/rustoscript/js.rs-parser.git"
+rev = "5a2911a"
