@@ -37,6 +37,10 @@ fn main() {
             continue;
         }
 
+        if input == "exit" {
+            break;
+        }
+
         // insert semicolon if necessary
         if !input.ends_with(";") && !input.ends_with("}") {
             input.push_str(";");

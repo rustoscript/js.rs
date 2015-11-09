@@ -12,7 +12,9 @@ pub enum JsValue {
     JsSymbol(String),
     // Objects
     // TODO: internal representation
-    JsObject
+    JsObject,
+    // Error
+    JsError(String)
 }
 
 use self::JsValue::*;

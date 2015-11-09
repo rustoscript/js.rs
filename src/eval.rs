@@ -11,26 +11,36 @@ use jsrs_parser::ast::Exp::*;
 use jsrs_parser::ast::BinOp::*;
 use jsrs_parser::ast::Stmt::*;
 
-pub fn eval_string(string: &str, state: &mut HashMap<String, JsValue>) -> JsValue {
-    eval_stmt(parse_Stmt(string).unwrap(), state)
+pub fn eval_string(string: &str, state: &mut HashMap<String, JsValue>)
+        -> Result<JsValue, String> {
+    match parse_Stmt(string) {
+        Ok(stmt) => match eval_stmt(stmt, state) {
+            Ok(value) => Ok(value),
+            Err(s) => Err(s)
+        },
+        Err(parse_error) => Err(format!("SyntaxError: {:?}", parse_error))
+    }
+    //parse_Stmt(string).map(|stmt| eval_stmt(stmt, state))
+        //.map_err(|parse_error| format!("SyntaxError: {:?}", parse_error))
 }
 
-pub fn eval_stmt(s: Stmt, mut state: &mut HashMap<String, JsValue>) -> JsValue {
+pub fn eval_stmt(s: Stmt, mut state: &mut HashMap<String, JsValue>)
+        -> Result<JsValue, String> {
     match s {
         Assign(var_string, exp) => {
             let eval = eval_exp(exp, state);
             state.insert(var_string, eval);
-            JsUndefined
+            Ok(JsUndefined)
         },
         BareExp(exp) => eval_exp(exp, &mut state),
         Decl(var_string, exp) => {
             let eval = eval_exp(exp, state);
             state.insert(var_string, eval);
-            JsUndefined
+            Ok(JsUndefined)
         },
         Seq(s1, s2) => {
             let _exp = eval_stmt(*s1, &mut state);
-            eval_stmt(*s2, &mut state)
+            Ok(eval_stmt(*s2, &mut state))
         }
     }
 }
