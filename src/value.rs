@@ -1,6 +1,6 @@
 use std::fmt::{Display, Error, Formatter};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 #[allow(dead_code)]
 pub enum JsValue {
     // Primitives (cannot be changed)

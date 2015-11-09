@@ -66,8 +66,67 @@ pub fn eval_exp(e: Exp, mut state: &mut HashMap<String, JsValue>) -> JsValue {
         Var(var) => {
             match state.get(&var) {
                 Some(ref a) => (*a).clone(),
-                _ => panic!("ReferenceError: {} is not defined", var)
+                _ => JsError(format!("ReferenceError: {} is not defined", var))
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use std::collections::HashMap;
+
+    use super::*;
+    use value::JsValue::*;
+
+    #[test]
+    fn test_eval_literals() {
+        let mut state = HashMap::new();
+        assert_eq!(JsNumber(5.0f64), eval_string("5.0;\n", &mut state));
+        assert_eq!(JsNumber(0.0f64), eval_string("0.0;\n", &mut state));
+        assert_eq!(JsUndefined, eval_string("undefined;\n", &mut state));
+        assert_eq!(0, state.len());
+    }
+
+    // TODO: handle `var` and no `var` separately
+    #[test]
+    fn test_store_state() {
+        let mut state = HashMap::new();
+        assert_eq!(JsUndefined, eval_string("var a = 1;\n", &mut state));
+        assert_eq!(JsNumber(2.0f64), eval_string("a = 2;\n", &mut state));
+        assert_eq!(JsUndefined, eval_string("var b = 3;\n", &mut state));
+        assert_eq!(JsNumber(4.0f64), eval_string("c = 4;\n", &mut state));
+        assert_eq!(3, state.len());
+    }
+
+    #[test]
+    fn test_inc_dec() {
+        let mut state = HashMap::new();
+        assert_eq!(JsUndefined, eval_string("var a = 1;\n", &mut state));
+        assert_eq!(&JsNumber(1.0f64), state.get("a").unwrap());
+
+        assert_eq!(JsNumber(1.0f64), eval_string("a++;\n", &mut state));
+        assert_eq!(&JsNumber(2.0f64), state.get("a").unwrap());
+
+        assert_eq!(JsNumber(3.0f64), eval_string("++a;\n", &mut state));
+        assert_eq!(&JsNumber(3.0f64), state.get("a").unwrap());
+
+        assert_eq!(JsNumber(3.0f64), eval_string("a--;\n", &mut state));
+        assert_eq!(&JsNumber(2.0f64), state.get("a").unwrap());
+
+        assert_eq!(JsNumber(1.0f64), eval_string("--a;\n", &mut state));
+        assert_eq!(&JsNumber(1.0f64), state.get("a").unwrap());
+
+        assert_eq!(1, state.len());
+    }
+
+    #[test]
+    fn test_binexp() {
+        let mut state = HashMap::new();
+        assert_eq!(JsNumber(6.0f64),  eval_string("2.0 + 4.0;\n", &mut state));
+        assert_eq!(JsNumber(0.5f64),  eval_string("2.0 / 4.0;\n", &mut state));
+        assert_eq!(JsNumber(-2.0f64), eval_string("2.0 - 4.0;\n", &mut state));
+        assert_eq!(JsNumber(8.0f64),  eval_string("2.0 * 4.0;\n", &mut state));
+        assert_eq!(0, state.len());
     }
 }
