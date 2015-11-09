@@ -12,20 +12,27 @@ use jsrs_parser::ast::BinOp::*;
 use jsrs_parser::ast::Stmt::*;
 
 pub fn eval_string(string: &str, state: &mut HashMap<String, JsValue>) -> JsValue {
-    eval_stmt(parse_Stmt(string).unwrap(), state)
+    match parse_Stmt(string) {
+        Ok(stmt) => eval_stmt(stmt, state),
+        Err(e) => JsError(format!("{:?}", e))
+    }
+    //eval_stmt(parse_Stmt(string).unwrap(), state)
 }
 
 pub fn eval_stmt(s: Stmt, mut state: &mut HashMap<String, JsValue>) -> JsValue {
     match s {
         Assign(var_string, exp) => {
-            let eval = eval_exp(exp, state);
-            state.insert(var_string, eval);
-            JsUndefined
+            // TODO: this is a hack to return the value properly, which should be changed once we
+            // stop using HashMap to store state.
+            let val = eval_exp(exp, state);
+            let cloned = val.clone();
+            state.insert(var_string, val);
+            cloned
         },
         BareExp(exp) => eval_exp(exp, &mut state),
         Decl(var_string, exp) => {
-            let eval = eval_exp(exp, state);
-            state.insert(var_string, eval);
+            let val = eval_exp(exp, state);
+            state.insert(var_string, val);
             JsUndefined
         },
         Seq(s1, s2) => {

@@ -12,7 +12,9 @@ pub enum JsValue {
     JsSymbol(String),
     // Objects
     // TODO: internal representation
-    JsObject
+    JsObject,
+    // Error value (TODO: more consistent to ECMAScript spec?)
+    JsError(String),
 }
 
 use self::JsValue::*;
@@ -30,6 +32,7 @@ impl Display for JsValue {
             JsString(ref s) => write!(fmt, "{}", s),
             JsSymbol(ref s) => write!(fmt, "{}", s),
             JsObject => write!(fmt, "{{}}"),
+            JsError(ref err) => write!(fmt, "{}", err),
         }
     }
 }
