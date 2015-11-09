@@ -1,5 +1,7 @@
 use std::fmt::{Display, Error, Formatter};
 
+#[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub enum JsValue {
     // Primitives (cannot be changed)
     JsBoolean(bool),

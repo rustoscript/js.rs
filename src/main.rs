@@ -3,6 +3,7 @@ extern crate jsrs_parser;
 #[macro_use]
 mod macros;
 
+mod value;
 mod eval;
 
 use std::io::{self, Write};
