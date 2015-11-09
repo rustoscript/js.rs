@@ -2,6 +2,9 @@ use std;
 use std::f64::NAN;
 use std::collections::HashMap;
 
+#[macro_use]
+mod macros;
+
 use value::JsValue;
 use value::JsValue::*;
 
