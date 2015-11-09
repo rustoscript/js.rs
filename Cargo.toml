@@ -1,7 +1,10 @@
 [package]
 name = "jsrs"
 version = "0.1.0"
-authors = [ "Terry Sun <terrynsun@gmail.com>" ]
+authors = [
+    "Terry Sun <terrynsun@gmail.com>",
+    "Saghm Rossi <saghmrossi@gmail.com>"
+]
 
 [dependencies.jsrs-parser]
 git = "https://github.com/rustoscript/js.rs-parser.git"
