@@ -40,9 +40,9 @@ pub fn eval_exp(e: Exp, mut state: &mut HashMap<String, Exp>) -> Exp {
 
             match op {
                 Minus => eval_float_binop!(eval1, eval2, f1, f2, f1 - f2),
-                Plus => eval_float_binop!(eval1, eval2, f1, f2, f1 + f2),
+                Plus  => eval_float_binop!(eval1, eval2, f1, f2, f1 + f2),
                 Slash => eval_float_binop!(eval1, eval2, f1, f2, f1 / f2),
-                Star => eval_float_binop!(eval1, eval2, f1, f2, f1 * f2),
+                Star  => eval_float_binop!(eval1, eval2, f1, f2, f1 * f2),
             }
         }
         Float(f) => Float(f),
