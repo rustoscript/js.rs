@@ -1,4 +1,4 @@
-# js.rs
+# js.rs [![Build Status](https://travis-ci.org/rustoscript/js.rs.svg)](https://travis-ci.org/rustoscript/js.rs)
 
 A JavaScript interpreter written in Rust.
 
