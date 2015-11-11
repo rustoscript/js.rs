@@ -2,10 +2,10 @@ extern crate jsrs_parser;
 
 mod value;
 mod eval;
+mod js_value;
 
 use std::env;
 use std::io;
-//use std::io::{self, Write};
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::path::Path;
