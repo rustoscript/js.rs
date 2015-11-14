@@ -1,4 +1,5 @@
 extern crate jsrs_parser;
+extern crate jsrs_common;
 
 mod value;
 mod eval;

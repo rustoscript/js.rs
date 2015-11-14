@@ -9,10 +9,10 @@ use value::JsValue;
 use value::JsValue::*;
 
 use jsrs_parser::lalr::parse_Stmt;
-use jsrs_parser::ast::*;
-use jsrs_parser::ast::Exp::*;
-use jsrs_parser::ast::BinOp::*;
-use jsrs_parser::ast::Stmt::*;
+use jsrs_common::ast::*;
+use jsrs_common::ast::Exp::*;
+use jsrs_common::ast::BinOp::*;
+use jsrs_common::ast::Stmt::*;
 
 pub fn eval_string(string: &str, state: &mut HashMap<String, JsValue>) -> JsValue {
     match parse_Stmt(string) {
@@ -38,10 +38,12 @@ pub fn eval_stmt(s: Stmt, mut state: &mut HashMap<String, JsValue>) -> JsValue {
             state.insert(var_string, val);
             JsUndefined
         },
+        If(_, _, _) => panic!("unimplemented: if statement"),
         Seq(s1, s2) => {
             let _exp = eval_stmt(*s1, &mut state);
             eval_stmt(*s2, &mut state)
-        }
+        },
+        While(_, _) => panic!("unimplemented: while statement"),
     }
 }
 
@@ -52,12 +54,15 @@ pub fn eval_exp(e: Exp, mut state: &mut HashMap<String, JsValue>) -> JsValue {
             let val2 = eval_exp(*e2, state);
 
             match op {
+                And   => panic!("unimplemented: and"),
                 Minus => eval_float_binop!(val1, val2, f1, f2, f1 - f2),
+                Or    => panic!("unimplemented: or"),
                 Plus  => eval_float_binop!(val1, val2, f1, f2, f1 + f2),
                 Slash => eval_float_binop!(val1, val2, f1, f2, f1 / f2),
                 Star  => eval_float_binop!(val1, val2, f1, f2, f1 * f2),
             }
         }
+        Bool(b) => JsBoolean(b),
         Float(f) => JsNumber(f),
         Neg(exp) => eval_float_sign!("Neg", exp, f, -f, state),
         Pos(exp) => eval_float_sign!("Pos", exp, f, f, state),

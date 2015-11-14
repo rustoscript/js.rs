@@ -8,4 +8,8 @@ authors = [
 
 [dependencies.jsrs-parser]
 git = "https://github.com/rustoscript/js.rs-parser.git"
-rev = "5a2911a"
+rev = "f362e53"
+
+[dependencies.jsrs-common]
+git = "https://github.com/rustoscript/js.rs-common.git"
+rev = "e79093e"
