@@ -1,18 +1,21 @@
 extern crate jsrs_parser;
 extern crate jsrs_common;
+extern crate rustyline;
 
 mod value;
 mod eval;
 mod js_value;
 
 use std::env;
-use std::io;
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::path::Path;
 use std::fs::File;
 
 use std::collections::HashMap;
+
+use rustyline::error::ReadlineError;
+use rustyline::Editor;
 
 use eval::eval_string;
 
@@ -47,39 +50,45 @@ fn eval_file(filename: String, debug: bool) {
 
 fn repl() {
     let mut state = HashMap::new();
-    let stdin = io::stdin();
-    let mut stdout = io::stdout();
+    let mut rl = Editor::new();
 
     loop {
         // prompt
-        print!(">> ");
-        stdout.flush().unwrap();
+        let readline = rl.readline(">> ");
 
-        // read input
-        let mut input = String::new();
-        stdin.read_line(&mut input).unwrap();
+        match readline {
+            Ok(line) => {
+                rl.add_history_entry(&line);
+                let mut input = String::from(line.trim());
 
-        // exit if no input (eg. ^D)
-        if input.len() == 0 {
-            println!("");
-            break;
+                // ignore if only whitespace
+                if input.len() == 0 {
+                    continue;
+                }
+
+                // insert semicolon if necessary
+                if !input.ends_with(";") && !input.ends_with("}") {
+                    input.push_str(";");
+                }
+
+                // eval
+                println!("=> {:?}", eval_string(&input, &mut state));
+                println!("** {:?}", state);
+                println!("Line: {}", line);
+            },
+            Err(ReadlineError::Interrupted) => {
+                println!("CTRL-C");
+                break
+            },
+            Err(ReadlineError::Eof) => {
+                println!("CTRL-D");
+                break
+            },
+            Err(err) => {
+                println!("Error: {:?}", err);
+                break
+            }
         }
-
-        input = String::from(input.trim());
-
-        // ignore if only whitespace
-        if input.len() == 0 {
-            continue;
-        }
-
-        // insert semicolon if necessary
-        if !input.ends_with(";") && !input.ends_with("}") {
-            input.push_str(";");
-        }
-
-        // eval
-        println!("=> {:?}", eval_string(&input, &mut state));
-        println!("** {:?}", state);
     }
 }
 
