@@ -39,6 +39,7 @@ pub fn eval_stmt(s: Stmt, mut state: &mut HashMap<String, JsValue>) -> JsValue {
             JsUndefined
         },
         If(_, _, _) => panic!("unimplemented: if statement"),
+        Ret(_) => panic!("unimplemented: ret statement"),
         Seq(s1, s2) => {
             let _exp = eval_stmt(*s1, &mut state);
             eval_stmt(*s2, &mut state)
@@ -55,6 +56,13 @@ pub fn eval_exp(e: Exp, mut state: &mut HashMap<String, JsValue>) -> JsValue {
 
             match op {
                 And   => panic!("unimplemented: and"),
+                Ge    => panic!("unimplemented: ge"),
+                Gt    => panic!("unimplemented: gt"),
+                Eql   => panic!("unimplemented: eql"),
+                Le    => panic!("unimplemented: le"),
+                Lt    => panic!("unimplemented: lt"),
+                Neq   => panic!("unimplemented: neq"),
+
                 Minus => eval_float_binop!(val1, val2, f1, f2, f1 - f2),
                 Or    => panic!("unimplemented: or"),
                 Plus  => eval_float_binop!(val1, val2, f1, f2, f1 + f2),
@@ -63,6 +71,8 @@ pub fn eval_exp(e: Exp, mut state: &mut HashMap<String, JsValue>) -> JsValue {
             }
         }
         Bool(b) => JsBoolean(b),
+        Call(_, _) => panic!("unimplemented: call"),
+        Defun(_, _, _) => panic!("unimplemented: defun"),
         Float(f) => JsNumber(f),
         Neg(exp) => eval_float_sign!("Neg", exp, f, -f, state),
         Pos(exp) => eval_float_sign!("Pos", exp, f, f, state),
