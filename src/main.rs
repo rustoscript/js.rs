@@ -8,9 +8,9 @@ mod js_value;
 
 use std::env;
 use std::io::prelude::*;
-use std::io::BufReader;
+use std::io::{self, BufReader};
 use std::path::Path;
-use std::fs::File;
+use std::fs::{File, metadata};
 
 use std::collections::HashMap;
 
@@ -51,6 +51,11 @@ fn eval_file(filename: String, debug: bool) {
 fn repl() {
     let mut state = HashMap::new();
     let mut rl = Editor::new();
+    let mut stderr = io::stderr();
+
+    if metadata(".history").is_ok() && rl.load_history(".history").is_err() {
+        writeln!(stderr, "Error: unable to load history on startup").unwrap();
+    }
 
     loop {
         // prompt
@@ -71,6 +76,8 @@ fn repl() {
                     input.push_str(";");
                 }
 
+                rl.add_history_entry(&input);
+
                 // eval
                 println!("=> {:?}", eval_string(&input, &mut state));
                 println!("** {:?}", state);
@@ -78,14 +85,29 @@ fn repl() {
             },
             Err(ReadlineError::Interrupted) => {
                 println!("CTRL-C");
+
+                if rl.save_history(".history").is_err() {
+                    writeln!(stderr, "Error: unable to save history on exit").unwrap();
+                }
+
                 break
             },
             Err(ReadlineError::Eof) => {
                 println!("CTRL-D");
+
+                if rl.save_history(".history").is_err() {
+                    writeln!(stderr, "Error: unable to save history on exit").unwrap();
+                }
+
                 break
             },
             Err(err) => {
                 println!("Error: {:?}", err);
+
+                if rl.save_history(".history").is_err() {
+                    writeln!(stderr, "Error: unable to save history on exit").unwrap();
+                }
+
                 break
             }
         }
