@@ -70,7 +70,7 @@ pub fn eval_exp(e: Exp, mut state: &mut HashMap<String, JsValue>) -> JsValue {
                 Star  => eval_float_binop!(val1, val2, f1, f2, f1 * f2),
             }
         }
-        Bool(b) => JsBoolean(b),
+        Bool(b) => JsBool(b),
         Call(_, _) => panic!("unimplemented: call"),
         Defun(_, _, _) => panic!("unimplemented: defun"),
         Float(f) => JsNumber(f),
