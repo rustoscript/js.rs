@@ -55,19 +55,20 @@ pub fn eval_exp(e: Exp, mut state: &mut HashMap<String, JsValue>) -> JsValue {
             let val2 = eval_exp(*e2, state);
 
             match op {
-                And   => panic!("unimplemented: and"),
-                Ge    => panic!("unimplemented: ge"),
-                Gt    => panic!("unimplemented: gt"),
-                Eql   => panic!("unimplemented: eql"),
-                Le    => panic!("unimplemented: le"),
-                Lt    => panic!("unimplemented: lt"),
-                Neq   => panic!("unimplemented: neq"),
+                And   => eval_logic!(val1, val2, f1, f2, f1 && f2),
+                Or    => eval_logic!(val1, val2, f1, f2, f1 || f2),
 
-                Minus => eval_float_binop!(val1, val2, f1, f2, f1 - f2),
-                Or    => panic!("unimplemented: or"),
-                Plus  => eval_float_binop!(val1, val2, f1, f2, f1 + f2),
-                Slash => eval_float_binop!(val1, val2, f1, f2, f1 / f2),
-                Star  => eval_float_binop!(val1, val2, f1, f2, f1 * f2),
+                Ge    => eval_cmp!(val1, val2, f1, f2, f1 >= f2),
+                Gt    => eval_cmp!(val1, val2, f1, f2, f1 >  f2),
+                Le    => eval_cmp!(val1, val2, f1, f2, f1 <= f2),
+                Lt    => eval_cmp!(val1, val2, f1, f2, f1 <  f2),
+                Neq   => eval_cmp!(val1, val2, f1, f2, f1 != f2),
+                Eql   => eval_cmp!(val1, val2, f1, f2, f1 == f2),
+
+                Minus => eval_num_binop!(val1, val2, f1, f2, f1 - f2),
+                Plus  => eval_num_binop!(val1, val2, f1, f2, f1 + f2),
+                Slash => eval_num_binop!(val1, val2, f1, f2, f1 / f2),
+                Star  => eval_num_binop!(val1, val2, f1, f2, f1 * f2),
             }
         }
         Bool(b) => JsBool(b),

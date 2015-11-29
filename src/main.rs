@@ -4,7 +4,6 @@ extern crate rustyline;
 
 mod value;
 mod eval;
-mod js_value;
 
 use std::env;
 use std::io::prelude::*;

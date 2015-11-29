@@ -38,7 +38,7 @@ impl Display for JsValue {
 }
 
 impl JsValue {
-    fn as_bool(self) -> JsValue {
+    pub fn as_bool(self) -> JsValue {
         match self {
             JsBool(_) => self,
             JsUndefined => JsBool(false),
@@ -61,7 +61,7 @@ impl JsValue {
         }
     }
 
-    fn as_number(self) -> JsValue {
+    pub fn as_number(self) -> JsValue {
         match self {
             JsBool(b) => if b { JsNumber(1f64) } else { JsNumber(0f64) },
             JsUndefined => JsNumber(NAN),
