@@ -7,6 +7,7 @@ mod eval;
 
 use std::env;
 use std::io::prelude::*;
+use std::process::exit;
 use std::io::{self, BufReader};
 use std::path::Path;
 use std::fs::{File, metadata};
@@ -47,7 +48,7 @@ fn eval_file(filename: String, debug: bool) {
     }
 }
 
-fn repl() {
+fn repl() -> i32 {
     let mut state = HashMap::new();
     let mut rl = Editor::new();
     let mut stderr = io::stderr();
@@ -70,12 +71,12 @@ fn repl() {
                     continue;
                 }
 
+                rl.add_history_entry(&input);
+
                 // insert semicolon if necessary
                 if !input.ends_with(";") && !input.ends_with("}") {
                     input.push_str(";");
                 }
-
-                rl.add_history_entry(&input);
 
                 // eval
                 println!("=> {:?}", eval_string(&input, &mut state));
@@ -83,21 +84,17 @@ fn repl() {
                 println!("Line: {}", line);
             },
             Err(ReadlineError::Interrupted) => {
-                println!("CTRL-C");
-
                 if rl.save_history(".history").is_err() {
                     writeln!(stderr, "Error: unable to save history on exit").unwrap();
+                    return 2;
                 }
-
-                break
+                return 1;
             },
             Err(ReadlineError::Eof) => {
-                println!("CTRL-D");
-
                 if rl.save_history(".history").is_err() {
                     writeln!(stderr, "Error: unable to save history on exit").unwrap();
+                    return 2;
                 }
-
                 break
             },
             Err(err) => {
@@ -105,12 +102,13 @@ fn repl() {
 
                 if rl.save_history(".history").is_err() {
                     writeln!(stderr, "Error: unable to save history on exit").unwrap();
+                    return 2;
                 }
-
-                break
+                return 3;
             }
         }
     }
+    0
 }
 
 fn main() {
@@ -120,6 +118,7 @@ fn main() {
             eval_file(file, true);
         }
     } else {
-        repl();
+        let ret = repl();
+        exit(ret)
     }
 }
