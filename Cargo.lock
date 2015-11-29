@@ -2,7 +2,7 @@
 name = "jsrs"
 version = "0.1.0"
 dependencies = [
- "jsrs-common 0.1.0 (git+https://github.com/rustoscript/js.rs-common?rev=22c4a48)",
+ "jsrs-common 0.1.0 (git+https://github.com/rustoscript/js.rs-common.git?rev=22c4a48)",
  "jsrs-parser 0.1.0 (git+https://github.com/rustoscript/js.rs-parser.git)",
  "rustyline 0.1.0 (git+https://github.com/kkawakam/rustyline.git)",
 ]
@@ -31,7 +31,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "bitflags"
-version = "0.3.2"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
@@ -41,7 +41,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "fixedbitset"
-version = "0.0.5"
+version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
@@ -52,14 +52,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "jsrs-common"
 version = "0.1.0"
-source = "git+https://github.com/rustoscript/js.rs-common?rev=22c4a48#22c4a482653bdc677ecc596efca5fb7ad2dbea89"
+source = "git+https://github.com/rustoscript/js.rs-common.git?rev=22c4a48#22c4a482653bdc677ecc596efca5fb7ad2dbea89"
 
 [[package]]
 name = "jsrs-parser"
 version = "0.1.0"
-source = "git+https://github.com/rustoscript/js.rs-parser.git#ed944bd88d61865fb6ee9e90872cf49cc2b420de"
+source = "git+https://github.com/rustoscript/js.rs-parser.git#24ad6b6bfb6c533e5e650f61c74fd758702e5b56"
 dependencies = [
- "jsrs-common 0.1.0 (git+https://github.com/rustoscript/js.rs-common?rev=22c4a48)",
+ "jsrs-common 0.1.0 (git+https://github.com/rustoscript/js.rs-common.git?rev=22c4a48)",
  "lalrpop 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "lalrpop-util 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rustyline 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -84,9 +84,9 @@ dependencies = [
  "lalrpop-intern 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "lalrpop-snap 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "lalrpop-util 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "petgraph 0.1.13 (registry+https://github.com/rust-lang/crates.io-index)",
+ "petgraph 0.1.17 (registry+https://github.com/rust-lang/crates.io-index)",
  "regex 0.1.41 (registry+https://github.com/rust-lang/crates.io-index)",
- "term 0.2.13 (registry+https://github.com/rust-lang/crates.io-index)",
+ "term 0.2.14 (registry+https://github.com/rust-lang/crates.io-index)",
  "unicode-xid 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -107,7 +107,7 @@ dependencies = [
  "rand 0.3.12 (registry+https://github.com/rust-lang/crates.io-index)",
  "regex 0.1.41 (registry+https://github.com/rust-lang/crates.io-index)",
  "rusty-peg 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "term 0.2.13 (registry+https://github.com/rust-lang/crates.io-index)",
+ "term 0.2.14 (registry+https://github.com/rust-lang/crates.io-index)",
  "unicode-xid 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -148,16 +148,16 @@ name = "nix"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "bitflags 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bitflags 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.1.12 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "petgraph"
-version = "0.1.13"
+version = "0.1.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "fixedbitset 0.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "fixedbitset 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -196,7 +196,7 @@ dependencies = [
 [[package]]
 name = "rustyline"
 version = "0.1.0"
-source = "git+https://github.com/kkawakam/rustyline.git#84effd66c053a2103cdf5455cc63a04449caf6af"
+source = "git+https://github.com/kkawakam/rustyline.git#4f775dad5f8dc881bdbfd290e527182944e0aa31"
 dependencies = [
  "libc 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "nix 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -215,7 +215,7 @@ dependencies = [
 
 [[package]]
 name = "term"
-version = "0.2.13"
+version = "0.2.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "kernel32-sys 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
