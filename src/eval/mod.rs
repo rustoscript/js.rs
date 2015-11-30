@@ -100,7 +100,15 @@ pub fn eval_exp(e: &Exp, mut state: &mut HashMap<String, JsValue>) -> JsValue {
         }
         &Bool(b) => JsBool(b),
         &Call(_, _) => panic!("unimplemented: call"),
-        &Defun(_, _, _) => panic!("unimplemented: defun"),
+        &Defun(ref opt_var, ref params, ref block) => {
+            if let Some(ref var) = *opt_var {
+                let f = JsFunction(var.clone(), params.clone(), (*block).clone());
+                state.insert(var.clone(), f);
+                JsUndefined
+            } else {
+                JsFunction(String::from(""), params.clone(), (*block).clone())
+            }
+        },
         &Float(f) => JsNumber(f),
         &Neg(ref exp) => eval_float_sign!("Neg", exp, f, -f, state),
         &Pos(ref exp) => eval_float_sign!("Pos", exp, f, f, state),

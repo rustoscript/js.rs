@@ -1,7 +1,8 @@
 use std::fmt::{Display, Error, Formatter};
 use std::f64::NAN;
+use jsrs_common::ast::Stmt;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub enum JsValue {
     // Primitives (cannot be changed)
@@ -15,6 +16,8 @@ pub enum JsValue {
     JsObject,
     // Error value (TODO: more consistent to ECMAScript spec?)
     JsError(String),
+    // Ob
+    JsFunction(String, Vec<String>, Box<Stmt>),
 }
 
 use self::JsValue::*;
@@ -33,6 +36,8 @@ impl Display for JsValue {
             JsSymbol(ref s) => write!(fmt, "{}", s),
             JsObject => write!(fmt, "{{}}"),
             JsError(ref err) => write!(fmt, "{}", err),
+            JsFunction(ref var, ref params, ref stmt) =>
+                write!(fmt, "function{} ({}) {}", var, params.len(), stmt),
         }
     }
 }
@@ -56,8 +61,7 @@ impl JsValue {
                     JsBool(true)
                 },
             JsSymbol(_) => JsBool(true),
-            JsObject => JsBool(true),
-            JsError(_) => JsBool(true),
+            JsObject | JsError(_) | JsFunction(_, _, _) => JsBool(true),
         }
     }
 
@@ -78,8 +82,7 @@ impl JsValue {
                     }
                 },
             JsSymbol(_) => panic!("Cannot convert a Symbol to a number."),
-            JsObject => JsNumber(NAN),
-            JsError(_) => JsNumber(NAN),
+            JsObject | JsError(_) | JsFunction(_, _, _) => JsNumber(NAN),
         }
     }
 }
