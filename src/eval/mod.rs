@@ -16,45 +16,72 @@ use jsrs_common::ast::Stmt::*;
 
 pub fn eval_string(string: &str, state: &mut HashMap<String, JsValue>) -> JsValue {
     match parse_Stmt(string) {
-        Ok(stmt) => eval_stmt(stmt, state),
+        Ok(stmt) => eval_stmt(&stmt, state),
         Err(e) => JsError(format!("{:?}", e))
     }
     //eval_stmt(parse_Stmt(string).unwrap(), state)
 }
 
-pub fn eval_stmt(s: Stmt, mut state: &mut HashMap<String, JsValue>) -> JsValue {
-    match s {
-        Assign(var_string, exp) => {
+pub fn eval_stmt(s: &Stmt, mut state: &mut HashMap<String, JsValue>) -> JsValue {
+    match *s {
+        Assign(ref var_string, ref exp) => {
             // TODO: this is a hack to return the value properly, which should be changed once we
             // stop using HashMap to store state.
             let val = eval_exp(exp, state);
             let cloned = val.clone();
-            state.insert(var_string, val);
+            state.insert(var_string.clone(), val);
             cloned
         },
-        BareExp(exp) => eval_exp(exp, &mut state),
-        Decl(var_string, exp) => {
+        BareExp(ref exp) => eval_exp(exp, &mut state),
+        Decl(ref var_string, ref exp) => {
             let val = eval_exp(exp, state);
-            state.insert(var_string, val);
+            state.insert(var_string.clone(), val);
             JsUndefined
         },
-        If(_, _, _) => panic!("unimplemented: if statement"),
-        Ret(_) => panic!("unimplemented: ret statement"),
-        Seq(s1, s2) => {
-            let _exp = eval_stmt(*s1, &mut state);
-            eval_stmt(*s2, &mut state)
+        If(ref condition, ref if_block, ref else_block) => {
+            if let JsBool(b) = eval_exp(&condition, state).as_bool() {
+                if b {
+                    eval_stmt(&*if_block, state)
+                } else {
+                    if let Some(ref block) = *else_block {
+                        eval_stmt(&*block, state)
+                    } else {
+                        JsUndefined
+                    }
+                }
+            } else {
+                panic!("invalid boolean expression");
+            }
         },
-        While(_, _) => panic!("unimplemented: while statement"),
+        Ret(_) => panic!("unimplemented: ret statement"),
+        Seq(ref s1, ref s2) => {
+            let _exp = eval_stmt(&*s1, &mut state);
+            eval_stmt(&*s2, &mut state)
+        },
+        While(ref condition, ref block) => {
+            let mut ret_val = JsUndefined;
+            loop {
+                if let JsBool(b) = eval_exp(&condition, state).as_bool() {
+                    if b {
+                        ret_val = eval_stmt(&*block, state)
+                    } else {
+                        return ret_val
+                    }
+                } else {
+                    panic!("invalid boolean expression");
+                }
+            }
+        }
     }
 }
 
-pub fn eval_exp(e: Exp, mut state: &mut HashMap<String, JsValue>) -> JsValue {
+pub fn eval_exp(e: &Exp, mut state: &mut HashMap<String, JsValue>) -> JsValue {
     match e {
-        BinExp(e1, op, e2) => {
-            let val1 = eval_exp(*e1, state);
-            let val2 = eval_exp(*e2, state);
+        &BinExp(ref e1, ref op, ref e2) => {
+            let val1 = eval_exp(e1, state);
+            let val2 = eval_exp(e2, state);
 
-            match op {
+            match *op {
                 And   => eval_logic!(val1, val2, f1, f2, f1 && f2),
                 Or    => eval_logic!(val1, val2, f1, f2, f1 || f2),
 
@@ -71,19 +98,19 @@ pub fn eval_exp(e: Exp, mut state: &mut HashMap<String, JsValue>) -> JsValue {
                 Star  => eval_num_binop!(val1, val2, f1, f2, f1 * f2),
             }
         }
-        Bool(b) => JsBool(b),
-        Call(_, _) => panic!("unimplemented: call"),
-        Defun(_, _, _) => panic!("unimplemented: defun"),
-        Float(f) => JsNumber(f),
-        Neg(exp) => eval_float_sign!("Neg", exp, f, -f, state),
-        Pos(exp) => eval_float_sign!("Pos", exp, f, f, state),
-        PostDec(exp) => eval_float_post_op!(exp, f, f - 1.0, state),
-        PostInc(exp) => eval_float_post_op!(exp, f, f + 1.0, state),
-        PreDec(exp) => eval_float_pre_op!(exp, f, f - 1.0, state),
-        PreInc(exp) => eval_float_pre_op!(exp, f, f + 1.0, state),
-        Undefined => JsUndefined,
-        Var(var) => {
-            match state.get(&var) {
+        &Bool(b) => JsBool(b),
+        &Call(_, _) => panic!("unimplemented: call"),
+        &Defun(_, _, _) => panic!("unimplemented: defun"),
+        &Float(f) => JsNumber(f),
+        &Neg(ref exp) => eval_float_sign!("Neg", exp, f, -f, state),
+        &Pos(ref exp) => eval_float_sign!("Pos", exp, f, f, state),
+        &PostDec(ref exp) => eval_float_post_op!(exp, f, f - 1.0, state),
+        &PostInc(ref exp) => eval_float_post_op!(exp, f, f + 1.0, state),
+        &PreDec(ref exp) => eval_float_pre_op!(exp, f, f - 1.0, state),
+        &PreInc(ref exp) => eval_float_pre_op!(exp, f, f + 1.0, state),
+        &Undefined => JsUndefined,
+        &Var(ref var) => {
+            match state.get(var) {
                 Some(ref a) => (*a).clone(),
                 _ => JsError(format!("ReferenceError: {} is not defined", var))
             }

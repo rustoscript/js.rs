@@ -30,7 +30,7 @@ macro_rules! eval_logic {
 
 macro_rules! eval_float_sign {
     ($name:expr, $e:expr, $f:ident, $op:expr, $state:expr) => {
-        match eval_exp(*$e, &mut $state) {
+        match eval_exp(&*$e, &mut $state) {
             JsNumber($f) => JsNumber($op),
             // TODO: coerce other types to Number first
             _ => JsNumber(std::f64::NAN),
@@ -38,13 +38,14 @@ macro_rules! eval_float_sign {
     }
 }
 
+/// eval_float_post_op!(exp, f, f - 1.0, state),
 macro_rules! eval_float_post_op {
     ($e:expr, $f:ident, $new:expr, $state:expr) => {
-        match *$e {
-            Var(var) => match $state.get(&var) {
+        match **$e {
+            Var(ref var) => match $state.get(var) {
                 Some(&JsNumber($f)) => {
-                    $state.insert(var, JsNumber($new));
-                    eval_exp(Float($f), &mut $state)
+                    $state.insert(var.clone(), JsNumber($new));
+                    eval_exp(&Float($f), &mut $state)
                 }
                 _ => panic!("undefined variable `{}`", var)
             },
@@ -55,11 +56,11 @@ macro_rules! eval_float_post_op {
 
 macro_rules! eval_float_pre_op {
     ($e:expr, $f:ident, $new:expr, $state:expr) => {
-        match *$e {
-            Var(var) => match $state.get(&var) {
+        match **$e {
+            Var(ref var) => match $state.get(var) {
                 Some(&JsNumber($f)) => {
-                    $state.insert(var, JsNumber($new));
-                    eval_exp(Float($new), &mut $state)
+                    $state.insert(var.clone(), JsNumber($new));
+                    eval_exp(&Float($new), &mut $state)
                 }
                 _ => panic!("undefined variable `{}`", var)
             },
