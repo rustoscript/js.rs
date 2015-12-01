@@ -81,7 +81,6 @@ fn repl() -> i32 {
                 // eval
                 println!("=> {:?}", eval_string(&input, &mut state));
                 println!("** {:?}", state);
-                println!("Line: {}", line);
             },
             Err(ReadlineError::Interrupted) => {
                 if rl.save_history(".history").is_err() {

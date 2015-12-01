@@ -2,6 +2,7 @@ use std::fmt::{Display, Error, Formatter};
 use std::f64::NAN;
 use jsrs_common::ast::Stmt;
 
+
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub enum JsValue {
@@ -16,7 +17,8 @@ pub enum JsValue {
     JsObject,
     // Error value (TODO: more consistent to ECMAScript spec?)
     JsError(String),
-    // Ob
+    // Special case of Object
+    // Need to factor this into a struct (?)
     JsFunction(String, Vec<String>, Box<Stmt>),
 }
 

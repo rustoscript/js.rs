@@ -99,7 +99,14 @@ pub fn eval_exp(e: &Exp, mut state: &mut HashMap<String, JsValue>) -> JsValue {
             }
         }
         &Bool(b) => JsBool(b),
-        &Call(_, _) => panic!("unimplemented: call"),
+        &Call(ref fun_exp, _) => {
+            // TODO: create scope with arguments
+            let fun_name = eval_exp(fun_exp, state);
+            match fun_name {
+                JsFunction(_, _, stmt) => eval_stmt(&*stmt, state),
+                _ => panic!("TypeError: {} is not a function.", fun_name)
+            }
+        },
         &Defun(ref opt_var, ref params, ref block) => {
             if let Some(ref var) = *opt_var {
                 let f = JsFunction(var.clone(), params.clone(), (*block).clone());
