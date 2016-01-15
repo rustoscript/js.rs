@@ -3,7 +3,7 @@ use std;
 #[macro_use]
 mod macros;
 
-use coerce::AsBool;
+use coerce::{AsBool,AsNumber};
 
 use french_press::js_types::js_type::{JsVar, JsType};
 use french_press::js_types::js_type::JsType::*;
@@ -77,8 +77,8 @@ pub fn eval_exp(e: &Exp, mut state: &mut StateManager) -> JsVar {
             let val2 = eval_exp(e2, state);
 
             match *op {
-                //And   => eval_logic!(val1, val2, f1, f2, f1 && f2),
-                //Or    => eval_logic!(val1, val2, f1, f2, f1 || f2),
+                And => JsVar::new(JsBool(val1.as_bool() && val2.as_bool())),
+                Or  => JsVar::new(JsBool(val1.as_bool() || val2.as_bool())),
 
                 //Ge    => eval_cmp!(val1, val2, f1, f2, f1 >= f2),
                 //Gt    => eval_cmp!(val1, val2, f1, f2, f1 >  f2),
@@ -87,10 +87,10 @@ pub fn eval_exp(e: &Exp, mut state: &mut StateManager) -> JsVar {
                 //Neq   => eval_cmp!(val1, val2, f1, f2, f1 != f2),
                 //Eql   => eval_cmp!(val1, val2, f1, f2, f1 == f2),
 
-                //Minus => eval_num_binop!(val1, val2, f1, f2, f1 - f2),
-                //Plus  => eval_num_binop!(val1, val2, f1, f2, f1 + f2),
-                //Slash => eval_num_binop!(val1, val2, f1, f2, f1 / f2),
-                //Star  => eval_num_binop!(val1, val2, f1, f2, f1 * f2),
+                Minus => JsVar::new(JsNum(val1.as_number() - val2.as_number())),
+                Plus  => JsVar::new(JsNum(val1.as_number() + val2.as_number())),
+                Slash => JsVar::new(JsNum(val1.as_number() / val2.as_number())),
+                Star  => JsVar::new(JsNum(val1.as_number() * val2.as_number())),
                 _ => unimplemented!(),
             }
         }

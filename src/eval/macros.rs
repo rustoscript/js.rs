@@ -1,28 +1,8 @@
-/// Evaluate numerical exp on two values as JsNum and returns a JsNum.
-macro_rules! eval_num_binop {
-    ($left:expr, $right:expr, $f1:ident, $f2:ident, $out:expr) => {
-        match ($left.as_number(), $right.as_number()) {
-            (JsNum($f1), JsNum($f2)) => JsNum($out),
-            _ => JsNum(std::f64::NAN)
-        }
-    }
-}
-
 /// Compares two values as JsNum and returns a JsBool.
 macro_rules! eval_cmp {
     ($left:expr, $right:expr, $f1:ident, $f2:ident, $out:expr) => {
         match ($left.as_number(), $right.as_number()) {
             (JsNum($f1), JsNum($f2)) => JsBool($out),
-            _ => JsBool(false)
-        }
-    }
-}
-
-/// Compares two values as JsBool and returns a JsBool.
-macro_rules! eval_logic {
-    ($left:expr, $right:expr, $f1:ident, $f2:ident, $out:expr) => {
-        match ($left.as_bool(), $right.as_bool()) {
-            (JsBool($f1), JsBool($f2)) => JsBool($out),
             _ => JsBool(false)
         }
     }

@@ -6,7 +6,6 @@ extern crate uuid;
 
 mod coerce;
 mod state;
-mod value;
 mod eval;
 
 use std::env;
@@ -15,8 +14,6 @@ use std::process::exit;
 use std::io::{self, BufReader};
 use std::path::Path;
 use std::fs::{File, metadata};
-
-use std::collections::HashMap;
 
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
