@@ -1,12 +1,14 @@
 use std;
-use std::f64::NAN;
-use std::collections::HashMap;
 
 #[macro_use]
 mod macros;
 
-use value::JsValue;
-use value::JsValue::*;
+use coerce::AsBool;
+
+use french_press::js_types::js_type::{JsVar, JsType};
+use french_press::js_types::js_type::JsType::*;
+
+use state::StateManager;
 
 use jsrs_parser::lalr::parse_Stmt;
 use jsrs_common::ast::*;
@@ -14,15 +16,16 @@ use jsrs_common::ast::Exp::*;
 use jsrs_common::ast::BinOp::*;
 use jsrs_common::ast::Stmt::*;
 
-pub fn eval_string(string: &str, state: &mut HashMap<String, JsValue>) -> JsValue {
+pub fn eval_string(string: &str, state: &mut StateManager) -> JsVar {
     match parse_Stmt(string) {
         Ok(stmt) => eval_stmt(&stmt, state),
-        Err(e) => JsError(format!("{:?}", e))
+        //Err(e) => JsError(format!("{:?}", e))
+        Err(e) => unimplemented!()
     }
     //eval_stmt(parse_Stmt(string).unwrap(), state)
 }
 
-pub fn eval_stmt(s: &Stmt, mut state: &mut HashMap<String, JsValue>) -> JsValue {
+pub fn eval_stmt(s: &Stmt, mut state: &mut StateManager) -> JsVar {
     match *s {
         Assign(ref var_string, ref exp) => {
             // TODO: this is a hack to return the value properly, which should be changed once we
@@ -36,21 +39,17 @@ pub fn eval_stmt(s: &Stmt, mut state: &mut HashMap<String, JsValue>) -> JsValue 
         Decl(ref var_string, ref exp) => {
             let val = eval_exp(exp, state);
             state.insert(var_string.clone(), val);
-            JsUndefined
+            JsVar::new(JsType::JsUndef)
         },
         If(ref condition, ref if_block, ref else_block) => {
-            if let JsBool(b) = eval_exp(&condition, state).as_bool() {
-                if b {
-                    eval_stmt(&*if_block, state)
-                } else {
-                    if let Some(ref block) = *else_block {
-                        eval_stmt(&*block, state)
-                    } else {
-                        JsUndefined
-                    }
-                }
+            if eval_exp(&condition, state).as_bool() {
+                eval_stmt(&*if_block, state)
             } else {
-                panic!("invalid boolean expression");
+                if let Some(ref block) = *else_block {
+                    eval_stmt(&*block, state)
+                } else {
+                    JsVar::new(JsType::JsUndef)
+                }
             }
         },
         Ret(_) => panic!("unimplemented: ret statement"),
@@ -59,77 +58,81 @@ pub fn eval_stmt(s: &Stmt, mut state: &mut HashMap<String, JsValue>) -> JsValue 
             eval_stmt(&*s2, &mut state)
         },
         While(ref condition, ref block) => {
-            let mut ret_val = JsUndefined;
+            let mut ret_val = JsVar::new(JsUndef);
             loop {
-                if let JsBool(b) = eval_exp(&condition, state).as_bool() {
-                    if b {
-                        ret_val = eval_stmt(&*block, state)
-                    } else {
-                        return ret_val
-                    }
+                if eval_exp(&condition, state).as_bool() {
+                    ret_val = eval_stmt(&*block, state)
                 } else {
-                    panic!("invalid boolean expression");
+                    return ret_val
                 }
             }
         }
     }
 }
 
-pub fn eval_exp(e: &Exp, mut state: &mut HashMap<String, JsValue>) -> JsValue {
+pub fn eval_exp(e: &Exp, mut state: &mut StateManager) -> JsVar {
     match e {
         &BinExp(ref e1, ref op, ref e2) => {
             let val1 = eval_exp(e1, state);
             let val2 = eval_exp(e2, state);
 
             match *op {
-                And   => eval_logic!(val1, val2, f1, f2, f1 && f2),
-                Or    => eval_logic!(val1, val2, f1, f2, f1 || f2),
+                //And   => eval_logic!(val1, val2, f1, f2, f1 && f2),
+                //Or    => eval_logic!(val1, val2, f1, f2, f1 || f2),
 
-                Ge    => eval_cmp!(val1, val2, f1, f2, f1 >= f2),
-                Gt    => eval_cmp!(val1, val2, f1, f2, f1 >  f2),
-                Le    => eval_cmp!(val1, val2, f1, f2, f1 <= f2),
-                Lt    => eval_cmp!(val1, val2, f1, f2, f1 <  f2),
-                Neq   => eval_cmp!(val1, val2, f1, f2, f1 != f2),
-                Eql   => eval_cmp!(val1, val2, f1, f2, f1 == f2),
+                //Ge    => eval_cmp!(val1, val2, f1, f2, f1 >= f2),
+                //Gt    => eval_cmp!(val1, val2, f1, f2, f1 >  f2),
+                //Le    => eval_cmp!(val1, val2, f1, f2, f1 <= f2),
+                //Lt    => eval_cmp!(val1, val2, f1, f2, f1 <  f2),
+                //Neq   => eval_cmp!(val1, val2, f1, f2, f1 != f2),
+                //Eql   => eval_cmp!(val1, val2, f1, f2, f1 == f2),
 
-                Minus => eval_num_binop!(val1, val2, f1, f2, f1 - f2),
-                Plus  => eval_num_binop!(val1, val2, f1, f2, f1 + f2),
-                Slash => eval_num_binop!(val1, val2, f1, f2, f1 / f2),
-                Star  => eval_num_binop!(val1, val2, f1, f2, f1 * f2),
+                //Minus => eval_num_binop!(val1, val2, f1, f2, f1 - f2),
+                //Plus  => eval_num_binop!(val1, val2, f1, f2, f1 + f2),
+                //Slash => eval_num_binop!(val1, val2, f1, f2, f1 / f2),
+                //Star  => eval_num_binop!(val1, val2, f1, f2, f1 * f2),
+                _ => unimplemented!(),
             }
         }
-        &Bool(b) => JsBool(b),
+        &Bool(b) => JsVar::new(JsBool(b)),
         &Call(ref fun_exp, _) => {
-            // TODO: create scope with arguments
-            let fun_name = eval_exp(fun_exp, state);
-            match fun_name {
-                JsFunction(_, _, stmt) => eval_stmt(&*stmt, state),
-                _ => panic!("TypeError: {} is not a function.", fun_name)
-            }
+            unimplemented!()
+            //// TODO: create scope with arguments
+            //let fun_name = eval_exp(fun_exp, state);
+            //match fun_name {
+            //    JsFunction(_, _, stmt) => eval_stmt(&*stmt, state),
+            //    _ => panic!("TypeError: {} is not a function.", fun_name)
+            //}
         },
         &Defun(ref opt_var, ref params, ref block) => {
-            if let Some(ref var) = *opt_var {
-                let f = JsFunction(var.clone(), params.clone(), (*block).clone());
-                state.insert(var.clone(), f);
-                JsUndefined
-            } else {
-                JsFunction(String::from(""), params.clone(), (*block).clone())
-            }
+            unimplemented!()
+            // TODO unimpl
+            //if let Some(ref var) = *opt_var {
+            //    let f = JsFunction(var.clone(), params.clone(), (*block).clone());
+            //    state.insert(var.clone(), f);
+            //    JsUndefined
+            //} else {
+            //    JsFunction(String::from(""), params.clone(), (*block).clone())
+            //}
         },
-        &Float(f) => JsNumber(f),
-        &Neg(ref exp) => eval_float_sign!("Neg", exp, f, -f, state),
-        &Pos(ref exp) => eval_float_sign!("Pos", exp, f, f, state),
-        &PostDec(ref exp) => eval_float_post_op!(exp, f, f - 1.0, state),
-        &PostInc(ref exp) => eval_float_post_op!(exp, f, f + 1.0, state),
-        &PreDec(ref exp) => eval_float_pre_op!(exp, f, f - 1.0, state),
-        &PreInc(ref exp) => eval_float_pre_op!(exp, f, f + 1.0, state),
-        &Undefined => JsUndefined,
+        &Float(f) => JsVar::new(JsType::JsNum(f)),
+        //&Neg(ref exp) => eval_float_sign!("Neg", exp, f, -f, state),
+        //&Pos(ref exp) => eval_float_sign!("Pos", exp, f, f, state),
+        //&PostDec(ref exp) => eval_float_post_op!(exp, f, f - 1.0, state),
+        //&PostInc(ref exp) => eval_float_post_op!(exp, f, f + 1.0, state),
+        //&PreDec(ref exp) => eval_float_pre_op!(exp, f, f - 1.0, state),
+        //&PreInc(ref exp) => eval_float_pre_op!(exp, f, f + 1.0, state),
+        &NewObject(_, _) => unimplemented!(),
+        &Object(_) => unimplemented!(),
+        &Undefined => JsVar::new(JsUndef),
         &Var(ref var) => {
             match state.get(var) {
                 Some(ref a) => (*a).clone(),
-                _ => JsError(format!("ReferenceError: {} is not defined", var))
+                //_ => JsError(format!("ReferenceError: {} is not defined", var))
+                _ => panic!(format!("ReferenceError: {} is not defined", var))
             }
         }
+        _ => unimplemented!(),
     }
 }
 
