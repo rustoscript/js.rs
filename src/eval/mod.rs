@@ -1,5 +1,3 @@
-use std;
-
 #[macro_use]
 mod macros;
 
@@ -20,7 +18,7 @@ pub fn eval_string(string: &str, state: &mut StateManager) -> JsVar {
     match parse_Stmt(string) {
         Ok(stmt) => eval_stmt(&stmt, state),
         //Err(e) => JsError(format!("{:?}", e))
-        Err(e) => unimplemented!()
+        Err(_) => unimplemented!()
     }
     //eval_stmt(parse_Stmt(string).unwrap(), state)
 }
@@ -80,22 +78,21 @@ pub fn eval_exp(e: &Exp, mut state: &mut StateManager) -> JsVar {
                 And => JsVar::new(JsBool(val1.as_bool() && val2.as_bool())),
                 Or  => JsVar::new(JsBool(val1.as_bool() || val2.as_bool())),
 
-                //Ge    => eval_cmp!(val1, val2, f1, f2, f1 >= f2),
-                //Gt    => eval_cmp!(val1, val2, f1, f2, f1 >  f2),
-                //Le    => eval_cmp!(val1, val2, f1, f2, f1 <= f2),
-                //Lt    => eval_cmp!(val1, val2, f1, f2, f1 <  f2),
-                //Neq   => eval_cmp!(val1, val2, f1, f2, f1 != f2),
-                //Eql   => eval_cmp!(val1, val2, f1, f2, f1 == f2),
+                Ge  => JsVar::new(JsBool(val1.as_bool() >= val2.as_bool())),
+                Gt  => JsVar::new(JsBool(val1.as_bool() >  val2.as_bool())),
+                Le  => JsVar::new(JsBool(val1.as_bool() <= val2.as_bool())),
+                Lt  => JsVar::new(JsBool(val1.as_bool() <  val2.as_bool())),
+                Neq => JsVar::new(JsBool(val1.as_bool() != val2.as_bool())),
+                Eql => JsVar::new(JsBool(val1.as_bool() == val2.as_bool())),
 
                 Minus => JsVar::new(JsNum(val1.as_number() - val2.as_number())),
                 Plus  => JsVar::new(JsNum(val1.as_number() + val2.as_number())),
                 Slash => JsVar::new(JsNum(val1.as_number() / val2.as_number())),
                 Star  => JsVar::new(JsNum(val1.as_number() * val2.as_number())),
-                _ => unimplemented!(),
             }
         }
         &Bool(b) => JsVar::new(JsBool(b)),
-        &Call(ref fun_exp, _) => {
+        &Call(_, _) => {
             unimplemented!()
             //// TODO: create scope with arguments
             //let fun_name = eval_exp(fun_exp, state);
@@ -104,7 +101,7 @@ pub fn eval_exp(e: &Exp, mut state: &mut StateManager) -> JsVar {
             //    _ => panic!("TypeError: {} is not a function.", fun_name)
             //}
         },
-        &Defun(ref opt_var, ref params, ref block) => {
+        &Defun(_, _, _) => {
             unimplemented!()
             // TODO unimpl
             //if let Some(ref var) = *opt_var {
@@ -116,8 +113,8 @@ pub fn eval_exp(e: &Exp, mut state: &mut StateManager) -> JsVar {
             //}
         },
         &Float(f) => JsVar::new(JsType::JsNum(f)),
-        //&Neg(ref exp) => eval_float_sign!("Neg", exp, f, -f, state),
-        //&Pos(ref exp) => eval_float_sign!("Pos", exp, f, f, state),
+        &Neg(ref exp) => JsVar::new(JsNum(-eval_exp(exp, state).as_number())),
+        &Pos(ref exp) => JsVar::new(JsNum(eval_exp(exp, state).as_number())),
         //&PostDec(ref exp) => eval_float_post_op!(exp, f, f - 1.0, state),
         //&PostInc(ref exp) => eval_float_post_op!(exp, f, f + 1.0, state),
         //&PreDec(ref exp) => eval_float_pre_op!(exp, f, f - 1.0, state),
@@ -138,59 +135,58 @@ pub fn eval_exp(e: &Exp, mut state: &mut StateManager) -> JsVar {
 
 #[cfg(test)]
 mod test {
-    use std::collections::HashMap;
-
     use super::*;
-    use value::JsValue::*;
+    use state::*;
+    use french_press::js_types::js_type::JsType;
 
     #[test]
     fn test_eval_literals() {
-        let mut state = HashMap::new();
-        assert_eq!(JsNumber(5.0f64), eval_string("5.0;\n", &mut state));
-        assert_eq!(JsNumber(0.0f64), eval_string("0.0;\n", &mut state));
-        assert_eq!(JsUndefined, eval_string("undefined;\n", &mut state));
+        let mut state = StateManager::new();
+        assert_eq!(JsType::JsNum(5.0f64), eval_string("5.0;\n", &mut state).t);
+        assert_eq!(JsType::JsNum(0.0f64), eval_string("0.0;\n", &mut state).t);
+        assert_eq!(JsType::JsUndef, eval_string("undefined;\n", &mut state).t);
         assert_eq!(0, state.len());
     }
 
-    // TODO: handle `var` and no `var` separately
-    #[test]
-    fn test_store_state() {
-        let mut state = HashMap::new();
-        assert_eq!(JsUndefined, eval_string("var a = 1;\n", &mut state));
-        assert_eq!(JsNumber(2.0f64), eval_string("a = 2;\n", &mut state));
-        assert_eq!(JsUndefined, eval_string("var b = 3;\n", &mut state));
-        assert_eq!(JsNumber(4.0f64), eval_string("c = 4;\n", &mut state));
-        assert_eq!(3, state.len());
-    }
+    //// TODO: handle `var` and no `var` separately
+    //#[test]
+    //fn test_store_state() {
+    //    let mut state = HashMap::new();
+    //    assert_eq!(JsUndefined, eval_string("var a = 1;\n", &mut state));
+    //    assert_eq!(JsNumber(2.0f64), eval_string("a = 2;\n", &mut state));
+    //    assert_eq!(JsUndefined, eval_string("var b = 3;\n", &mut state));
+    //    assert_eq!(JsNumber(4.0f64), eval_string("c = 4;\n", &mut state));
+    //    assert_eq!(3, state.len());
+    //}
 
     #[test]
     fn test_inc_dec() {
-        let mut state = HashMap::new();
-        assert_eq!(JsUndefined, eval_string("var a = 1;\n", &mut state));
-        assert_eq!(&JsNumber(1.0f64), state.get("a").unwrap());
+        let mut state = StateManager::new();
+        //assert_eq!(JsType::JsNum(1.0f64), eval_string("var a = 1;\n", &mut state).t);
+        //assert_eq!(&JsType::JsNum(1.0), state.get(&String::from("a")).unwrap());
 
-        assert_eq!(JsNumber(1.0f64), eval_string("a++;\n", &mut state));
-        assert_eq!(&JsNumber(2.0f64), state.get("a").unwrap());
+        //assert_eq!(JsType::JsNum(1.0f64), eval_string("a++;\n", &mut state));
+        //assert_eq!(&JsNumber(2.0f64), state.get("a").unwrap());
 
-        assert_eq!(JsNumber(3.0f64), eval_string("++a;\n", &mut state));
-        assert_eq!(&JsNumber(3.0f64), state.get("a").unwrap());
+        //assert_eq!(JsNumber(3.0f64), eval_string("++a;\n", &mut state));
+        //assert_eq!(&JsNumber(3.0f64), state.get("a").unwrap());
 
-        assert_eq!(JsNumber(3.0f64), eval_string("a--;\n", &mut state));
-        assert_eq!(&JsNumber(2.0f64), state.get("a").unwrap());
+        //assert_eq!(JsNumber(3.0f64), eval_string("a--;\n", &mut state));
+        //assert_eq!(&JsNumber(2.0f64), state.get("a").unwrap());
 
-        assert_eq!(JsNumber(1.0f64), eval_string("--a;\n", &mut state));
-        assert_eq!(&JsNumber(1.0f64), state.get("a").unwrap());
+        //assert_eq!(JsNumber(1.0f64), eval_string("--a;\n", &mut state));
+        //assert_eq!(&JsNumber(1.0f64), state.get("a").unwrap());
 
-        assert_eq!(1, state.len());
+        //assert_eq!(1, state.len());
     }
 
     #[test]
     fn test_binexp() {
-        let mut state = HashMap::new();
-        assert_eq!(JsNumber(6.0f64),  eval_string("2.0 + 4.0;\n", &mut state));
-        assert_eq!(JsNumber(0.5f64),  eval_string("2.0 / 4.0;\n", &mut state));
-        assert_eq!(JsNumber(-2.0f64), eval_string("2.0 - 4.0;\n", &mut state));
-        assert_eq!(JsNumber(8.0f64),  eval_string("2.0 * 4.0;\n", &mut state));
+        let mut state = StateManager::new();
+        assert_eq!(JsType::JsNum(6.0f64),  eval_string("2.0 + 4.0;\n", &mut state).t);
+        assert_eq!(JsType::JsNum(0.5f64),  eval_string("2.0 / 4.0;\n", &mut state).t);
+        assert_eq!(JsType::JsNum(-2.0f64), eval_string("2.0 - 4.0;\n", &mut state).t);
+        assert_eq!(JsType::JsNum(8.0f64),  eval_string("2.0 * 4.0;\n", &mut state).t);
         assert_eq!(0, state.len());
     }
 }
