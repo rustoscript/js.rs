@@ -41,11 +41,10 @@ pub fn eval_stmt(s: &Stmt, mut state: &mut ScopeManager) -> JsVar {
             let mut var = eval_exp(exp, state);
             var.binding = Binding::new(var_string);
             // TODO: use value
-            match state.alloc(var, None) {
-                Ok(_) => (),
-                e @ Err(_) => println!("{:?}", e),
+            match state.alloc(var.clone(), None) {
+                Ok(_) => var,
+                e @ Err(_) => panic!("{:?}", e),
             }
-            JsVar::new(JsType::JsUndef)
         },
         If(ref condition, ref if_block, ref else_block) => {
             if eval_exp(&condition, state).as_bool() {
@@ -171,9 +170,9 @@ mod test {
 
     #[test]
     fn test_inc_dec() {
-        //let mut state = init_gc(new_hash_set);
+        let mut state = init_gc(new_hash_set);
         //assert_eq!(JsType::JsNum(1.0f64), eval_string("var a = 1;\n", &mut state).t);
-        //assert_eq!(&JsType::JsNum(1.0), state.get(&String::from("a")).unwrap());
+        //assert_eq!(&JsType::JsNum(1.0), state.load(&Binding::new("a")).unwrap());
 
         //assert_eq!(JsType::JsNum(1.0f64), eval_string("a++;\n", &mut state));
         //assert_eq!(&JsNumber(2.0f64), state.get("a").unwrap());
