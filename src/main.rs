@@ -5,7 +5,6 @@ extern crate rustyline;
 extern crate uuid;
 
 mod coerce;
-mod state;
 mod eval;
 
 use std::env;
@@ -18,17 +17,19 @@ use std::fs::{File, metadata};
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 
-use state::StateManager;
-
 use french_press::init_gc;
+use french_press::js_types::js_type::Binding;
 use std::collections::hash_set::HashSet;
-use uuid::Uuid;
 
 use eval::eval_string;
 
 
+fn new_hash_set() -> HashSet<Binding> {
+    HashSet::new()
+}
+
 fn eval_file(filename: String, debug: bool) {
-    let mut state = StateManager::new();
+    let mut scope_manager = init_gc(new_hash_set);
 
     println!("Reading from \"{}\"", filename);
     let path = Path::new(&filename);
@@ -49,22 +50,17 @@ fn eval_file(filename: String, debug: bool) {
         }
 
         if debug {
-            println!("=> {:?}", eval_string(&input, &mut state));
-            println!("** {:?}", state);
+            println!("=> {:?}", eval_string(&input, &mut scope_manager));
+            //println!("** {:?}", state);
         }
     }
 }
 
-fn new_hash_set() -> HashSet<Uuid> {
-    HashSet::new()
-}
-
 fn repl() -> i32 {
-    let mut state = StateManager::new();
     let mut rl = Editor::new();
     let mut stderr = io::stderr();
 
-    let scope_manager = init_gc(new_hash_set);
+    let mut scope_manager = init_gc(new_hash_set);
 
     if metadata(".history").is_ok() && rl.load_history(".history").is_err() {
         writeln!(stderr, "Error: unable to load history on startup").unwrap();
@@ -92,8 +88,8 @@ fn repl() -> i32 {
                 }
 
                 // eval
-                println!("=> {:?}", eval_string(&input, &mut state).t);
-                println!("** {:?}", state);
+                println!("=> {:?}", eval_string(&input, &mut scope_manager).t);
+                //println!("** {:?}", state);
             },
             Err(ReadlineError::Interrupted) => {
                 if rl.save_history(".history").is_err() {

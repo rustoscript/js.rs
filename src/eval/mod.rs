@@ -3,10 +3,9 @@ mod macros;
 
 use coerce::{AsBool,AsNumber};
 
-use french_press::js_types::js_type::{JsVar, JsType};
+use french_press::ScopeManager;
+use french_press::js_types::js_type::{JsVar, JsType, Binding};
 use french_press::js_types::js_type::JsType::*;
-
-use state::StateManager;
 
 use jsrs_parser::lalr::parse_Stmt;
 use jsrs_common::ast::*;
@@ -14,7 +13,7 @@ use jsrs_common::ast::Exp::*;
 use jsrs_common::ast::BinOp::*;
 use jsrs_common::ast::Stmt::*;
 
-pub fn eval_string(string: &str, state: &mut StateManager) -> JsVar {
+pub fn eval_string(string: &str, state: &mut ScopeManager) -> JsVar {
     match parse_Stmt(string) {
         Ok(stmt) => eval_stmt(&stmt, state),
         //Err(e) => JsError(format!("{:?}", e))
@@ -23,20 +22,24 @@ pub fn eval_string(string: &str, state: &mut StateManager) -> JsVar {
     //eval_stmt(parse_Stmt(string).unwrap(), state)
 }
 
-pub fn eval_stmt(s: &Stmt, mut state: &mut StateManager) -> JsVar {
+pub fn eval_stmt(s: &Stmt, mut state: &mut ScopeManager) -> JsVar {
     match *s {
         Assign(ref var_string, ref exp) => {
             // TODO: this is a hack to return the value properly, which should be changed once we
             // stop using HashMap to store state.
-            let val = eval_exp(exp, state);
-            let cloned = val.clone();
-            state.insert(var_string.clone(), val);
+            let mut var = eval_exp(exp, state);
+            let cloned = var.clone();
+            var.binding = Binding::new(var_string);
+            // TODO: use value
+            let _ = state.store(var, None);
             cloned
         },
         BareExp(ref exp) => eval_exp(exp, &mut state),
         Decl(ref var_string, ref exp) => {
-            let val = eval_exp(exp, state);
-            state.insert(var_string.clone(), val);
+            let mut var = eval_exp(exp, state);
+            var.binding = Binding::new(var_string);
+            // TODO: use value
+            let _ = state.store(var, None);
             JsVar::new(JsType::JsUndef)
         },
         If(ref condition, ref if_block, ref else_block) => {
@@ -68,7 +71,7 @@ pub fn eval_stmt(s: &Stmt, mut state: &mut StateManager) -> JsVar {
     }
 }
 
-pub fn eval_exp(e: &Exp, mut state: &mut StateManager) -> JsVar {
+pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> JsVar {
     match e {
         &BinExp(ref e1, ref op, ref e2) => {
             let val1 = eval_exp(e1, state);
@@ -123,8 +126,8 @@ pub fn eval_exp(e: &Exp, mut state: &mut StateManager) -> JsVar {
         &Object(_) => unimplemented!(),
         &Undefined => JsVar::new(JsUndef),
         &Var(ref var) => {
-            match state.get(var) {
-                Some(ref a) => (*a).clone(),
+            match state.load(&Binding::new(var)) {
+                Ok((var, _)) => var,
                 //_ => JsError(format!("ReferenceError: {} is not defined", var))
                 _ => panic!(format!("ReferenceError: {} is not defined", var))
             }
@@ -136,16 +139,20 @@ pub fn eval_exp(e: &Exp, mut state: &mut StateManager) -> JsVar {
 #[cfg(test)]
 mod test {
     use super::*;
-    use state::*;
-    use french_press::js_types::js_type::JsType;
+    use std::collections::hash_set::HashSet;
+    use french_press::init_gc;
+    use french_press::js_types::js_type::{JsType, Binding};
+
+    fn new_hash_set() -> HashSet<Binding> {
+        HashSet::new()
+    }
 
     #[test]
     fn test_eval_literals() {
-        let mut state = StateManager::new();
+        let mut state = init_gc(new_hash_set);
         assert_eq!(JsType::JsNum(5.0f64), eval_string("5.0;\n", &mut state).t);
         assert_eq!(JsType::JsNum(0.0f64), eval_string("0.0;\n", &mut state).t);
         assert_eq!(JsType::JsUndef, eval_string("undefined;\n", &mut state).t);
-        assert_eq!(0, state.len());
     }
 
     //// TODO: handle `var` and no `var` separately
@@ -156,12 +163,11 @@ mod test {
     //    assert_eq!(JsNumber(2.0f64), eval_string("a = 2;\n", &mut state));
     //    assert_eq!(JsUndefined, eval_string("var b = 3;\n", &mut state));
     //    assert_eq!(JsNumber(4.0f64), eval_string("c = 4;\n", &mut state));
-    //    assert_eq!(3, state.len());
     //}
 
     #[test]
     fn test_inc_dec() {
-        let mut state = StateManager::new();
+        //let mut state = init_gc(new_hash_set);
         //assert_eq!(JsType::JsNum(1.0f64), eval_string("var a = 1;\n", &mut state).t);
         //assert_eq!(&JsType::JsNum(1.0), state.get(&String::from("a")).unwrap());
 
@@ -176,17 +182,14 @@ mod test {
 
         //assert_eq!(JsNumber(1.0f64), eval_string("--a;\n", &mut state));
         //assert_eq!(&JsNumber(1.0f64), state.get("a").unwrap());
-
-        //assert_eq!(1, state.len());
     }
 
     #[test]
     fn test_binexp() {
-        let mut state = StateManager::new();
+        let mut state = init_gc(new_hash_set);
         assert_eq!(JsType::JsNum(6.0f64),  eval_string("2.0 + 4.0;\n", &mut state).t);
         assert_eq!(JsType::JsNum(0.5f64),  eval_string("2.0 / 4.0;\n", &mut state).t);
         assert_eq!(JsType::JsNum(-2.0f64), eval_string("2.0 - 4.0;\n", &mut state).t);
         assert_eq!(JsType::JsNum(8.0f64),  eval_string("2.0 * 4.0;\n", &mut state).t);
-        assert_eq!(0, state.len());
     }
 }
