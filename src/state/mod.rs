@@ -1,4 +1,4 @@
-use french_press::js_types::js_type::JsVar;
+use french_press::js_types::js_type::{JsVar, JsType};
 use std::collections::HashMap;
 
 #[derive(Debug)]
@@ -17,6 +17,10 @@ impl StateManager {
 
     pub fn get(&self, string: &String) -> Option<&JsVar> {
         self.vars.get(string)
+    }
+
+    pub fn get_value(&self, string: &String) -> Option<&JsType> {
+        self.vars.get(string).map(|var| &var.t)
     }
 
     #[allow(dead_code)]

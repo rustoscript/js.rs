@@ -92,7 +92,7 @@ fn repl() -> i32 {
                 }
 
                 // eval
-                println!("=> {:?}", eval_string(&input, &mut state));
+                println!("=> {:?}", eval_string(&input, &mut state).t);
                 println!("** {:?}", state);
             },
             Err(ReadlineError::Interrupted) => {

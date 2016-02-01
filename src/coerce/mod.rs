@@ -5,11 +5,11 @@ use french_press::js_types::js_type::JsType::*;
 
 
 pub trait AsBool {
-    fn as_bool(self) -> bool;
+    fn as_bool(&self) -> bool;
 }
 
 impl AsBool for JsVar {
-    fn as_bool(self) -> bool {
+    fn as_bool(&self) -> bool {
         match self.t {
             JsBool(b) => b,
             JsUndef=> false,
@@ -34,11 +34,11 @@ impl AsBool for JsVar {
 }
 
 pub trait AsNumber {
-    fn as_number(self) -> f64;
+    fn as_number(&self) -> f64;
 }
 
 impl AsNumber for JsVar {
-    fn as_number(self) -> f64 {
+    fn as_number(&self) -> f64 {
         match self.t {
             JsBool(b) => if b { 1f64 } else { 0f64 },
             JsUndef => NAN,
