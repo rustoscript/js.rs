@@ -61,6 +61,7 @@ fn repl() -> i32 {
     let mut stderr = io::stderr();
 
     let mut scope_manager = init_gc(new_hash_set);
+    scope_manager.push_scope(new_hash_set);
 
     if metadata(".history").is_ok() && rl.load_history(".history").is_err() {
         writeln!(stderr, "Error: unable to load history on startup").unwrap();

@@ -30,8 +30,10 @@ pub fn eval_stmt(s: &Stmt, mut state: &mut ScopeManager) -> JsVar {
             let mut var = eval_exp(exp, state);
             let cloned = var.clone();
             var.binding = Binding::new(var_string);
-            // TODO: use value
-            let _ = state.store(var, None);
+            match state.alloc(var, None) {
+                Ok(_) => (),
+                e @ Err(_) => println!("{:?}", e),
+            }
             cloned
         },
         BareExp(ref exp) => eval_exp(exp, &mut state),
@@ -39,7 +41,10 @@ pub fn eval_stmt(s: &Stmt, mut state: &mut ScopeManager) -> JsVar {
             let mut var = eval_exp(exp, state);
             var.binding = Binding::new(var_string);
             // TODO: use value
-            let _ = state.store(var, None);
+            match state.alloc(var, None) {
+                Ok(_) => (),
+                e @ Err(_) => println!("{:?}", e),
+            }
             JsVar::new(JsType::JsUndef)
         },
         If(ref condition, ref if_block, ref else_block) => {
@@ -118,7 +123,17 @@ pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> JsVar {
         &Float(f) => JsVar::new(JsType::JsNum(f)),
         &Neg(ref exp) => JsVar::new(JsNum(-eval_exp(exp, state).as_number())),
         &Pos(ref exp) => JsVar::new(JsNum(eval_exp(exp, state).as_number())),
-        //&PostDec(ref exp) => eval_float_post_op!(exp, f, f - 1.0, state),
+        &PostDec(ref exp) => {
+            if let Var(ref binding) = **exp {
+                match state.load(&Binding::new(binding)) {
+                    Ok((var, _)) => var,
+                    //_ => JsError(format!("ReferenceError: {} is not defined", var))
+                    _ => panic!(format!("ReferenceError: {} is not defined", binding))
+                }
+            } else {
+                panic!("invalid left-hand expression for postfix operation");
+            }
+        },
         //&PostInc(ref exp) => eval_float_post_op!(exp, f, f + 1.0, state),
         //&PreDec(ref exp) => eval_float_pre_op!(exp, f, f - 1.0, state),
         //&PreInc(ref exp) => eval_float_pre_op!(exp, f, f + 1.0, state),
