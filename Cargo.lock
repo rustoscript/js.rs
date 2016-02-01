@@ -2,7 +2,7 @@
 name = "jsrs"
 version = "0.1.0"
 dependencies = [
- "french_press 0.1.0 (git+https://github.com/rustoscript/french-press?rev=38c57a8)",
+ "french_press 0.1.0 (git+https://github.com/rustoscript/french-press?rev=c74b57d)",
  "jsrs-common 0.1.0 (git+https://github.com/rustoscript/js.rs-common.git?rev=ad1e542)",
  "jsrs-parser 0.1.0 (git+https://github.com/rustoscript/js.rs-parser.git)",
  "rustyline 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -49,7 +49,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "french_press"
 version = "0.1.0"
-source = "git+https://github.com/rustoscript/french-press?rev=38c57a8#38c57a87ffd0158e1f9da7c6ade3e19d7f735934"
+source = "git+https://github.com/rustoscript/french-press?rev=c74b57d#c74b57de69d11311fe85d3c97e7f1ad4565feaaf"
 dependencies = [
  "jsrs-common 0.1.0 (git+https://github.com/rustoscript/js.rs-common.git)",
  "uuid 0.1.18 (registry+https://github.com/rust-lang/crates.io-index)",
