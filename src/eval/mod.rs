@@ -123,20 +123,10 @@ pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> JsVar {
         &Float(f) => JsVar::new(JsType::JsNum(f)),
         &Neg(ref exp) => JsVar::new(JsNum(-eval_exp(exp, state).as_number())),
         &Pos(ref exp) => JsVar::new(JsNum(eval_exp(exp, state).as_number())),
-        &PostDec(ref exp) => {
-            if let Var(ref binding) = **exp {
-                match state.load(&Binding::new(binding)) {
-                    Ok((var, _)) => var,
-                    //_ => JsError(format!("ReferenceError: {} is not defined", var))
-                    _ => panic!(format!("ReferenceError: {} is not defined", binding))
-                }
-            } else {
-                panic!("invalid left-hand expression for postfix operation");
-            }
-        },
-        //&PostInc(ref exp) => eval_float_post_op!(exp, f, f + 1.0, state),
-        //&PreDec(ref exp) => eval_float_pre_op!(exp, f, f - 1.0, state),
-        //&PreInc(ref exp) => eval_float_pre_op!(exp, f, f + 1.0, state),
+        &PostDec(ref exp) => eval_float_post_op!(exp, f, f - 1.0, state),
+        &PostInc(ref exp) => eval_float_post_op!(exp, f, f + 1.0, state),
+        &PreDec(ref exp) => eval_float_pre_op!(exp, f, f - 1.0, state),
+        &PreInc(ref exp) => eval_float_pre_op!(exp, f, f + 1.0, state),
         &NewObject(_, _) => unimplemented!(),
         &Object(_) => unimplemented!(),
         &Undefined => JsVar::new(JsUndef),
@@ -147,7 +137,6 @@ pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> JsVar {
                 _ => panic!(format!("ReferenceError: {} is not defined", var))
             }
         }
-        _ => unimplemented!(),
     }
 }
 
