@@ -2,7 +2,8 @@
 name = "jsrs"
 version = "0.1.0"
 dependencies = [
- "french_press 0.1.0 (git+https://github.com/rustoscript/french-press?rev=c74b57d)",
+ "french_press 0.1.0 (git+https://github.com/rustoscript/french-press?rev=a3b5a81)",
+ "js-types 0.1.0 (git+https://github.com/rustoscript/js-types.git?rev=3ee9463)",
  "jsrs-common 0.1.0 (git+https://github.com/rustoscript/js.rs-common.git?rev=ad1e542)",
  "jsrs-parser 0.1.0 (git+https://github.com/rustoscript/js.rs-parser.git)",
  "rustyline 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -37,6 +38,15 @@ version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "clippy"
+version = "0.0.37"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "semver 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "unicode-normalization 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "diff"
 version = "0.1.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -49,8 +59,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "french_press"
 version = "0.1.0"
-source = "git+https://github.com/rustoscript/french-press?rev=c74b57d#c74b57de69d11311fe85d3c97e7f1ad4565feaaf"
+source = "git+https://github.com/rustoscript/french-press?rev=a3b5a81#a3b5a81e1b84293fb9740b751e120c2b4b50f631"
 dependencies = [
+ "clippy 0.0.37 (registry+https://github.com/rust-lang/crates.io-index)",
+ "js-types 0.1.0 (git+https://github.com/rustoscript/js-types.git?rev=3ee9463)",
  "jsrs-common 0.1.0 (git+https://github.com/rustoscript/js.rs-common.git)",
  "uuid 0.1.18 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -59,6 +71,14 @@ dependencies = [
 name = "itertools"
 version = "0.3.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "js-types"
+version = "0.1.0"
+source = "git+https://github.com/rustoscript/js-types.git?rev=3ee9463#3ee9463eaba26b66144c96fc12415b493a477e18"
+dependencies = [
+ "uuid 0.1.18 (registry+https://github.com/rust-lang/crates.io-index)",
+]
 
 [[package]]
 name = "jsrs-common"
@@ -169,6 +189,11 @@ dependencies = [
 ]
 
 [[package]]
+name = "nom"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
 name = "petgraph"
 version = "0.1.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -235,6 +260,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "semver"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "nom 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "term"
 version = "0.2.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -242,6 +275,11 @@ dependencies = [
  "kernel32-sys 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "winapi 0.2.5 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
+
+[[package]]
+name = "unicode-normalization"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "unicode-width"

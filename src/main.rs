@@ -1,8 +1,9 @@
-extern crate jsrs_parser;
+extern crate js_types;
 extern crate jsrs_common;
+extern crate jsrs_parser;
 extern crate french_press;
+
 extern crate rustyline;
-extern crate uuid;
 
 mod coerce;
 mod eval;
@@ -18,18 +19,12 @@ use rustyline::error::ReadlineError;
 use rustyline::Editor;
 
 use french_press::init_gc;
-use french_press::js_types::js_type::Binding;
-use std::collections::hash_set::HashSet;
 
 use eval::eval_string;
 
 
-fn new_hash_set() -> HashSet<Binding> {
-    HashSet::new()
-}
-
 fn eval_file(filename: String, debug: bool) {
-    let mut scope_manager = init_gc(new_hash_set);
+    let mut scope_manager = init_gc();
 
     println!("Reading from \"{}\"", filename);
     let path = Path::new(&filename);
@@ -60,8 +55,8 @@ fn repl() -> i32 {
     let mut rl = Editor::new();
     let mut stderr = io::stderr();
 
-    let mut scope_manager = init_gc(new_hash_set);
-    scope_manager.push_scope(new_hash_set);
+    let mut scope_manager = init_gc();
+    scope_manager.push_scope();
 
     if metadata(".history").is_ok() && rl.load_history(".history").is_err() {
         writeln!(stderr, "Error: unable to load history on startup").unwrap();

@@ -15,7 +15,11 @@ rev = "ad1e542"
 
 [dependencies.french_press]
 git = "https://github.com/rustoscript/french-press"
-rev = "c74b57d"
+rev = "a3b5a81"
+
+[dependencies.js-types]
+git = "https://github.com/rustoscript/js-types.git"
+rev = "3ee9463"
 
 [dependencies]
 rustyline = "*"

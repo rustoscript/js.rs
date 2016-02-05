@@ -1,7 +1,7 @@
 use std::f64::NAN;
 
-use french_press::js_types::js_type::JsVar;
-use french_press::js_types::js_type::JsType::*;
+use js_types::js_var::JsVar;
+use js_types::js_var::JsType::*;
 
 
 pub trait AsBool {
