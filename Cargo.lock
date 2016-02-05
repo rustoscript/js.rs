@@ -2,10 +2,10 @@
 name = "jsrs"
 version = "0.1.0"
 dependencies = [
- "french_press 0.1.0 (git+https://github.com/rustoscript/french-press?rev=a3b5a81)",
- "js-types 0.1.0 (git+https://github.com/rustoscript/js-types.git?rev=3ee9463)",
+ "french_press 0.1.0 (git+https://github.com/rustoscript/french-press?rev=fa91f0f)",
+ "js-types 0.1.0 (git+https://github.com/rustoscript/js-types.git?rev=dcf3f2a)",
  "jsrs-common 0.1.0 (git+https://github.com/rustoscript/js.rs-common.git?rev=ad1e542)",
- "jsrs-parser 0.1.0 (git+https://github.com/rustoscript/js.rs-parser.git)",
+ "jsrs-parser 0.1.0 (git+https://github.com/rustoscript/js.rs-parser.git?rev=e96dd83)",
  "rustyline 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "uuid 0.1.18 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -59,10 +59,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "french_press"
 version = "0.1.0"
-source = "git+https://github.com/rustoscript/french-press?rev=a3b5a81#a3b5a81e1b84293fb9740b751e120c2b4b50f631"
+source = "git+https://github.com/rustoscript/french-press?rev=fa91f0f#fa91f0f1defc43b3edd3985758dd36e4e83a99fd"
 dependencies = [
  "clippy 0.0.37 (registry+https://github.com/rust-lang/crates.io-index)",
- "js-types 0.1.0 (git+https://github.com/rustoscript/js-types.git?rev=3ee9463)",
+ "js-types 0.1.0 (git+https://github.com/rustoscript/js-types.git?rev=dcf3f2a)",
  "jsrs-common 0.1.0 (git+https://github.com/rustoscript/js.rs-common.git)",
  "uuid 0.1.18 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -75,8 +75,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "js-types"
 version = "0.1.0"
-source = "git+https://github.com/rustoscript/js-types.git?rev=3ee9463#3ee9463eaba26b66144c96fc12415b493a477e18"
+source = "git+https://github.com/rustoscript/js-types.git?rev=dcf3f2a#dcf3f2af34573fb699fad6a350e586266f4c1f76"
 dependencies = [
+ "jsrs-common 0.1.0 (git+https://github.com/rustoscript/js.rs-common.git?rev=ad1e542)",
  "uuid 0.1.18 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -93,11 +94,11 @@ source = "git+https://github.com/rustoscript/js.rs-common.git?rev=ad1e542#ad1e54
 [[package]]
 name = "jsrs-parser"
 version = "0.1.0"
-source = "git+https://github.com/rustoscript/js.rs-parser.git#4c5a2bc29e7c3bda437af2597599664ee4c2628b"
+source = "git+https://github.com/rustoscript/js.rs-parser.git?rev=e96dd83#e96dd83fd3e6169c72147c990dfd0c0431b75bbc"
 dependencies = [
  "jsrs-common 0.1.0 (git+https://github.com/rustoscript/js.rs-common.git?rev=ad1e542)",
- "lalrpop 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "lalrpop-util 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "lalrpop 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "lalrpop-util 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rustyline 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -112,44 +113,43 @@ dependencies = [
 
 [[package]]
 name = "lalrpop"
-version = "0.8.0"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "diff 0.1.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "itertools 0.3.25 (registry+https://github.com/rust-lang/crates.io-index)",
- "lalrpop-intern 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "lalrpop-snap 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "lalrpop-util 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "lalrpop-intern 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "lalrpop-snap 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "lalrpop-util 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "petgraph 0.1.18 (registry+https://github.com/rust-lang/crates.io-index)",
  "regex 0.1.46 (registry+https://github.com/rust-lang/crates.io-index)",
- "term 0.2.14 (registry+https://github.com/rust-lang/crates.io-index)",
  "unicode-xid 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "lalrpop-intern"
-version = "0.8.0"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "lalrpop-snap"
-version = "0.8.0"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "diff 0.1.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "itertools 0.3.25 (registry+https://github.com/rust-lang/crates.io-index)",
- "lalrpop-intern 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "lalrpop-util 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "lalrpop-intern 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "lalrpop-util 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "petgraph 0.1.18 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.3.13 (registry+https://github.com/rust-lang/crates.io-index)",
  "regex 0.1.46 (registry+https://github.com/rust-lang/crates.io-index)",
- "rusty-peg 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "term 0.2.14 (registry+https://github.com/rust-lang/crates.io-index)",
  "unicode-xid 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "lalrpop-util"
-version = "0.8.0"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
@@ -230,14 +230,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "rustc-serialize"
 version = "0.3.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-
-[[package]]
-name = "rusty-peg"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-dependencies = [
- "regex 0.1.46 (registry+https://github.com/rust-lang/crates.io-index)",
-]
 
 [[package]]
 name = "rustyline"
