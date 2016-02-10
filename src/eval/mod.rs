@@ -146,7 +146,8 @@ mod test {
     use super::*;
     use std::collections::hash_set::HashSet;
     use french_press::init_gc;
-    use french_press::js_types::js_type::{JsType, Binding};
+    use js_types::js_var::JsType;
+    use js_types::binding::Binding;
 
     #[test]
     fn test_eval_literals() {
