@@ -1,10 +1,14 @@
+#![feature(test)]
+
 extern crate js_types;
 extern crate jsrs_common;
 extern crate jsrs_parser;
 extern crate french_press;
+extern crate test;
 
 extern crate rustyline;
 
+mod bench;
 mod coerce;
 mod eval;
 
