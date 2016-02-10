@@ -7,7 +7,19 @@ mod benchmarks {
     use test::Bencher;
 
     #[bench]
-    fn bench_example(b: &mut Bencher) {
+    fn simple_example(b: &mut Bencher) {
+        let code = "\
+        var x = 3;
+        var y = 4;
+        var z = x + y;
+        ";
+
+        let mut sm = init_gc();
+        b.iter(|| eval_string(code, &mut sm));
+    }
+
+    #[bench]
+    fn complex_example(b: &mut Bencher) {
         let code = "\
         var x = 3;
         var y = 4;
@@ -21,8 +33,8 @@ mod benchmarks {
             }
         }
         ";
-        let mut sm = init_gc();
 
+        let mut sm = init_gc();
         b.iter(|| eval_string(code, &mut sm));
     }
 }
