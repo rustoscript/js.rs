@@ -100,13 +100,17 @@ pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> JsVar {
         }
         &Bool(b) => JsVar::new(JsBool(b)),
         &Call(ref fun_name, ref params) => {
-            unimplemented!()
-             // TODO: create scope with arguments
-//             let fun_name = eval_exp(fun_exp, state);
-//             match fun_name {
-//                 JsFunction(_, _, stmt) => eval_stmt(&*stmt, state),
-//                 _ => panic!("TypeError: {} is not a function.", fun_name)
-//             }
+            let fun_binding = eval_exp(fun_name, state);
+            match state.load(&fun_binding.binding) {
+                Ok((var, opt_ptr)) => {
+                    if let Some(JsPtrEnum::JsFn(js_fn_struct)) = opt_ptr {
+                        eval_stmt(&js_fn_struct.stmt, state)
+                    } else {
+                        panic!(format!("Invalid call object."))
+                    }
+                },
+                _ => panic!("ReferenceError: {} is not defined")
+            }
         },
         &Defun(ref opt_binding, ref params, ref body) => {
             if let &Some(ref binding) = opt_binding {
