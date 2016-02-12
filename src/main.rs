@@ -23,7 +23,6 @@ use rustyline::error::ReadlineError;
 use rustyline::Editor;
 
 use french_press::{init_gc, ScopeManager};
-use js_types::js_var::JsType::JsUndef;
 
 use eval::eval_string;
 
