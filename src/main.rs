@@ -22,14 +22,12 @@ use std::fs::{File, metadata};
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 
-use french_press::init_gc;
+use french_press::{init_gc, ScopeManager};
 
 use eval::eval_string;
 
 
-fn eval_file(filename: String, debug: bool) {
-    let mut scope_manager = init_gc();
-
+fn eval_file(filename: String, debug: bool, mut scope_manager: &mut ScopeManager) {
     println!("Reading from \"{}\"", filename);
     let path = Path::new(&filename);
     let file = File::open(&path)
@@ -55,11 +53,10 @@ fn eval_file(filename: String, debug: bool) {
     }
 }
 
-fn repl() -> i32 {
+fn repl(mut scope_manager: &mut ScopeManager) -> i32 {
     let mut rl = Editor::new();
     let mut stderr = io::stderr();
 
-    let mut scope_manager = init_gc();
     scope_manager.push_scope();
 
     if metadata(".history").is_ok() && rl.load_history(".history").is_err() {
@@ -120,13 +117,15 @@ fn repl() -> i32 {
 }
 
 fn main() {
+    let mut scope_manager = init_gc();
+
     let args = env::args();
     if args.len() > 1 {
         for file in args.skip(1) {
-            eval_file(file, true);
+            eval_file(file, false, &mut scope_manager);
         }
     } else {
-        let ret = repl();
+        let ret = repl(&mut scope_manager);
         exit(ret)
     }
 }
