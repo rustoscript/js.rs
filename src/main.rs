@@ -85,13 +85,7 @@ fn repl(mut scope_manager: &mut ScopeManager) -> i32 {
                     input.push_str(";");
                 }
 
-                // eval
-                let ret_type = match eval_string(&input, &mut scope_manager) {
-                    Some(var) => var.t,
-                    None => JsUndef,
-                };
-
-                println!("=> {:?}", ret_type);
+                println!("=> {:?}", eval_string(&input, &mut scope_manager).t);
             },
             Err(ReadlineError::Interrupted) => {
                 if rl.save_history(".history").is_err() {
