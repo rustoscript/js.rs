@@ -23,6 +23,7 @@ use rustyline::error::ReadlineError;
 use rustyline::Editor;
 
 use french_press::{init_gc, ScopeManager};
+use js_types::js_var::JsType::JsUndef;
 
 use eval::eval_string;
 
@@ -85,8 +86,12 @@ fn repl(mut scope_manager: &mut ScopeManager) -> i32 {
                 }
 
                 // eval
-                println!("=> {:?}", eval_string(&input, &mut scope_manager).t);
-                //println!("** {:?}", state);
+                let ret_type = match eval_string(&input, &mut scope_manager) {
+                    Some(var) => var.t,
+                    None => JsUndef,
+                };
+
+                println!("=> {:?}", ret_type);
             },
             Err(ReadlineError::Interrupted) => {
                 if rl.save_history(".history").is_err() {
