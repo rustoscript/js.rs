@@ -5,7 +5,8 @@ use coerce::{AsBool,AsNumber};
 
 use french_press::ScopeManager;
 use js_types::binding::Binding;
-use js_types::js_var::{JsVar, JsType};
+use js_types::js_fn::JsFnStruct;
+use js_types::js_var::{JsVar, JsType, JsPtrEnum};
 use js_types::js_var::JsType::*;
 
 use jsrs_parser::lalr::parse_Stmt;
@@ -17,10 +18,8 @@ use jsrs_common::ast::Stmt::*;
 pub fn eval_string(string: &str, state: &mut ScopeManager) -> JsVar {
     match parse_Stmt(string) {
         Ok(stmt) => eval_stmt(&stmt, state),
-        //Err(e) => JsError(format!("{:?}", e))
-        Err(_) => unimplemented!()
+        Err(_) => panic!("parse error"),
     }
-    //eval_stmt(parse_Stmt(string).unwrap(), state)
 }
 
 pub fn eval_stmt(s: &Stmt, mut state: &mut ScopeManager) -> JsVar {
@@ -100,25 +99,27 @@ pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> JsVar {
             }
         }
         &Bool(b) => JsVar::new(JsBool(b)),
-        &Call(_, _) => {
+        &Call(ref fun_name, ref params) => {
             unimplemented!()
-            //// TODO: create scope with arguments
-            //let fun_name = eval_exp(fun_exp, state);
-            //match fun_name {
-            //    JsFunction(_, _, stmt) => eval_stmt(&*stmt, state),
-            //    _ => panic!("TypeError: {} is not a function.", fun_name)
-            //}
+             // TODO: create scope with arguments
+//             let fun_name = eval_exp(fun_exp, state);
+//             match fun_name {
+//                 JsFunction(_, _, stmt) => eval_stmt(&*stmt, state),
+//                 _ => panic!("TypeError: {} is not a function.", fun_name)
+//             }
         },
-        &Defun(_, _, _) => {
-            unimplemented!()
-            // TODO unimpl
-            //if let Some(ref var) = *opt_var {
-            //    let f = JsFunction(var.clone(), params.clone(), (*block).clone());
-            //    state.insert(var.clone(), f);
-            //    JsUndefined
-            //} else {
-            //    JsFunction(String::from(""), params.clone(), (*block).clone())
-            //}
+        &Defun(ref opt_binding, ref params, ref body) => {
+            if let &Some(ref binding) = opt_binding {
+                let js_fun = JsFnStruct::new(opt_binding, params, &**body);
+                let mut var = JsVar::new(JsPtr);
+                var.binding = Binding::new(binding.clone());
+                if let Err(_) = state.alloc(var, Some(JsPtrEnum::JsFn(js_fun))) {
+                    panic!("error storing function into state");
+                }
+                JsVar::new(JsPtr) // Doesn't store any information anyway
+            } else {
+                panic!("functions without bindings are not yet supported.")
+            }
         },
         &Float(f) => JsVar::new(JsType::JsNum(f)),
         &Neg(ref exp) => JsVar::new(JsNum(-eval_exp(exp, state).as_number())),
