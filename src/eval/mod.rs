@@ -15,14 +15,14 @@ use jsrs_common::ast::Exp::*;
 use jsrs_common::ast::BinOp::*;
 use jsrs_common::ast::Stmt::*;
 
-pub fn eval_string(string: &str, state: &mut ScopeManager) -> JsVar {
+pub fn eval_string(string: &str, state: &mut ScopeManager) -> Option<JsVar> {
     match parse_Stmt(string) {
         Ok(stmt) => eval_stmt(&stmt, state),
         Err(_) => panic!("parse error"),
     }
 }
 
-pub fn eval_stmt(s: &Stmt, mut state: &mut ScopeManager) -> JsVar {
+pub fn eval_stmt(s: &Stmt, mut state: &mut ScopeManager) -> Option<JsVar> {
     match *s {
         Assign(ref var_string, ref exp) => {
             // TODO: this is a hack to return the value properly, which should be changed once we
@@ -34,15 +34,18 @@ pub fn eval_stmt(s: &Stmt, mut state: &mut ScopeManager) -> JsVar {
                 Ok(_) => (),
                 e @ Err(_) => println!("{:?}", e),
             }
-            cloned
+            None
         },
-        BareExp(ref exp) => eval_exp(exp, &mut state),
+        BareExp(ref exp) => {
+            let _ = eval_exp(exp, &mut state);
+            None
+        }
         Decl(ref var_string, ref exp) => {
             let mut var = eval_exp(exp, state);
             var.binding = Binding::new(var_string.clone());
             // TODO: use value
             match state.alloc(var.clone(), None) {
-                Ok(_) => var,
+                Ok(_) => None,
                 e @ Err(_) => panic!("{:?}", e),
             }
         },
@@ -53,22 +56,22 @@ pub fn eval_stmt(s: &Stmt, mut state: &mut ScopeManager) -> JsVar {
                 if let Some(ref block) = *else_block {
                     eval_stmt(&*block, state)
                 } else {
-                    JsVar::new(JsType::JsUndef)
+                    None
                 }
             }
         },
-        Ret(_) => panic!("unimplemented: ret statement"),
+        Ret(ref e) => Some(eval_exp(&e, &mut state)),
         Seq(ref s1, ref s2) => {
             let _exp = eval_stmt(&*s1, &mut state);
             eval_stmt(&*s2, &mut state)
         },
         While(ref condition, ref block) => {
-            let mut ret_val = JsVar::new(JsUndef);
+            let mut ret_val = None;
             loop {
                 if eval_exp(&condition, state).as_bool() {
-                    ret_val = eval_stmt(&*block, state)
+                    ret_val = eval_stmt(&*block, state);
                 } else {
-                    return ret_val
+                    return ret_val;
                 }
             }
         }
@@ -104,7 +107,7 @@ pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> JsVar {
             match state.load(&fun_binding.binding) {
                 Ok((var, opt_ptr)) => {
                     if let Some(JsPtrEnum::JsFn(js_fn_struct)) = opt_ptr {
-                        eval_stmt(&js_fn_struct.stmt, state)
+                        eval_stmt(&js_fn_struct.stmt, state).unwrap_or(JsVar::new(JsUndef))
                     } else {
                         panic!(format!("Invalid call object."))
                     }
