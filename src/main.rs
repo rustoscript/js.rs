@@ -28,7 +28,8 @@ use js_types::js_var::JsType::JsUndef;
 use eval::eval_string;
 
 
-fn eval_file(filename: String, debug: bool, mut scope_manager: &mut ScopeManager) {
+fn eval_file(filename: String, debug: bool,
+             mut scope_manager: &mut ScopeManager) {
     println!("Reading from \"{}\"", filename);
     let path = Path::new(&filename);
     let file = File::open(&path)
@@ -47,11 +48,12 @@ fn eval_file(filename: String, debug: bool, mut scope_manager: &mut ScopeManager
             input.push_str(";");
         }
 
+        let ret = eval_string(&input, &mut scope_manager);
         if debug {
-            println!("=> {:?}", eval_string(&input, &mut scope_manager));
-            //println!("** {:?}", state);
+            println!("=> {:?}", ret);
         }
     }
+    repl(scope_manager);
 }
 
 fn repl(mut scope_manager: &mut ScopeManager) -> i32 {
