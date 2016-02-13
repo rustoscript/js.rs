@@ -132,6 +132,9 @@ pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> JsVar {
                         }
 
                         let (_, v) = eval_stmt(&js_fn_struct.stmt, state);
+
+                        // Should we yield here? Not sure, so for now it doesn't
+                        state.pop_scope(false).expect("Unable to clear scope for function");
                         v.unwrap_or(JsVar::new(JsUndef))
                     } else {
                         panic!(format!("Invalid call object."))
