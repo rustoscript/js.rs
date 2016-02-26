@@ -20,8 +20,7 @@ use jsrs_common::ast::Stmt::*;
 pub fn eval_string(string: &str, state: &mut ScopeManager) -> JsVar {
     match parse_Stmt(string) {
         Ok(stmt) => {
-            let (v, _) = eval_stmt(&stmt, state);
-            v
+            eval_stmt(&stmt, state).0
         }
         Err(_) => panic!("parse error"),
     }
@@ -110,6 +109,7 @@ pub fn eval_stmt(s: &Stmt, mut state: &mut ScopeManager) -> (JsVar, Option<JsVar
 /// Evaluate an expression into a JsVar.
 pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> JsVar {
     match e {
+        // e1 [op] e2
         &BinExp(ref e1, ref op, ref e2) => {
             let val1 = eval_exp(e1, state);
             let val2 = eval_exp(e2, state);
@@ -132,6 +132,8 @@ pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> JsVar {
             }
         }
         &Bool(b) => JsVar::new(JsBool(b)),
+
+        // fun_name([arg_exp1, arg_exps])
         &Call(ref fun_name, ref arg_exps) => {
             let fun_binding = eval_exp(fun_name, state);
 
@@ -166,6 +168,9 @@ pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> JsVar {
                 _ => panic!("ReferenceError: {} is not defined")
             }
         },
+
+        // function([param1, params]) { body }
+        // function opt_binding([param1, params]) { body }
         &Defun(ref opt_binding, ref params, ref body) => {
             if let &Some(ref binding) = opt_binding {
                 let js_fun = JsFnStruct::new(opt_binding, params, &**body);
@@ -190,12 +195,11 @@ pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> JsVar {
 
         &NewObject(_, _) => unimplemented!(),
         &Object(_) => unimplemented!(),
+
         &Undefined => JsVar::new(JsUndef),
         &Var(ref var_binding) => {
-            match state.load(&Binding::new(var_binding.clone())) {
-                Ok((var, _)) => var,
-                _ => panic!(format!("ReferenceError: {} is not defined", var_binding))
-            }
+            state.load(&Binding::new(var_binding.clone()))
+                .expect("ReferenceError: {} is not defined").0
         }
     }
 }
