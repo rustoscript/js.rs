@@ -18,6 +18,13 @@ use jsrs_common::ast::Exp::*;
 use jsrs_common::ast::BinOp::*;
 use jsrs_common::ast::Stmt::*;
 
+type VarWithPtr = (JsVar, Option<JsPtrEnum>);
+
+// Helper to avoid repeating this everywhere
+fn scalar(v: JsType) -> (JsVar, Option<JsPtrEnum>) {
+    (JsVar::new(v), None)
+}
+
 /// Evaluate a string containing some JavaScript statements (or sequences of statements).
 /// Returns a JsVar which is the return value of those statements.
 pub fn eval_string(string: &str, state: &mut ScopeManager) -> JsVar {
@@ -25,7 +32,7 @@ pub fn eval_string(string: &str, state: &mut ScopeManager) -> JsVar {
         Ok(stmt) => {
             eval_stmt(&stmt, state).0
         }
-        Err(_) => panic!("parse error"),
+        Err(e) => panic!("parse error: {:?}", e),
     }
 }
 
@@ -36,12 +43,12 @@ pub fn eval_stmt(s: &Stmt, mut state: &mut ScopeManager) -> (JsVar, Option<JsVar
     match *s {
         // var_string = exp;
         Assign(ref var_string, ref exp) => {
-            let mut js_var = eval_exp(exp, state);
+            let (mut js_var, js_ptr) = eval_exp(exp, state);
             js_var.binding = Binding::new(var_string.clone());
 
             // Clone the js_var to store into the ScopeManager
             let cloned = js_var.clone();
-            match state.alloc(cloned, None) {
+            match state.alloc(cloned, js_ptr) {
                 Ok(_) => (),
                 e @ Err(_) => println!("{:?}", e),
             }
@@ -50,14 +57,13 @@ pub fn eval_stmt(s: &Stmt, mut state: &mut ScopeManager) -> (JsVar, Option<JsVar
         },
 
         // exp;
-        BareExp(ref exp) => (eval_exp(exp, &mut state), None),
+        BareExp(ref exp) => (eval_exp(exp, &mut state).0, None),
 
         // var var_string = exp
         Decl(ref var_string, ref exp) => {
-            let mut js_var = eval_exp(exp, state);
+            let (mut js_var, js_ptr) = eval_exp(exp, state);
             js_var.binding = Binding::new(var_string.clone());
-            // TODO: must handle JsPtrEnum here.
-            match state.alloc(js_var.clone(), None) {
+            match state.alloc(js_var.clone(), js_ptr) {
                 Ok(_) => (js_var, None),
                 e @ Err(_) => panic!("{:?}", e),
             }
@@ -66,7 +72,7 @@ pub fn eval_stmt(s: &Stmt, mut state: &mut ScopeManager) -> (JsVar, Option<JsVar
         // if (condition) { if_block } else { else_block }
         If(ref condition, ref if_block, ref else_block) => {
             // evaluate expression
-            if eval_exp(&condition, state).as_bool() {
+            if eval_exp(&condition, state).0.as_bool() {
                 // condition = true, evaluate if-block.
                 eval_stmt(&*if_block, state)
             } else {
@@ -82,7 +88,7 @@ pub fn eval_stmt(s: &Stmt, mut state: &mut ScopeManager) -> (JsVar, Option<JsVar
 
         // return exp
         Ret(ref exp) => {
-            let js_var = eval_exp(&exp, &mut state);
+            let js_var = eval_exp(&exp, &mut state).0;
             (js_var.clone(), Some(js_var))
         }
 
@@ -96,7 +102,7 @@ pub fn eval_stmt(s: &Stmt, mut state: &mut ScopeManager) -> (JsVar, Option<JsVar
         While(ref condition, ref block) => {
             let mut ret_val = None;
             loop {
-                if eval_exp(&condition, state).as_bool() {
+                if eval_exp(&condition, state).0.as_bool() {
                     // TODO: check to see if a return stmt has been reached.
                     let (_, v) = eval_stmt(&*block, state);
                     ret_val = v;
@@ -110,35 +116,35 @@ pub fn eval_stmt(s: &Stmt, mut state: &mut ScopeManager) -> (JsVar, Option<JsVar
 }
 
 /// Evaluate an expression into a JsVar.
-pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> JsVar {
+pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> (JsVar, Option<JsPtrEnum>) {
     match e {
         // e1 [op] e2
         &BinExp(ref e1, ref op, ref e2) => {
-            let val1 = eval_exp(e1, state);
-            let val2 = eval_exp(e2, state);
+            let val1 = eval_exp(e1, state).0;
+            let val2 = eval_exp(e2, state).0;
 
             match *op {
-                And => JsVar::new(JsBool(val1.as_bool() && val2.as_bool())),
-                Or  => JsVar::new(JsBool(val1.as_bool() || val2.as_bool())),
+                And => scalar(JsBool(val1.as_bool() && val2.as_bool())),
+                Or  => scalar(JsBool(val1.as_bool() || val2.as_bool())),
 
-                Ge  => JsVar::new(JsBool(val1.as_bool() >= val2.as_bool())),
-                Gt  => JsVar::new(JsBool(val1.as_bool() >  val2.as_bool())),
-                Le  => JsVar::new(JsBool(val1.as_bool() <= val2.as_bool())),
-                Lt  => JsVar::new(JsBool(val1.as_bool() <  val2.as_bool())),
-                Neq => JsVar::new(JsBool(val1.as_bool() != val2.as_bool())),
-                Eql => JsVar::new(JsBool(val1.as_bool() == val2.as_bool())),
+                Ge  => scalar(JsBool(val1.as_bool() >= val2.as_bool())),
+                Gt  => scalar(JsBool(val1.as_bool() >  val2.as_bool())),
+                Le  => scalar(JsBool(val1.as_bool() <= val2.as_bool())),
+                Lt  => scalar(JsBool(val1.as_bool() <  val2.as_bool())),
+                Neq => scalar(JsBool(val1.as_bool() != val2.as_bool())),
+                Eql => scalar(JsBool(val1.as_bool() == val2.as_bool())),
 
-                Minus => JsVar::new(JsNum(val1.as_number() - val2.as_number())),
-                Plus  => JsVar::new(JsNum(val1.as_number() + val2.as_number())),
-                Slash => JsVar::new(JsNum(val1.as_number() / val2.as_number())),
-                Star  => JsVar::new(JsNum(val1.as_number() * val2.as_number())),
+                Minus => scalar(JsNum(val1.as_number() - val2.as_number())),
+                Plus  => scalar(JsNum(val1.as_number() + val2.as_number())),
+                Slash => scalar(JsNum(val1.as_number() / val2.as_number())),
+                Star  => scalar(JsNum(val1.as_number() * val2.as_number())),
             }
         }
-        &Bool(b) => JsVar::new(JsBool(b)),
+        &Bool(b) => scalar(JsBool(b)),
 
         // fun_name([arg_exp1, arg_exps])
         &Call(ref fun_name, ref arg_exps) => {
-            let fun_binding = eval_exp(fun_name, state);
+            let fun_binding = eval_exp(fun_name, state).0;
 
             // Create vector of arguments, evaluated to JsVars.
             let mut args = Vec::new();
@@ -152,13 +158,13 @@ pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> JsVar {
 
                     for param in js_fn_struct.params {
                         let mut arg = if args.is_empty() {
-                            JsVar::new(JsUndef)
+                            scalar(JsUndef)
                         } else {
                             args.remove(0)
                         };
 
-                        arg.binding = Binding::new(param.to_owned());
-                        state.alloc(arg, None)
+                        arg.0.binding = Binding::new(param.to_owned());
+                        state.alloc(arg.0, arg.1)
                             .expect("Unable to store function argument in scope");
                     }
 
@@ -166,7 +172,8 @@ pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> JsVar {
 
                     // Should we yield here? Not sure, so for now it doesn't
                     state.pop_scope(false).expect("Unable to clear scope for function");
-                    v.unwrap_or(JsVar::new(JsUndef))
+                    // TODO handle obj
+                    v.map(|x| (x, None)).unwrap_or(scalar(JsUndef))
                 }
                 Ok(_) => panic!("Invalid call object"),
                 _ => panic!("ReferenceError: {} is not defined")
@@ -178,39 +185,40 @@ pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> JsVar {
         &Defun(ref opt_binding, ref params, ref body) => {
             if let &Some(ref binding) = opt_binding {
                 let js_fun = JsFnStruct::new(opt_binding, params, &**body);
-                let var = JsVar::bind(binding.clone(), JsPtr);
-                state.alloc(var.clone(), Some(JsPtrEnum::JsFn(js_fun)))
-                    .expect("error storing function into state");
-                var
+                state.alloc(JsVar::bind(binding.to_owned(), JsPtr),
+                    Some(JsPtrEnum::JsFn(js_fun.clone())))
+                    .expect("Error storing function into state");
+                (JsVar::bind(binding.to_owned(), JsPtr), Some(JsPtrEnum::JsFn(js_fun)))
             } else {
                 panic!("functions without bindings are not yet supported.")
             }
         },
-        &Float(f) => JsVar::new(JsType::JsNum(f)),
-        &Neg(ref exp) => JsVar::new(JsNum(-eval_exp(exp, state).as_number())),
-        &Pos(ref exp) => JsVar::new(JsNum(eval_exp(exp, state).as_number())),
+        &Float(f) => scalar(JsType::JsNum(f)),
+        &Neg(ref exp) => scalar(JsNum(-eval_exp(exp, state).0.as_number())),
+        &Pos(ref exp) => scalar(JsNum(eval_exp(exp, state).0.as_number())),
 
-        &PostDec(ref exp) => eval_float_post_op!(exp, f, f - 1.0, state),
-        &PostInc(ref exp) => eval_float_post_op!(exp, f, f + 1.0, state),
-        &PreDec(ref exp)  => eval_float_pre_op!(exp, f, f - 1.0, state),
-        &PreInc(ref exp)  => eval_float_pre_op!(exp, f, f + 1.0, state),
+        &PostDec(ref exp) => (eval_float_post_op!(exp, f, f - 1.0, state), None),
+        &PostInc(ref exp) => (eval_float_post_op!(exp, f, f + 1.0, state), None),
+        &PreDec(ref exp)  => (eval_float_pre_op!(exp, f, f - 1.0, state),  None),
+        &PreInc(ref exp)  => (eval_float_pre_op!(exp, f, f + 1.0, state),  None),
 
         &NewObject(_, _) => unimplemented!(),
         &Object(ref fields) => {
             let mut kv_tuples = Vec::new();
             for f in fields {
                 let f_key = JsKey::new(JsKeyEnum::JsStr(JsStrStruct::new(&f.0)));
-                let f_exp = eval_exp(&*f.1, state);
+                // TODO: handle obj as key/value pair
+                let f_exp = eval_exp(&*f.1, state).0;
                 kv_tuples.push((f_key, f_exp, None));
             }
-            JsObjStruct::new(None, "", kv_tuples, &mut AllocBox::new());
-            JsVar::new(JsPtr)
+            let obj = JsObjStruct::new(None, "", kv_tuples, &mut AllocBox::new());
+            (JsVar::new(JsPtr), Some(JsPtrEnum::JsObj(obj)))
         },
 
-        &Undefined => JsVar::new(JsUndef),
+        &Undefined => scalar(JsUndef),
         &Var(ref var_binding) => {
             state.load(&Binding::new(var_binding.clone()))
-                .expect("ReferenceError: {} is not defined").0
+                .expect("ReferenceError: {} is not defined")
         }
     }
 }
