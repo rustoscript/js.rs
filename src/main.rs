@@ -122,7 +122,7 @@ fn main() {
     let args = env::args();
     if args.len() > 1 {
         for file in args.skip(1) {
-            eval_file(file, false, &mut scope_manager);
+            eval_file(file, true, &mut scope_manager);
         }
     } else {
         let ret = repl(&mut scope_manager);

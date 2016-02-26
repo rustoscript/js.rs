@@ -4,9 +4,12 @@ mod macros;
 use coerce::{AsBool,AsNumber};
 
 use french_press::ScopeManager;
+use french_press::alloc::AllocBox;
 use js_types::binding::Binding;
 use js_types::js_fn::JsFnStruct;
-use js_types::js_var::{JsVar, JsType, JsPtrEnum};
+use js_types::js_obj::JsObjStruct;
+use js_types::js_str::JsStrStruct;
+use js_types::js_var::{JsVar, JsType, JsPtrEnum, JsKey, JsKeyEnum};
 use js_types::js_var::JsType::*;
 
 use jsrs_parser::lalr::parse_Stmt;
@@ -147,7 +150,7 @@ pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> JsVar {
                 Ok((_, Some(JsPtrEnum::JsFn(js_fn_struct)))) => {
                     state.push_scope();
 
-                    for param in js_fn_struct.params.iter() {
+                    for param in js_fn_struct.params {
                         let mut arg = if args.is_empty() {
                             JsVar::new(JsUndef)
                         } else {
@@ -194,7 +197,16 @@ pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> JsVar {
         &PreInc(ref exp)  => eval_float_pre_op!(exp, f, f + 1.0, state),
 
         &NewObject(_, _) => unimplemented!(),
-        &Object(_) => unimplemented!(),
+        &Object(ref fields) => {
+            let mut kv_tuples = Vec::new();
+            for f in fields {
+                let f_key = JsKey::new(JsKeyEnum::JsStr(JsStrStruct::new(&f.0)));
+                let f_exp = eval_exp(&*f.1, state);
+                kv_tuples.push((f_key, f_exp, None));
+            }
+            JsObjStruct::new(None, "", kv_tuples, &mut AllocBox::new());
+            JsVar::new(JsPtr)
+        },
 
         &Undefined => JsVar::new(JsUndef),
         &Var(ref var_binding) => {
