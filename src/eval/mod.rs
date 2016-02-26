@@ -176,7 +176,7 @@ pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> (JsVar, Option<JsPtrEn
                     v.map(|x| (x, None)).unwrap_or(scalar(JsUndef))
                 }
                 Ok(_) => panic!("Invalid call object"),
-                _ => panic!("ReferenceError: {} is not defined")
+                _ => panic!("ReferenceError: {:?} is not defined", fun_name)
             }
         },
 
