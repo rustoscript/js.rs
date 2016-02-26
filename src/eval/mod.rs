@@ -135,37 +135,34 @@ pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> JsVar {
         &Call(ref fun_name, ref arg_exps) => {
             let fun_binding = eval_exp(fun_name, state);
 
+            // Create vector of arguments, evaluated to JsVars.
             let mut args = Vec::new();
-
             for exp in arg_exps {
                 args.push(eval_exp(exp, state));
             }
 
             match state.load(&fun_binding.binding) {
-                Ok((_, opt_ptr)) => {
-                    if let Some(JsPtrEnum::JsFn(js_fn_struct)) = opt_ptr {
-                        state.push_scope();
+                Ok((_, Some(JsPtrEnum::JsFn(js_fn_struct)))) => {
+                    state.push_scope();
 
-                        for param in js_fn_struct.params.iter() {
-                            let mut arg = if args.is_empty() {
-                                JsVar::new(JsUndef)
-                            } else {
-                                args.remove(0)
-                            };
+                    for param in js_fn_struct.params.iter() {
+                        let mut arg = if args.is_empty() {
+                            JsVar::new(JsUndef)
+                        } else {
+                            args.remove(0)
+                        };
 
-                            arg.binding = Binding::new(param.to_owned());
-                            state.alloc(arg, None).expect("Unable to store function argument in scope");
-                        }
-
-                        let (_, v) = eval_stmt(&js_fn_struct.stmt, state);
-
-                        // Should we yield here? Not sure, so for now it doesn't
-                        state.pop_scope(false).expect("Unable to clear scope for function");
-                        v.unwrap_or(JsVar::new(JsUndef))
-                    } else {
-                        panic!(format!("Invalid call object."))
+                        arg.binding = Binding::new(param.to_owned());
+                        state.alloc(arg, None).expect("Unable to store function argument in scope");
                     }
-                },
+
+                    let (_, v) = eval_stmt(&js_fn_struct.stmt, state);
+
+                    // Should we yield here? Not sure, so for now it doesn't
+                    state.pop_scope(false).expect("Unable to clear scope for function");
+                    v.unwrap_or(JsVar::new(JsUndef))
+                }
+                Ok(_) => panic!("Invalid call object"),
                 _ => panic!("ReferenceError: {} is not defined")
             }
         },
