@@ -9,7 +9,7 @@ use js_types::binding::Binding;
 use js_types::js_fn::JsFnStruct;
 use js_types::js_obj::JsObjStruct;
 use js_types::js_str::JsStrStruct;
-use js_types::js_var::{JsVar, JsType, JsPtrEnum, JsKey, JsKeyEnum};
+use js_types::js_var::{JsVar, JsType, JsPtrEnum, JsKey, JsPtrTag};
 use js_types::js_var::JsType::*;
 
 use jsrs_parser::lalr::parse_Stmt;
@@ -68,6 +68,9 @@ pub fn eval_stmt(s: &Stmt, mut state: &mut ScopeManager) -> (JsVar, Option<JsVar
                 e @ Err(_) => panic!("{:?}", e),
             }
         },
+
+        // Empty statement (?)
+        Empty => (JsVar::new(JsUndef), None),
 
         // if (condition) { if_block } else { else_block }
         If(ref condition, ref if_block, ref else_block) => {
@@ -154,7 +157,7 @@ pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> (JsVar, Option<JsPtrEn
 
             match state.load(&fun_binding.binding) {
                 Ok((_, Some(JsPtrEnum::JsFn(js_fn_struct)))) => {
-                    state.push_scope();
+                    state.push_scope(e);
 
                     for param in js_fn_struct.params {
                         let mut arg = if args.is_empty() {
@@ -185,14 +188,29 @@ pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> (JsVar, Option<JsPtrEn
         &Defun(ref opt_binding, ref params, ref body) => {
             if let &Some(ref binding) = opt_binding {
                 let js_fun = JsFnStruct::new(opt_binding, params, &**body);
-                state.alloc(JsVar::bind(binding.to_owned(), JsPtr),
+                state.alloc(JsVar::bind(binding.to_owned(), JsPtr(JsPtrTag::JsFn)),
                     Some(JsPtrEnum::JsFn(js_fun.clone())))
                     .expect("Error storing function into state");
-                (JsVar::bind(binding.to_owned(), JsPtr), Some(JsPtrEnum::JsFn(js_fun)))
+                (JsVar::bind(binding.to_owned(), JsPtr(JsPtrTag::JsFn)),
+                Some(JsPtrEnum::JsFn(js_fun)))
             } else {
                 panic!("functions without bindings are not yet supported.")
             }
         },
+
+        // var.binding
+        &InstanceVar(ref var, ref binding) => {
+            unimplemented!();
+        },
+
+        &Method(_, _, _) => {
+            unimplemented!();
+        },
+
+        &Null => {
+            unimplemented!();
+        },
+
         &Float(f) => scalar(JsType::JsNum(f)),
         &Neg(ref exp) => scalar(JsNum(-eval_exp(exp, state).0.as_number())),
         &Pos(ref exp) => scalar(JsNum(eval_exp(exp, state).0.as_number())),
@@ -206,13 +224,13 @@ pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> (JsVar, Option<JsPtrEn
         &Object(ref fields) => {
             let mut kv_tuples = Vec::new();
             for f in fields {
-                let f_key = JsKey::new(JsKeyEnum::JsStr(JsStrStruct::new(&f.0)));
+                let f_key = JsKey::JsStr(JsStrStruct::new(&f.0));
                 // TODO: handle obj as key/value pair
                 let f_exp = eval_exp(&*f.1, state).0;
                 kv_tuples.push((f_key, f_exp, None));
             }
             let obj = JsObjStruct::new(None, "", kv_tuples, &mut AllocBox::new());
-            (JsVar::new(JsPtr), Some(JsPtrEnum::JsObj(obj)))
+            (JsVar::new(JsPtr(JsPtrTag::JsObj)), Some(JsPtrEnum::JsObj(obj)))
         },
 
         &Undefined => scalar(JsUndef),

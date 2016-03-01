@@ -20,7 +20,7 @@ impl AsBool for JsVar {
                 } else {
                     true
                 },
-            JsPtr => true, // TODO - this is incorrect
+            JsPtr(_) => true, // TODO - this is incorrect
             //JsString(ref s) =>
             //    if s.len() == 0 {
             //        false
@@ -44,7 +44,7 @@ impl AsNumber for JsVar {
             JsUndef => NAN,
             JsNull => 0f64,
             JsNum(n) => n,
-            JsPtr => NAN,
+            JsPtr(_) => NAN,
             //JsString(ref s) =>
             //    if s.len() == 0 {
             //        JsNumber(0f64)
