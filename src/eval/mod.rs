@@ -207,8 +207,11 @@ pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> (JsVar, Option<JsPtrEn
                     let try_inner_var = obj_struct.dict.get(&JsKey::JsStr(JsStrStruct::new(var)));
                     if let Some(inner_var) = try_inner_var {
                         return (inner_var.clone(), None);
+                    } else {
+                        panic!("illegal access of instance variable"); // TODO: better error here?
                     }
                 } else {
+                    panic!("illegal access of instance variable"); // TODO: better error here?
                 }
             } else {
                 panic!("illegal access of instance variable"); // TODO: better error here?
