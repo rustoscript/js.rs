@@ -186,16 +186,18 @@ pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> (JsVar, Option<JsPtrEn
         // function([param1, params]) { body }
         // function opt_binding([param1, params]) { body }
         &Defun(ref opt_binding, ref params, ref body) => {
-            if let &Some(ref binding) = opt_binding {
-                let js_fun = JsFnStruct::new(opt_binding, params, &**body);
-                state.alloc(JsVar::bind(binding.to_owned(), JsPtr(JsPtrTag::JsFn)),
-                    Some(JsPtrEnum::JsFn(js_fun.clone())))
-                    .expect("Error storing function into state");
-                (JsVar::bind(binding.to_owned(), JsPtr(JsPtrTag::JsFn)),
-                Some(JsPtrEnum::JsFn(js_fun)))
-            } else {
-                panic!("functions without bindings are not yet supported.")
+            let js_fun = JsFnStruct::new(opt_binding, params, &**body);
+            let mut var = JsVar::new(JsPtr(JsPtrTag::JsFn));
+
+            if let &Some(ref s) = opt_binding {
+                var.binding = Binding::new(s.to_owned());
             }
+
+            if let Err(_) = state.alloc(var.clone(), Some(JsPtrEnum::JsFn(js_fun.clone()))) {
+                panic!("error storing function into state");
+            }
+
+            (var, Some(JsPtrEnum::JsFn(js_fun)))
         },
 
         // var.binding
