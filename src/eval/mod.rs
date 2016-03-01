@@ -203,18 +203,21 @@ pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> (JsVar, Option<JsPtrEn
             // TODO: this needs better type-reasoning and errors
             let (instance_var, var_ptr) = eval_exp(instance_exp, state);
             if let JsPtr(_) = instance_var.t {
-                if let Some(JsPtrEnum::JsObj(obj_struct)) = var_ptr {
-                    let try_inner_var = obj_struct.dict.get(&JsKey::JsStr(JsStrStruct::new(var)));
-                    if let Some(inner_var) = try_inner_var {
-                        return (inner_var.clone(), None);
-                    } else {
-                        panic!("illegal access of instance variable"); // TODO: better error here?
-                    }
-                } else {
-                    panic!("illegal access of instance variable"); // TODO: better error here?
+                match var_ptr {
+                    Some(JsPtrEnum::JsObj(obj_struct)) => {
+                        let try_inner = obj_struct.dict.get(&JsKey::JsStr(JsStrStruct::new(var)));
+                        if let Some(inner_var) = try_inner {
+                            return (inner_var.clone(), None);
+                        } else {
+                            return scalar(JsUndef);
+                        }
+                    },
+                    // TODO: all JsPtrs can have instance vars/methods, not just JsObjs
+                    _ => unimplemented!()
                 }
             } else {
-                panic!("illegal access of instance variable"); // TODO: better error here?
+                // TODO: Things which are not ptrs can also have instance vars/methods
+                unimplemented!()
             }
         },
 
