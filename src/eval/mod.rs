@@ -199,8 +199,20 @@ pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> (JsVar, Option<JsPtrEn
         },
 
         // var.binding
-        &InstanceVar(ref var, ref binding) => {
-            unimplemented!();
+        &InstanceVar(ref instance_exp, ref var) => {
+            // TODO: this needs better type-reasoning and errors
+            let (instance_var, var_ptr) = eval_exp(instance_exp, state);
+            if let JsPtr(_) = instance_var.t {
+                if let Some(JsPtrEnum::JsObj(obj_struct)) = var_ptr {
+                    let try_inner_var = obj_struct.dict.get(&JsKey::JsStr(JsStrStruct::new(var)));
+                    if let Some(inner_var) = try_inner_var {
+                        return (inner_var.clone(), None);
+                    }
+                } else {
+                }
+            } else {
+                panic!("illegal access of instance variable"); // TODO: better error here?
+            }
         },
 
         &Method(_, _, _) => {
@@ -208,7 +220,7 @@ pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> (JsVar, Option<JsPtrEn
         },
 
         &Null => {
-            unimplemented!();
+            scalar(JsNull)
         },
 
         &Float(f) => scalar(JsType::JsNum(f)),
