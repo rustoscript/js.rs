@@ -40,7 +40,7 @@ fn eval_file(filename: String, debug: bool,
         let mut input = String::from(line.unwrap().trim());
 
         if debug {
-            println!(">> {:?}", input);
+            println!(">> {}", input);
         }
 
         // insert semicolon if necessary
