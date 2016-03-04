@@ -69,9 +69,6 @@ pub fn eval_stmt(s: &Stmt, mut state: &mut ScopeManager) -> (JsVar, Option<JsVar
             }
         },
 
-        // Empty statement (?)
-        Empty => (JsVar::new(JsUndef), None),
-
         // if (condition) { if_block } else { else_block }
         If(ref condition, ref if_block, ref else_block) => {
             // evaluate expression
@@ -100,6 +97,9 @@ pub fn eval_stmt(s: &Stmt, mut state: &mut ScopeManager) -> (JsVar, Option<JsVar
             eval_stmt(&*s1, &mut state);
             eval_stmt(&*s2, &mut state)
         },
+
+        // throw <expression>;
+        Throw(..) => unimplemented!(),
 
         // while (condition) { block }
         While(ref condition, ref block) => {
@@ -223,10 +223,6 @@ pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> (JsVar, Option<JsPtrEn
             }
         },
 
-        &Method(_, _, _) => {
-            unimplemented!();
-        },
-
         &Null => {
             scalar(JsNull)
         },
@@ -253,6 +249,8 @@ pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> (JsVar, Option<JsPtrEn
             (JsVar::new(JsPtr(JsPtrTag::JsObj)), Some(JsPtrEnum::JsObj(obj)))
         },
 
+        &Str(ref s) => (JsVar::new(JsPtr(JsPtrTag::JsStr)), Some(JsPtrEnum::JsStr(JsStrStruct::new(s)))),
+        &TypeOf(ref e) => (JsVar::new(JsPtr(JsPtrTag::JsStr)), Some(JsPtrEnum::JsStr(JsStrStruct::new(&eval_exp(e, state).0.type_of())))),
         &Undefined => scalar(JsUndef),
         &Var(ref var_binding) => {
             state.load(&Binding::new(var_binding.clone()))
