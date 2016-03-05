@@ -18,6 +18,8 @@ use jsrs_common::ast::Exp::*;
 use jsrs_common::ast::BinOp::*;
 use jsrs_common::ast::Stmt::*;
 
+use unescape::unescape;
+
 type VarWithPtr = (JsVar, Option<JsPtrEnum>);
 
 // Helper to avoid repeating this everywhere
@@ -100,6 +102,9 @@ pub fn eval_stmt(s: &Stmt, mut state: &mut ScopeManager) -> (JsVar, Option<JsVar
 
         // throw <expression>;
         Throw(..) => unimplemented!(),
+
+        // try { block } [catch <expression> { block} &&/|| finally { block }]
+        Try(..) => unimplemented!(),
 
         // while (condition) { block }
         While(ref condition, ref block) => {
@@ -249,7 +254,11 @@ pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> (JsVar, Option<JsPtrEn
             (JsVar::new(JsPtr(JsPtrTag::JsObj)), Some(JsPtrEnum::JsObj(obj)))
         },
 
-        &Str(ref s) => (JsVar::new(JsPtr(JsPtrTag::JsStr)), Some(JsPtrEnum::JsStr(JsStrStruct::new(s)))),
+        &Str(ref s) => {
+            let var = JsVar::new(JsPtr(JsPtrTag::JsStr));
+            let ptr = Some(JsPtrEnum::JsStr(JsStrStruct::new(&unescape(s).expect("Invalid string"))));
+            (var, ptr)
+        }
         &TypeOf(ref e) => (JsVar::new(JsPtr(JsPtrTag::JsStr)), Some(JsPtrEnum::JsStr(JsStrStruct::new(&eval_exp(e, state).0.type_of())))),
         &Undefined => scalar(JsUndef),
         &Var(ref var_binding) => {

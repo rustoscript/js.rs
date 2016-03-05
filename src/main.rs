@@ -5,6 +5,7 @@ extern crate jsrs_common;
 extern crate jsrs_parser;
 extern crate french_press;
 extern crate test;
+extern crate unescape;
 
 extern crate rustyline;
 
