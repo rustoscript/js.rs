@@ -18,7 +18,6 @@ use jsrs_common::ast::Exp::*;
 use jsrs_common::ast::BinOp::*;
 use jsrs_common::ast::Stmt::*;
 
-type VarWithPtr = (JsVar, Option<JsPtrEnum>);
 
 // Helper to avoid repeating this everywhere
 fn scalar(v: JsType) -> (JsVar, Option<JsPtrEnum>) {
@@ -28,6 +27,7 @@ fn scalar(v: JsType) -> (JsVar, Option<JsPtrEnum>) {
 /// Evaluate a string containing some JavaScript statements (or sequences of statements).
 /// Returns a JsVar which is the return value of those statements.
 pub fn eval_string(string: &str, state: &mut ScopeManager) -> JsVar {
+    println!("{}", string);
     match parse_Stmt(string) {
         Ok(stmt) => {
             eval_stmt(&stmt, state).0
