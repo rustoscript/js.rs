@@ -61,6 +61,10 @@ impl AsNumber for JsVar {
     }
 }
 
+pub trait AsString {
+    fn as_string(&self, ptr: Option<&JsPtrEnum>) -> String;
+}
+
 fn ptr_as_str(ptr: &JsPtrEnum) -> String {
     match ptr {
         &JsPtrEnum::JsSym(ref s) => format!("Symbol({})", s),
@@ -76,11 +80,11 @@ fn ptr_as_str(ptr: &JsPtrEnum) -> String {
     }
 }
 
-pub trait AsString {
+impl AsString for JsVar {
     fn as_string(&self, ptr: Option<&JsPtrEnum>) -> String {
         let s = match self.t {
-            JsBool(true) => "true"
-            JsBool(false) => "false"
+            JsBool(true) => "true",
+            JsBool(false) => "false",
             JsUndef => "undefined",
             JsNull => "null",
             JsNum(n) => return format!("{}", n),
