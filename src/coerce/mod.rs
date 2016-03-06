@@ -1,8 +1,8 @@
 use std::f64::NAN;
 
 use js_types::js_var::JsVar;
+use js_types::js_var::JsPtrEnum;
 use js_types::js_var::JsType::*;
-
 
 pub trait AsBool {
     fn as_bool(&self) -> bool;
@@ -58,5 +58,35 @@ impl AsNumber for JsVar {
             //JsSymbol(_) => panic!("Cannot convert a Symbol to a number."),
             //JsObject | JsError(_) | JsFunction(_, _, _) => JsNumber(NAN),
         }
+    }
+}
+
+fn ptr_as_str(ptr: &JsPtrEnum) -> String {
+    match ptr {
+        &JsPtrEnum::JsSym(ref s) => format!("Symbol({})", s),
+        &JsPtrEnum::JsStr(ref s) => s.text.to_owned(),
+
+        // TODO: Check object's `toString` method
+        &JsPtrEnum::JsObj(ref s) => String::from("[object Object]"),
+
+        // TODO: A function's string representation is apparently the string of source code that
+        // created it; the AST doesn't currently support this, so we'll need to do some
+        // restructuring before we can support this.
+        &JsPtrEnum::JsFn(_) => String::from("[function]"),
+    }
+}
+
+pub trait AsString {
+    fn as_string(&self, ptr: Option<&JsPtrEnum>) -> String {
+        let s = match self.t {
+            JsBool(true) => "true"
+            JsBool(false) => "false"
+            JsUndef => "undefined",
+            JsNull => "null",
+            JsNum(n) => return format!("{}", n),
+            JsPtr(_) => return ptr_as_str(ptr.expect("Invalid pointer")),
+        };
+
+        String::from(s)
     }
 }
