@@ -152,7 +152,7 @@ pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> (JsVar, Option<JsPtrEn
 
         // fun_name([arg_exp1, arg_exps])
         &Call(ref fun_name, ref arg_exps) => {
-            let fun_binding = eval_exp(fun_name, state).0;
+            let (fun_binding, fun_ptr) = eval_exp(fun_name, state);
 
             // Create vector of arguments, evaluated to JsVars.
             let mut args = Vec::new();
@@ -160,33 +160,37 @@ pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> (JsVar, Option<JsPtrEn
                 args.push(eval_exp(exp, state));
             }
 
-            match state.load(&fun_binding.binding) {
-                Ok((_, Some(JsPtrEnum::JsFn(js_fn_struct)))) => {
-                    state.push_scope(e);
-
-                    for param in js_fn_struct.params {
-                        let mut arg = if args.is_empty() {
-                            scalar(JsUndef)
-                        } else {
-                            args.remove(0)
-                        };
-
-                        arg.0.binding = Binding::new(param.to_owned());
-                        state.alloc(arg.0, arg.1)
-                            .expect("Unable to store function argument in scope");
-                    }
-
-                    let (_, v) = eval_stmt(&js_fn_struct.stmt, state);
-
-                    // Should we yield here? Not sure, so for now it doesn't
-                    state.pop_scope(false).expect("Unable to clear scope for function");
-                    // TODO handle obj
-                    v.map(|x| (x, None)).unwrap_or(scalar(JsUndef))
+            let js_fn_struct = match fun_ptr {
+                Some(JsPtrEnum::JsFn(fun)) => fun,
+                Some(_) => panic!("ReferenceError: {:?} is not a function", fun_name),
+                None => match state.load(&fun_binding.binding) {
+                    Ok((_, Some(JsPtrEnum::JsFn(fun)))) => fun,
+                    Ok(_) => panic!("ReferenceError: {:?} is not a function", fun_name),
+                    Err(_) => panic!("ReferenceError: {:?} is not defined", fun_name),
                 }
-                Ok(_) => panic!("Invalid call object"),
-                _ => panic!("ReferenceError: {:?} is not defined", fun_name)
+            };
+
+            state.push_scope(e);
+
+            for param in js_fn_struct.params {
+                let mut arg = if args.is_empty() {
+                    scalar(JsUndef)
+                } else {
+                    args.remove(0)
+                };
+
+                arg.0.binding = Binding::new(param.to_owned());
+                state.alloc(arg.0, arg.1)
+                .expect("Unable to store function argument in scope");
             }
-        },
+
+            let (_, v) = eval_stmt(&js_fn_struct.stmt, state);
+
+            // Should we yield here? Not sure, so for now it doesn't
+            state.pop_scope(false).expect("Unable to clear scope for function");
+            // TODO handle obj
+            v.map(|x| (x, None)).unwrap_or(scalar(JsUndef))
+        }
 
         // function([param1, params]) { body }
         // function opt_binding([param1, params]) { body }
