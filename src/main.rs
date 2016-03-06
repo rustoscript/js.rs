@@ -26,6 +26,8 @@ use rustyline::Editor;
 
 use walkdir::WalkDir;
 
+use js_types::js_var::JsPtrEnum;
+
 use french_press::{init_gc, ScopeManager};
 use jsrs_common::ast::Exp;
 
@@ -114,7 +116,13 @@ fn repl(mut scope_manager: &mut ScopeManager) -> i32 {
                     input.push_str(";");
                 }
 
-                println!("=> {:?}", eval_string(&input, &mut scope_manager).t);
+                let (var, ptr) = eval_string(&input, &mut scope_manager);
+
+                match ptr {
+                    Some(JsPtrEnum::JsSym(s)) => println!("=> Symbol({:?})", s),
+                    Some(JsPtrEnum::JsStr(s)) => println!("=> {:?}", s.text),
+                    _ => println!("=> {:?}", var.t),
+                }
             },
             Err(ReadlineError::Interrupted) => {
                 if rl.save_history(".history").is_err() {

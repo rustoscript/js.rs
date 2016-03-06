@@ -28,7 +28,7 @@ fn scalar(v: JsType) -> (JsVar, Option<JsPtrEnum>) {
 
 /// Evaluate a string containing some JavaScript statements (or sequences of statements).
 /// Returns a JsVar which is the return value of those statements.
-pub fn eval_string(string: &str, state: &mut ScopeManager) -> JsVar {
+pub fn eval_string(string: &str, state: &mut ScopeManager) -> (JsVar, Option<JsPtrEnum>) {
     println!("{}", string);
     match parse_Stmt(string) {
         Ok(stmt) => {
@@ -41,7 +41,7 @@ pub fn eval_string(string: &str, state: &mut ScopeManager) -> JsVar {
 /// Evaluate a single JS statement (which may be a block or sequence of statements).
 /// Returns tuple of (evaluated final value, return value), where return value requires that
 /// `return` be used to generate it.
-pub fn eval_stmt(s: &Stmt, mut state: &mut ScopeManager) -> (JsVar, Option<JsVar>) {
+pub fn eval_stmt(s: &Stmt, mut state: &mut ScopeManager) -> ((JsVar, Option<JsPtrEnum>), Option<JsVar>) {
     match *s {
         // var_string = exp;
         Assign(ref var_string, ref exp) => {
@@ -50,23 +50,23 @@ pub fn eval_stmt(s: &Stmt, mut state: &mut ScopeManager) -> (JsVar, Option<JsVar
 
             // Clone the js_var to store into the ScopeManager
             let cloned = js_var.clone();
-            match state.alloc(cloned, js_ptr) {
+            match state.alloc(cloned, js_ptr.clone()) {
                 Ok(_) => (),
                 e @ Err(_) => println!("{:?}", e),
             }
 
-            (js_var, None)
+            ((js_var, js_ptr), None)
         },
 
         // exp;
-        BareExp(ref exp) => (eval_exp(exp, &mut state).0, None),
+        BareExp(ref exp) => (eval_exp(exp, &mut state), None),
 
         // var var_string = exp
         Decl(ref var_string, ref exp) => {
             let (mut js_var, js_ptr) = eval_exp(exp, state);
             js_var.binding = Binding::new(var_string.clone());
-            match state.alloc(js_var.clone(), js_ptr) {
-                Ok(_) => (js_var, None),
+            match state.alloc(js_var.clone(), js_ptr.clone()) {
+                Ok(_) => ((js_var, js_ptr), None),
                 e @ Err(_) => panic!("{:?}", e),
             }
         },
@@ -83,15 +83,15 @@ pub fn eval_stmt(s: &Stmt, mut state: &mut ScopeManager) -> (JsVar, Option<JsVar
                 if let Some(ref block) = *else_block {
                     eval_stmt(&*block, state)
                 } else {
-                    (JsVar::new(JsUndef), None)
+                    (scalar(JsUndef), None)
                 }
             }
         },
 
         // return exp
         Ret(ref exp) => {
-            let js_var = eval_exp(&exp, &mut state).0;
-            (js_var.clone(), Some(js_var))
+            let js_var = eval_exp(&exp, &mut state);
+            (js_var.clone(), Some(js_var.0))
         }
 
         // a sequence of any two expressions
@@ -116,7 +116,7 @@ pub fn eval_stmt(s: &Stmt, mut state: &mut ScopeManager) -> (JsVar, Option<JsVar
                     ret_val = v;
                 } else {
                     // condition is no longer true, return a return value
-                    return (JsVar::new(JsUndef), ret_val);
+                    return (scalar(JsUndef), ret_val);
                 }
             }
         }
