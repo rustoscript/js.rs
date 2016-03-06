@@ -66,7 +66,7 @@ pub fn eval_stmt(s: &Stmt, mut state: &mut ScopeManager) -> ((JsVar, Option<JsPt
             let (mut js_var, js_ptr) = eval_exp(exp, state);
             js_var.binding = Binding::new(var_string.clone());
             match state.alloc(js_var.clone(), js_ptr.clone()) {
-                Ok(_) => ((js_var, js_ptr), None),
+                Ok(_) => (scalar(JsUndef), None),
                 e @ Err(_) => panic!("{:?}", e),
             }
         },
