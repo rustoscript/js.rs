@@ -71,7 +71,7 @@ fn ptr_as_str(ptr: &JsPtrEnum) -> String {
         &JsPtrEnum::JsStr(ref s) => s.text.to_owned(),
 
         // TODO: Check object's `toString` method
-        &JsPtrEnum::JsObj(ref s) => String::from("[object Object]"),
+        &JsPtrEnum::JsObj(_) => String::from("[object Object]"),
 
         // TODO: A function's string representation is apparently the string of source code that
         // created it; the AST doesn't currently support this, so we'll need to do some

@@ -31,7 +31,7 @@ use js_types::js_var::JsPtrEnum;
 use french_press::{init_gc, ScopeManager};
 use jsrs_common::ast::Exp;
 
-use eval::eval_string;
+use eval::{eval_string, clean_string};
 
 
 fn eval_file(filename: String, debug: bool, should_repl: bool,
@@ -44,28 +44,19 @@ fn eval_file(filename: String, debug: bool, should_repl: bool,
 
     for (i, line) in file_buffer.lines().enumerate() {
         println!("{}: {:?}", i, line);
-        let mut input = String::from(line
+        let input = String::from(line
                                      .expect(&format!("Cannot read from {}", filename))
                                      .trim());
+        clean_string(input).map(|input| {
+            if debug {
+                println!(">> {}", input);
+            }
 
-        if debug {
-            println!(">> {}", input);
-        }
-
-        // insert semicolon if necessary
-        if !input.ends_with(";") && !input.ends_with("}") {
-            input.push_str(";");
-        }
-
-        // ignore comments
-        if input.starts_with("//"){
-            continue;
-        }
-
-        let ret = eval_string(&input, &mut scope_manager);
-        if debug {
-            println!("=> {:?}", ret);
-        }
+            let ret = eval_string(&input, &mut scope_manager);
+            if debug {
+                println!("=> {:?}", ret);
+            }
+        });
     }
     if should_repl {
         repl(scope_manager);
@@ -102,27 +93,18 @@ fn repl(mut scope_manager: &mut ScopeManager) -> i32 {
         match readline {
             Ok(line) => {
                 rl.add_history_entry(&line);
-                let mut input = String::from(line.trim());
+                let input = String::from(line.trim());
+                clean_string(input).map(|input| {
+                    rl.add_history_entry(&input);
 
-                // ignore if only whitespace
-                if input.len() == 0 {
-                    continue;
-                }
+                    let (var, ptr) = eval_string(&input, &mut scope_manager);
 
-                rl.add_history_entry(&input);
-
-                // insert semicolon if necessary
-                if !input.ends_with(";") && !input.ends_with("}") {
-                    input.push_str(";");
-                }
-
-                let (var, ptr) = eval_string(&input, &mut scope_manager);
-
-                match ptr {
-                    Some(JsPtrEnum::JsSym(s)) => println!("=> Symbol({:?})", s),
-                    Some(JsPtrEnum::JsStr(s)) => println!("=> {:?}", s.text),
-                    _ => println!("=> {:?}", var.t),
-                }
+                    match ptr {
+                        Some(JsPtrEnum::JsSym(s)) => println!("=> Symbol({:?})", s),
+                        Some(JsPtrEnum::JsStr(s)) => println!("=> {:?}", s.text),
+                        _ => println!("=> {:?}", var.t),
+                    }
+                });
             },
             Err(ReadlineError::Interrupted) => {
                 if rl.save_history(".history").is_err() {
