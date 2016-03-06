@@ -25,4 +25,5 @@ rev = "ae0af22"
 [dependencies]
 rustyline = "0.2.0"
 uuid = "0.1"
+walkdir = "0.1"
 unescape = "0.1.0"

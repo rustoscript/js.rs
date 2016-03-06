@@ -5,6 +5,7 @@ extern crate jsrs_common;
 extern crate jsrs_parser;
 extern crate french_press;
 extern crate test;
+extern crate walkdir;
 extern crate unescape;
 
 extern crate rustyline;
@@ -23,13 +24,15 @@ use std::fs::{File, metadata};
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 
+use walkdir::WalkDir;
+
 use french_press::{init_gc, ScopeManager};
 use jsrs_common::ast::Exp;
 
 use eval::eval_string;
 
 
-fn eval_file(filename: String, debug: bool,
+fn eval_file(filename: String, debug: bool, should_repl: bool,
              mut scope_manager: &mut ScopeManager) {
     println!("Reading from \"{}\"", filename);
     let path = Path::new(&filename);
@@ -37,8 +40,11 @@ fn eval_file(filename: String, debug: bool,
         .expect(&format!("Cannot open \"{}\": no such file or directory", filename));
     let file_buffer = BufReader::new(file);
 
-    for line in file_buffer.lines() {
-        let mut input = String::from(line.unwrap().trim());
+    for (i, line) in file_buffer.lines().enumerate() {
+        println!("{}: {:?}", i, line);
+        let mut input = String::from(line
+                                     .expect(&format!("Cannot read from {}", filename))
+                                     .trim());
 
         if debug {
             println!(">> {}", input);
@@ -49,12 +55,32 @@ fn eval_file(filename: String, debug: bool,
             input.push_str(";");
         }
 
+        // ignore comments
+        if input.starts_with("//"){
+            continue;
+        }
+
         let ret = eval_string(&input, &mut scope_manager);
         if debug {
             println!("=> {:?}", ret);
         }
     }
-    repl(scope_manager);
+    if should_repl {
+        repl(scope_manager);
+    }
+}
+
+fn test_dir() {
+    let dir_name = "tests/numeric";
+
+    for entry in WalkDir::new(dir_name) {
+        let entry = entry.unwrap();
+        if !entry.path().is_dir() {
+            let entry_path = entry.path().display().to_string();
+            let mut scope_manager = init_gc();
+            eval_file(entry_path, false, false, &mut scope_manager);
+        }
+    }
 }
 
 fn repl(mut scope_manager: &mut ScopeManager) -> i32 {
@@ -119,12 +145,13 @@ fn repl(mut scope_manager: &mut ScopeManager) -> i32 {
 }
 
 fn main() {
+    test_dir();
     let mut scope_manager = init_gc();
 
     let args = env::args();
     if args.len() > 1 {
         for file in args.skip(1) {
-            eval_file(file, true, &mut scope_manager);
+            eval_file(file, true, true, &mut scope_manager);
         }
     } else {
         let ret = repl(&mut scope_manager);
