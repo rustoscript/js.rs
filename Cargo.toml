@@ -8,19 +8,15 @@ authors = [
 
 [dependencies.jsrs-parser]
 git = "https://github.com/rustoscript/js.rs-parser.git"
-rev = "fd91f9d"
 
 [dependencies.jsrs-common]
 git = "https://github.com/rustoscript/js.rs-common.git"
-rev = "3e8c1b0"
 
 [dependencies.french_press]
 git = "https://github.com/rustoscript/french-press"
-rev = "9f4144e"
 
 [dependencies.js-types]
 git = "https://github.com/rustoscript/js-types.git"
-rev = "ae0af22"
 
 [dependencies]
 rustyline = "0.2.0"
