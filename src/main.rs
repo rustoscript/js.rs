@@ -11,7 +11,6 @@ extern crate unescape;
 extern crate rustyline;
 
 mod bench;
-mod coerce;
 mod eval;
 
 use std::env;

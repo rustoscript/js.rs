@@ -1,7 +1,7 @@
 #[macro_use]
 mod macros;
 
-use coerce::{AsBool,AsNumber};
+use js_types::coerce::{AsBool,AsNumber};
 
 use french_press::ScopeManager;
 use french_press::alloc::AllocBox;
