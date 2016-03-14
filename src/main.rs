@@ -1,19 +1,21 @@
 #![feature(test)]
+#![feature(plugin)]
+#![plugin(docopt_macros)]
 
 extern crate js_types;
 extern crate jsrs_common;
 extern crate jsrs_parser;
 extern crate french_press;
-extern crate test;
+
 extern crate walkdir;
 extern crate unescape;
-
 extern crate rustyline;
+extern crate rustc_serialize;
+extern crate docopt;
 
 mod bench;
 mod eval;
 
-use std::env;
 use std::io::prelude::*;
 use std::process::exit;
 use std::io::{self, BufReader};
@@ -22,16 +24,22 @@ use std::fs::{File, metadata};
 
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
-
 use walkdir::WalkDir;
 
-use js_types::js_var::JsPtrEnum;
-
-use french_press::{init_gc, ScopeManager};
 use jsrs_common::ast::Exp;
+use js_types::js_var::JsPtrEnum;
+use french_press::{init_gc, ScopeManager};
 
 use eval::{eval_string, clean_string};
 
+docopt!(Args derive Debug, "
+js.rs - a javascript interpreter
+
+Usage:
+jsrs
+jsrs <file>
+jsrs --test
+");
 
 fn eval_file(filename: String, debug: bool, should_repl: bool,
              mut scope_manager: &mut ScopeManager) {
@@ -134,16 +142,16 @@ fn repl(mut scope_manager: &mut ScopeManager) -> i32 {
 }
 
 fn main() {
-    test_dir();
-    let mut scope_manager = init_gc();
-
-    let args = env::args();
-    if args.len() > 1 {
-        for file in args.skip(1) {
-            eval_file(file, true, true, &mut scope_manager);
-        }
+    let args: Args = Args::docopt().decode().unwrap_or_else(|e| e.exit());
+    if args.flag_test {
+        test_dir()
     } else {
-        let ret = repl(&mut scope_manager);
-        exit(ret)
+        let mut scope_manager = init_gc();
+        if args.arg_file == "" {
+            let ret = repl(&mut scope_manager);
+            exit(ret)
+        } else {
+            eval_file(args.arg_file, true, true, &mut scope_manager);
+        }
     }
 }
