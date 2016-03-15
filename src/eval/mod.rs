@@ -32,9 +32,9 @@ pub fn clean_string(mut input: String) -> Option<String> {
     }
 
     // insert semicolon if necessary
-    if !input.ends_with(";") && !input.ends_with("}") {
-        input.push_str(";");
-    }
+    //if !input.ends_with(";") && !input.ends_with("}") {
+    //    input.push_str(";");
+    //}
 
     // ignore comments
     if input.starts_with("//"){
@@ -105,6 +105,8 @@ pub fn eval_stmt(s: &Stmt, mut state: &mut ScopeManager) -> ((JsVar, Option<JsPt
                 }
             }
         },
+
+        Empty => (scalar(JsUndef), None),
 
         // return exp
         Ret(ref exp) => {

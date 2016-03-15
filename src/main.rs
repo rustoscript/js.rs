@@ -49,21 +49,57 @@ fn eval_file(filename: String, debug: bool, should_repl: bool,
         .expect(&format!("Cannot open \"{}\": no such file or directory", filename));
     let file_buffer = BufReader::new(file);
 
-    for (i, line) in file_buffer.lines().enumerate() {
-        println!("{}: {:?}", i, line);
-        let input = String::from(line
-                                     .expect(&format!("Cannot read from {}", filename))
-                                     .trim());
-        clean_string(input).map(|input| {
-            if debug {
-                println!(">> {}", input);
-            }
+    let mut line_builder = String::new();
+    let mut braces = Vec::new();
 
-            let ret = eval_string(&input, &mut scope_manager);
-            if debug {
-                println!("=> {:?}", ret);
+    let mut file_iter = file_buffer.lines();
+    let mut complete = true;
+    loop {
+        if let Some(line) = file_iter.next() {
+            let input = String::from(line.expect(&format!("Cannot read from {}", filename))
+                                         .trim());
+            if let Some(input) = clean_string(input) {
+                println!("{}", input);
+
+                // Match braces to see if we should wait for more input
+                for c in input.chars() {
+                    if c == '(' {
+                        braces.push('(');
+                    } else if c == '{' {
+                        braces.push('{');
+                    } else if c == ')' {
+                        if braces.pop() != Some('(') {
+                            panic!("parse error: unexpected token {}", c);
+                        }
+                    } else if c == '}' {
+                        if braces.pop() != Some('{') {
+                            panic!("parse error: unexpected token {}", c);
+                        }
+                    }
+                }
+
+                line_builder.push_str(&input);
+
+                if braces.len() == 0 {
+                    clean_string(line_builder.clone()).map(|js_string| {
+                        println!("{:?}", line_builder);
+                        line_builder = String::new();
+                        if debug {
+                            println!(">> {}", js_string);
+                        }
+
+                        let ret = eval_string(&js_string, &mut scope_manager);
+                        if debug {
+                            println!("=> {:?}", ret);
+                        }
+                    });
+                } else {
+                    println!("{:?}", braces);
+                }
             }
-        });
+        } else {
+            break;
+        }
     }
     if should_repl {
         repl(scope_manager);
