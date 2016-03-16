@@ -9,7 +9,7 @@ dependencies = [
  "jsrs-common 0.1.0 (git+https://github.com/rustoscript/js.rs-common.git)",
  "jsrs-parser 0.1.0 (git+https://github.com/rustoscript/js.rs-parser.git)",
  "rustc-serialize 0.3.18 (registry+https://github.com/rust-lang/crates.io-index)",
- "rustyline 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rustyline 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "unescape 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "uuid 0.1.18 (registry+https://github.com/rust-lang/crates.io-index)",
  "walkdir 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -30,7 +30,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "kernel32-sys 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)",
- "winapi 0.2.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "winapi 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -48,11 +48,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "bitflags"
-version = "0.3.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-
-[[package]]
-name = "bitflags"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
@@ -66,7 +61,7 @@ name = "docopt"
 version = "0.6.78"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "regex 0.1.56 (registry+https://github.com/rust-lang/crates.io-index)",
+ "regex 0.1.58 (registry+https://github.com/rust-lang/crates.io-index)",
  "rustc-serialize 0.3.18 (registry+https://github.com/rust-lang/crates.io-index)",
  "strsim 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -87,10 +82,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "french_press"
 version = "0.1.0"
-source = "git+https://github.com/rustoscript/french-press#002c58520882c7476071a6763e53c482f221454b"
+source = "git+https://github.com/rustoscript/french-press#c392b680a7cfca3b8204f589b85f469c7e584a79"
 dependencies = [
- "js-types 0.1.0 (git+https://github.com/rustoscript/js-types.git?rev=389ed6b)",
- "jsrs-common 0.1.0 (git+https://github.com/rustoscript/js.rs-common.git?rev=44275eb)",
+ "js-types 0.1.0 (git+https://github.com/rustoscript/js-types.git)",
+ "jsrs-common 0.1.0 (git+https://github.com/rustoscript/js.rs-common.git)",
  "matches 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "uuid 0.1.18 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -103,40 +98,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "js-types"
 version = "0.1.0"
-source = "git+https://github.com/rustoscript/js-types.git#7e5e3c44c8f1ec041564ba9fbb8b3e7d5d854daa"
+source = "git+https://github.com/rustoscript/js-types.git#d72dda0b6e0a66e2e4874e0ec73d82477c71801a"
 dependencies = [
- "jsrs-common 0.1.0 (git+https://github.com/rustoscript/js.rs-common.git?rev=44275eb)",
- "uuid 0.1.18 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "js-types"
-version = "0.1.0"
-source = "git+https://github.com/rustoscript/js-types.git?rev=389ed6b#389ed6ba08678dab4c5dbab34b6f53fc9f1640aa"
-dependencies = [
- "jsrs-common 0.1.0 (git+https://github.com/rustoscript/js.rs-common.git?rev=44275eb)",
+ "jsrs-common 0.1.0 (git+https://github.com/rustoscript/js.rs-common.git)",
  "uuid 0.1.18 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "jsrs-common"
 version = "0.1.0"
-source = "git+https://github.com/rustoscript/js.rs-common.git#bfba6e4ba70af3ef75f158f3cb988b50d9aa85b3"
-
-[[package]]
-name = "jsrs-common"
-version = "0.1.0"
-source = "git+https://github.com/rustoscript/js.rs-common.git?rev=44275eb#44275eb6218ad5c161da85a51b4629b034842369"
+source = "git+https://github.com/rustoscript/js.rs-common.git#cfca24788b6d6275993b85bccb04fa4539352466"
 
 [[package]]
 name = "jsrs-parser"
 version = "0.1.0"
-source = "git+https://github.com/rustoscript/js.rs-parser.git#0074b91367067bec723a7e08b281d57cfec27747"
+source = "git+https://github.com/rustoscript/js.rs-parser.git#0aa94d621e60166e1eb02511104bdf38ec3e001d"
 dependencies = [
  "jsrs-common 0.1.0 (git+https://github.com/rustoscript/js.rs-common.git)",
  "lalrpop 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "lalrpop-util 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "rustyline 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rustyline 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -144,7 +125,7 @@ name = "kernel32-sys"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "winapi 0.2.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "winapi 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "winapi-build 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -163,7 +144,7 @@ dependencies = [
  "lalrpop-snap 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "lalrpop-util 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "petgraph 0.1.18 (registry+https://github.com/rust-lang/crates.io-index)",
- "regex 0.1.56 (registry+https://github.com/rust-lang/crates.io-index)",
+ "regex 0.1.58 (registry+https://github.com/rust-lang/crates.io-index)",
  "regex-syntax 0.2.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "rustc-serialize 0.3.18 (registry+https://github.com/rust-lang/crates.io-index)",
  "term 0.4.4 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -186,18 +167,13 @@ dependencies = [
  "lalrpop-intern 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "lalrpop-util 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "petgraph 0.1.18 (registry+https://github.com/rust-lang/crates.io-index)",
- "regex 0.1.56 (registry+https://github.com/rust-lang/crates.io-index)",
+ "regex 0.1.58 (registry+https://github.com/rust-lang/crates.io-index)",
  "unicode-xid 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "lalrpop-util"
 version = "0.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-
-[[package]]
-name = "libc"
-version = "0.1.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
@@ -220,11 +196,11 @@ dependencies = [
 
 [[package]]
 name = "nix"
-version = "0.4.2"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "bitflags 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "libc 0.1.12 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bitflags 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libc 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -245,7 +221,7 @@ dependencies = [
 
 [[package]]
 name = "regex"
-version = "0.1.56"
+version = "0.1.58"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "aho-corasick 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -271,11 +247,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "rustyline"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "libc 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)",
- "nix 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "nix 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "unicode-width 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -290,7 +266,7 @@ version = "0.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "kernel32-sys 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "winapi 0.2.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "winapi 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -300,7 +276,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "kernel32-sys 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)",
- "winapi 0.2.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "winapi 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -338,12 +314,12 @@ version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "kernel32-sys 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "winapi 0.2.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "winapi 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "winapi"
-version = "0.2.5"
+version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]

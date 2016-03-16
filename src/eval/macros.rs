@@ -6,8 +6,7 @@ macro_rules! eval_float_post_op {
                 Ok((orig_var, _)) => {
                         let $f: f64 = orig_var.as_number();
                         let new_num: f64 = $new;
-                        let mut new_var = JsVar::new(JsNum(new_num));
-                        new_var.binding = Binding::new(binding.clone());
+                        let new_var = JsVar::bind(&binding, JsNum(new_num));
                         $state.alloc(new_var, None).unwrap();
                         orig_var
                 }
@@ -26,8 +25,7 @@ macro_rules! eval_float_pre_op {
                 Ok((orig_var, _)) => {
                         let $f: f64 = orig_var.as_number();
                         let new_num: f64 = $new;
-                        let mut new_var = JsVar::new(JsNum(new_num));
-                        new_var.binding = Binding::new(binding.clone());
+                        let new_var = JsVar::bind(&binding, JsNum(new_num));
                         $state.alloc(new_var.clone(), None).unwrap();
                         new_var
                 }
