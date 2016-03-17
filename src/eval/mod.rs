@@ -208,8 +208,18 @@ pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> (JsVar, Option<JsPtrEn
 
             let (_, v) = eval_stmt(&js_fn_struct.stmt, state);
 
+            let returning_closure = v.as_ref().map_or(false, |ref var| {
+                match var.t {
+                    JsType::JsPtr(ref tag) => match tag {
+                        &JsPtrTag::JsFn { ref name } => name.is_none(),
+                        _ => false,
+                    },
+                    _ => false,
+                }
+            });
+
             // Should we yield here? Not sure, so for now it doesn't
-            state.pop_scope(false).expect("Unable to clear scope for function");
+            state.pop_scope(returning_closure, false).expect("Unable to clear scope for function");
             // TODO handle obj
             v.map(|x| (x, None)).unwrap_or(scalar(JsUndef))
         }
@@ -220,9 +230,9 @@ pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> (JsVar, Option<JsPtrEn
             let js_fun = JsFnStruct::new(opt_binding, params, &**body);
 
             let var = if let &Some(ref s) = opt_binding {
-                JsVar::bind(s, JsPtr(JsPtrTag::JsFn))
+                JsVar::bind(s, JsPtr(JsPtrTag::JsFn { name: opt_binding.clone() }))
             } else {
-                JsVar::new(JsPtr(JsPtrTag::JsFn))
+                JsVar::new(JsPtr(JsPtrTag::JsFn { name: None }))
             };
 
             if let Err(_) = state.alloc(var.clone(), Some(JsPtrEnum::JsFn(js_fun.clone()))) {

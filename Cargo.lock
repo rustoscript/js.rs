@@ -82,12 +82,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "french_press"
 version = "0.1.0"
-source = "git+https://github.com/rustoscript/french-press#c392b680a7cfca3b8204f589b85f469c7e584a79"
+source = "git+https://github.com/rustoscript/french-press#2dc3e448779f83bff2f38c9f7f0c80ec99195ea8"
 dependencies = [
  "js-types 0.1.0 (git+https://github.com/rustoscript/js-types.git)",
  "jsrs-common 0.1.0 (git+https://github.com/rustoscript/js.rs-common.git)",
  "matches 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "uuid 0.1.18 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -98,7 +97,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "js-types"
 version = "0.1.0"
-source = "git+https://github.com/rustoscript/js-types.git#d72dda0b6e0a66e2e4874e0ec73d82477c71801a"
+source = "git+https://github.com/rustoscript/js-types.git#bb00a5ab751ac1c327ae3717cd996b6d40a5db7e"
 dependencies = [
  "jsrs-common 0.1.0 (git+https://github.com/rustoscript/js.rs-common.git)",
  "uuid 0.1.18 (registry+https://github.com/rust-lang/crates.io-index)",
