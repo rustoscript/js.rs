@@ -63,12 +63,14 @@ pub fn eval_stmt(s: &Stmt, mut state: &mut ScopeManager) -> ((JsVar, Option<JsPt
     match *s {
         // var_string = exp;
         Assign(ref var_string, ref exp) => {
-            let (mut js_var, js_ptr) = eval_exp(exp, state);
-            js_var.binding = Binding::new(var_string.clone());
+            let (new_var, js_ptr) = eval_exp(exp, state);
+            // TODO error handling
+            let (mut js_var, _) = state.load(&Binding::new(var_string.clone())).unwrap();
+            js_var.t = new_var.t;
 
             // Clone the js_var to store into the ScopeManager
             let cloned = js_var.clone();
-            match state.alloc(cloned, js_ptr.clone()) {
+            match state.store(cloned, js_ptr.clone()) {
                 Ok(_) => (),
                 e @ Err(_) => println!("{:?}", e),
             }
@@ -83,7 +85,7 @@ pub fn eval_stmt(s: &Stmt, mut state: &mut ScopeManager) -> ((JsVar, Option<JsPt
         Decl(ref var_string, ref exp) => {
             let (mut js_var, js_ptr) = eval_exp(exp, state);
             js_var.binding = Binding::new(var_string.clone());
-            match state.alloc(js_var.clone(), js_ptr.clone()) {
+            match state.alloc(js_var, js_ptr) {
                 Ok(_) => (scalar(JsUndef), None),
                 e @ Err(_) => panic!("{:?}", e),
             }
@@ -216,11 +218,12 @@ pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> (JsVar, Option<JsPtrEn
         // function opt_binding([param1, params]) { body }
         &Defun(ref opt_binding, ref params, ref body) => {
             let js_fun = JsFnStruct::new(opt_binding, params, &**body);
-            let mut var = JsVar::new(JsPtr(JsPtrTag::JsFn));
 
-            if let &Some(ref s) = opt_binding {
-                var.binding = Binding::new(s.to_owned());
-            }
+            let var = if let &Some(ref s) = opt_binding {
+                JsVar::bind(s, JsPtr(JsPtrTag::JsFn))
+            } else {
+                JsVar::new(JsPtr(JsPtrTag::JsFn))
+            };
 
             if let Err(_) = state.alloc(var.clone(), Some(JsPtrEnum::JsFn(js_fun.clone()))) {
                 panic!("error storing function into state");
