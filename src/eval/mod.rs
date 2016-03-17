@@ -208,6 +208,11 @@ pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> (JsVar, Option<JsPtrEn
 
             let (_, v) = eval_stmt(&js_fn_struct.stmt, state);
 
+            // If the return value of a function is `None` (void),
+            // or is not a pointer to a function, a closure is not being
+            // returned from the function. If the function is returning a
+            // function, and the function being returned has no name, a closure
+            // is being returned.
             let returning_closure = v.as_ref().map_or(false, |ref var| {
                 match var.t {
                     JsType::JsPtr(ref tag) => match tag {
