@@ -1,4 +1,3 @@
-#![feature(test)]
 #![feature(plugin)]
 #![plugin(docopt_macros)]
 
@@ -15,6 +14,7 @@ extern crate docopt;
 
 mod bench;
 mod eval;
+mod preprocess;
 
 use std::io::prelude::*;
 use std::process::exit;
@@ -30,7 +30,8 @@ use jsrs_common::ast::Exp;
 use js_types::js_var::JsPtrEnum;
 use french_press::{init_gc, ScopeManager};
 
-use eval::{eval_string, clean_string};
+use eval::eval_string;
+use preprocess::clean_string;
 
 docopt!(Args derive Debug, "
 js.rs - a javascript interpreter
@@ -53,20 +54,22 @@ fn eval_file(filename: String, debug: bool, should_repl: bool,
     let mut braces = Vec::new();
 
     let mut file_iter = file_buffer.lines();
-    let mut complete = true;
     loop {
         if let Some(line) = file_iter.next() {
             let input = String::from(line.expect(&format!("Cannot read from {}", filename))
                                          .trim());
             if let Some(input) = clean_string(input) {
-                println!("{}", input);
+                //println!("{}", input);
 
+                let mut last = '\0';
                 // Match braces to see if we should wait for more input
                 for c in input.chars() {
                     if c == '(' {
                         braces.push('(');
                     } else if c == '{' {
                         braces.push('{');
+                    } else if c == '*' && last == '/' {
+                        braces.push('/');
                     } else if c == ')' {
                         if braces.pop() != Some('(') {
                             panic!("parse error: unexpected token {}", c);
@@ -75,14 +78,19 @@ fn eval_file(filename: String, debug: bool, should_repl: bool,
                         if braces.pop() != Some('{') {
                             panic!("parse error: unexpected token {}", c);
                         }
+                    } else if c == '/' && last == '*' {
+                        if braces.pop() != Some('/') {
+                            panic!("parse error: unexpected token {}", c);
+                        }
                     }
+                    last = c;
                 }
 
                 line_builder.push_str(&input);
 
                 if braces.len() == 0 {
                     clean_string(line_builder.clone()).map(|js_string| {
-                        println!("{:?}", line_builder);
+                        println!("{:?}\n", line_builder);
                         line_builder = String::new();
                         if debug {
                             println!(">> {}", js_string);
@@ -93,8 +101,6 @@ fn eval_file(filename: String, debug: bool, should_repl: bool,
                             println!("=> {:?}", ret);
                         }
                     });
-                } else {
-                    println!("{:?}", braces);
                 }
             }
         } else {

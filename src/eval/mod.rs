@@ -26,24 +26,6 @@ fn scalar(v: JsType) -> (JsVar, Option<JsPtrEnum>) {
     (JsVar::new(v), None)
 }
 
-pub fn clean_string(mut input: String) -> Option<String> {
-    if input == "" {
-        return None;
-    }
-
-    // insert semicolon if necessary
-    //if !input.ends_with(";") && !input.ends_with("}") {
-    //    input.push_str(";");
-    //}
-
-    // ignore comments
-    if input.starts_with("//"){
-        return None;
-    }
-
-    Some(input)
-}
-
 /// Evaluate a string containing some JavaScript statements (or sequences of statements).
 /// Returns a JsVar which is the return value of those statements.
 pub fn eval_string(string: &str, state: &mut ScopeManager) -> (JsVar, Option<JsPtrEnum>) {
