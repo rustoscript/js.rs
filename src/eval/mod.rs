@@ -174,7 +174,10 @@ pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> (JsVar, Option<JsPtrEn
                 }
             };
 
-            state.push_scope(e);
+            match js_fn_struct.name {
+                Some(_) => state.push_scope(e),
+                None => state.push_closure_scope(fun_binding.unique),
+            }
 
             for param in js_fn_struct.params {
                 let mut arg = if args.is_empty() {
@@ -195,13 +198,14 @@ pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> (JsVar, Option<JsPtrEn
             // returned from the function. If the function is returning a
             // function, and the function being returned has no name, a closure
             // is being returned.
-            let returning_closure = v.as_ref().map_or(false, |ref var| {
+            let returning_closure = v.as_ref().map_or(None, |ref var| {
                 match var.t {
                     JsType::JsPtr(ref tag) => match tag {
-                        &JsPtrTag::JsFn { ref name } => name.is_none(),
-                        _ => false,
+                        &JsPtrTag::JsFn { ref name } =>
+                            if name.is_none() { Some(var.unique) } else { None },
+                        _ => None,
                     },
-                    _ => false,
+                    _ => None,
                 }
             });
 
