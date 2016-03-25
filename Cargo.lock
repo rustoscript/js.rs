@@ -9,7 +9,7 @@ dependencies = [
  "jsrs-common 0.1.0 (git+https://github.com/rustoscript/js.rs-common.git)",
  "jsrs-parser 0.1.0 (git+https://github.com/rustoscript/js.rs-parser.git)",
  "rustc-serialize 0.3.18 (registry+https://github.com/rust-lang/crates.io-index)",
- "rustyline 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rustyline 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "unescape 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "uuid 0.1.18 (registry+https://github.com/rust-lang/crates.io-index)",
  "walkdir 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -82,7 +82,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "french_press"
 version = "0.1.0"
-source = "git+https://github.com/rustoscript/french-press#2dc3e448779f83bff2f38c9f7f0c80ec99195ea8"
+source = "git+https://github.com/rustoscript/french-press#051a8b510ec8c4a0615934fa156ab6b819094e63"
 dependencies = [
  "js-types 0.1.0 (git+https://github.com/rustoscript/js-types.git)",
  "jsrs-common 0.1.0 (git+https://github.com/rustoscript/js.rs-common.git)",
@@ -97,7 +97,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "js-types"
 version = "0.1.0"
-source = "git+https://github.com/rustoscript/js-types.git#bb00a5ab751ac1c327ae3717cd996b6d40a5db7e"
+source = "git+https://github.com/rustoscript/js-types.git#0152432a7d72de70030c9b9489831d7b6d4bc276"
 dependencies = [
  "jsrs-common 0.1.0 (git+https://github.com/rustoscript/js.rs-common.git)",
  "uuid 0.1.18 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -106,17 +106,17 @@ dependencies = [
 [[package]]
 name = "jsrs-common"
 version = "0.1.0"
-source = "git+https://github.com/rustoscript/js.rs-common.git#cfca24788b6d6275993b85bccb04fa4539352466"
+source = "git+https://github.com/rustoscript/js.rs-common.git#b30ce0ca43e5479913393e49c5cc9831641abaf6"
 
 [[package]]
 name = "jsrs-parser"
 version = "0.1.0"
-source = "git+https://github.com/rustoscript/js.rs-parser.git#0aa94d621e60166e1eb02511104bdf38ec3e001d"
+source = "git+https://github.com/rustoscript/js.rs-parser.git#621c0c8efcceffd26598a64ec0c6c25d523053ba"
 dependencies = [
  "jsrs-common 0.1.0 (git+https://github.com/rustoscript/js.rs-common.git)",
  "lalrpop 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "lalrpop-util 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "rustyline 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rustyline 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -246,7 +246,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "rustyline"
-version = "0.2.1"
+version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "libc 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)",
