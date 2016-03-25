@@ -1,22 +1,23 @@
 #[macro_use]
 mod macros;
 
-use js_types::coerce::{AsBool,AsNumber};
+use jsrs_common::types::coerce::{AsBool,AsNumber};
 
 use french_press::ScopeManager;
 use french_press::alloc::AllocBox;
-use js_types::binding::Binding;
-use js_types::js_fn::JsFnStruct;
-use js_types::js_obj::JsObjStruct;
-use js_types::js_str::JsStrStruct;
-use js_types::js_var::{JsVar, JsType, JsPtrEnum, JsKey, JsPtrTag};
-use js_types::js_var::JsType::*;
 
 use jsrs_parser::lalr::parse_Stmt;
 use jsrs_common::ast::*;
 use jsrs_common::ast::Exp::*;
 use jsrs_common::ast::BinOp::*;
 use jsrs_common::ast::Stmt::*;
+
+use jsrs_common::types::binding::Binding;
+use jsrs_common::types::js_fn::JsFnStruct;
+use jsrs_common::types::js_obj::JsObjStruct;
+use jsrs_common::types::js_str::JsStrStruct;
+use jsrs_common::types::js_var::{JsVar, JsType, JsPtrEnum, JsKey, JsPtrTag};
+use jsrs_common::types::js_var::JsType::*;
 
 use unescape::unescape;
 

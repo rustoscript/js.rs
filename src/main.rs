@@ -1,7 +1,6 @@
 #![feature(plugin)]
 #![plugin(docopt_macros)]
 
-extern crate js_types;
 extern crate jsrs_common;
 extern crate jsrs_parser;
 extern crate french_press;
@@ -27,7 +26,7 @@ use rustyline::Editor;
 use walkdir::WalkDir;
 
 use jsrs_common::ast::Exp;
-use js_types::js_var::JsPtrEnum;
+use jsrs_common::types::js_var::JsPtrEnum;
 use french_press::{init_gc, ScopeManager};
 
 use eval::eval_string;
