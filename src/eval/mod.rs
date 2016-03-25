@@ -15,8 +15,9 @@ use js_types::js_var::JsType::*;
 use jsrs_parser::lalr::parse_Stmt;
 use jsrs_common::ast::*;
 use jsrs_common::ast::Exp::*;
-use jsrs_common::ast::BinOp::*;
 use jsrs_common::ast::Stmt::*;
+
+use number::eval_binop;
 
 use unescape::unescape;
 
@@ -135,22 +136,8 @@ pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> (JsVar, Option<JsPtrEn
             let val1 = eval_exp(e1, state).0;
             let val2 = eval_exp(e2, state).0;
 
-            match *op {
-                And => scalar(JsBool(val1.as_bool() && val2.as_bool())),
-                Or  => scalar(JsBool(val1.as_bool() || val2.as_bool())),
-
-                Ge  => scalar(JsBool(val1.as_bool() >= val2.as_bool())),
-                Gt  => scalar(JsBool(val1.as_bool() >  val2.as_bool())),
-                Le  => scalar(JsBool(val1.as_bool() <= val2.as_bool())),
-                Lt  => scalar(JsBool(val1.as_bool() <  val2.as_bool())),
-                Neq => scalar(JsBool(val1.as_bool() != val2.as_bool())),
-                Eql => scalar(JsBool(val1.as_bool() == val2.as_bool())),
-
-                Minus => scalar(JsNum(val1.as_number() - val2.as_number())),
-                Plus  => scalar(JsNum(val1.as_number() + val2.as_number())),
-                Slash => scalar(JsNum(val1.as_number() / val2.as_number())),
-                Star  => scalar(JsNum(val1.as_number() * val2.as_number())),
-            }
+            let result = eval_binop(op, val1, val2);
+            scalar(result)
         }
         &Bool(b) => scalar(JsBool(b)),
 

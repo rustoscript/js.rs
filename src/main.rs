@@ -12,6 +12,7 @@ extern crate rustyline;
 extern crate rustc_serialize;
 extern crate docopt;
 
+mod number;
 mod bench;
 mod eval;
 mod preprocess;
