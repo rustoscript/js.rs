@@ -13,13 +13,16 @@ extern crate docopt;
 
 mod bench;
 mod eval;
+mod native;
 mod preprocess;
 
-use std::io::prelude::*;
-use std::process::exit;
-use std::io::{self, BufReader};
-use std::path::Path;
+use std::cell::RefCell;
 use std::fs::{File, metadata};
+use std::io::{self, BufReader};
+use std::io::prelude::*;
+use std::path::Path;
+use std::process::exit;
+use std::rc::Rc;
 
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
@@ -30,6 +33,7 @@ use jsrs_common::types::js_var::JsPtrEnum;
 use french_press::{init_gc, ScopeManager};
 
 use eval::eval_string;
+use native::add_pervasives;
 use preprocess::clean_string;
 
 docopt!(Args derive Debug, "
@@ -42,7 +46,7 @@ jsrs --test
 ");
 
 fn eval_file(filename: String, debug: bool, should_repl: bool,
-             mut scope_manager: &mut ScopeManager) {
+             scope_manager: Rc<RefCell<ScopeManager>>) {
     println!("Reading from \"{}\"", filename);
     let path = Path::new(&filename);
     let file = File::open(&path)
@@ -95,7 +99,7 @@ fn eval_file(filename: String, debug: bool, should_repl: bool,
                             println!(">> {}", js_string);
                         }
 
-                        let ret = eval_string(&js_string, &mut scope_manager);
+                        let ret = eval_string(&js_string, scope_manager.clone());
                         if debug {
                             println!("=> {:?}", ret);
                         }
@@ -118,17 +122,17 @@ fn test_dir() {
         let entry = entry.unwrap();
         if !entry.path().is_dir() {
             let entry_path = entry.path().display().to_string();
-            let mut scope_manager = init_gc();
-            eval_file(entry_path, false, false, &mut scope_manager);
+            let scope_manager = Rc::new(RefCell::new(init_gc()));
+            eval_file(entry_path, false, false, scope_manager.clone());
         }
     }
 }
 
-fn repl(mut scope_manager: &mut ScopeManager) -> i32 {
+fn repl(scope_manager: Rc<RefCell<ScopeManager>>) -> i32 {
     let mut rl = Editor::new();
     let mut stderr = io::stderr();
 
-    scope_manager.push_scope(&Exp::Undefined);
+    scope_manager.borrow_mut().push_scope(&Exp::Undefined);
 
     if metadata(".history").is_ok() && rl.load_history(".history").is_err() {
         writeln!(stderr, "Error: unable to load history on startup").unwrap();
@@ -136,6 +140,7 @@ fn repl(mut scope_manager: &mut ScopeManager) -> i32 {
 
     loop {
         // prompt
+
         let readline = rl.readline(">> ");
 
         match readline {
@@ -145,7 +150,7 @@ fn repl(mut scope_manager: &mut ScopeManager) -> i32 {
                 clean_string(input).map(|input| {
                     rl.add_history_entry(&input);
 
-                    let (var, ptr) = eval_string(&input, &mut scope_manager);
+                    let (var, ptr) = eval_string(&input, scope_manager.clone());
 
                     match ptr {
                         Some(JsPtrEnum::JsSym(s)) => println!("=> Symbol({:?})", s),
@@ -187,12 +192,14 @@ fn main() {
     if args.flag_test {
         test_dir()
     } else {
-        let mut scope_manager = init_gc();
+        let scope_manager = Rc::new(RefCell::new(init_gc()));
+        add_pervasives(scope_manager.clone());
+
         if args.arg_file == "" {
-            let ret = repl(&mut scope_manager);
+            let ret = repl(scope_manager.clone());
             exit(ret)
         } else {
-            eval_file(args.arg_file, true, true, &mut scope_manager);
+            eval_file(args.arg_file, true, true, scope_manager.clone());
         }
     }
 }
