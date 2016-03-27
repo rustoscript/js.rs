@@ -173,7 +173,7 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> (JsVar, Option<JsP
             let js_fn_struct = match fun_ptr {
                 Some(JsPtrEnum::JsFn(fun)) => fun,
                 Some(JsPtrEnum::NativeFn(func)) => {
-                    return func.call(state.clone(), args)
+                    return func.call(state.clone(), None, args)
                 }
                 Some(_) => panic!("ReferenceError: {:?} is not a function", fun_name),
                 None => match state.deref().borrow().load(&fun_binding.binding) {
