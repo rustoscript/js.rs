@@ -12,11 +12,14 @@ extern crate rustyline;
 extern crate rustc_serialize;
 extern crate docopt;
 
+mod error;
+mod var;
+
 mod number;
 mod bench;
-mod eval;
+
 mod preprocess;
-mod var;
+mod eval;
 
 use std::io::prelude::*;
 use std::process::exit;
@@ -148,7 +151,7 @@ fn repl(mut scope_manager: &mut ScopeManager) -> i32 {
                 clean_string(input).map(|input| {
                     rl.add_history_entry(&input);
 
-                    let (var, ptr) = eval_string(&input, &mut scope_manager);
+                    let (var, ptr) = eval_string(&input, &mut scope_manager).unwrap();
 
                     match ptr {
                         Some(JsPtrEnum::JsSym(s)) => println!("=> Symbol({:?})", s),

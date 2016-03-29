@@ -5,7 +5,7 @@ use js_types::coerce::{AsBool,AsNumber};
 
 use french_press::ScopeManager;
 use french_press::alloc::AllocBox;
-use js_types::binding::Binding;
+use js_types::binding::{Binding, UniqueBinding};
 use js_types::js_fn::JsFnStruct;
 use js_types::js_obj::JsObjStruct;
 use js_types::js_str::JsStrStruct;
@@ -19,19 +19,17 @@ use jsrs_common::ast::Stmt::*;
 
 use number::eval_binop;
 use var::*;
+use error::Result;
 
 use unescape::unescape;
 
 
 /// Evaluate a string containing some JavaScript statements (or sequences of statements).
 /// Returns a JsVar which is the return value of those statements.
-pub fn eval_string(string: &str, state: &mut ScopeManager) -> JsVarValue {
-    println!("{}", string);
+pub fn eval_string(string: &str, state: &mut ScopeManager) -> Result<JsVarValue> {
     match parse_Stmt(string) {
-        Ok(stmt) => {
-            eval_stmt(&stmt, state).0
-        }
-        Err(e) => panic!("parse error: {:?}", e),
+        Ok(stmt) => Ok(eval_stmt(&stmt, state).0),
+        Err(e) => Err(JsError::ParseError(format!("{:?}", e))),
     }
 }
 
@@ -178,13 +176,14 @@ pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> JsVarValue {
             // returned from the function. If the function is returning a
             // function, and the function being returned has no name, a closure
             // is being returned.
-            let returning_closure = v.as_ref().map_or(false, |ref var| {
+            let returning_closure = v.as_ref().map_or(None, |ref var| {
                 match var.t {
                     JsType::JsPtr(ref tag) => match tag {
-                        &JsPtrTag::JsFn { ref name } => name.is_none(),
-                        _ => false,
+                        &JsPtrTag::JsFn { ref name } =>
+                            name.as_ref().map(|s| UniqueBinding(s.clone())),
+                        _ => None,
                     },
-                    _ => false,
+                    _ => None,
                 }
             });
 

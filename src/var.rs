@@ -7,6 +7,7 @@
 //use js_types::js_var::{JsVar, JsType, JsPtrEnum, JsKey, JsPtrTag};
 //use js_types::js_var::JsType::*;
 use js_types::js_var::{JsVar, JsPtrEnum, JsType};
+use error::JsError;
 
 
 pub type JsVarValue = (JsVar, Option<JsPtrEnum>);
