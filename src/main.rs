@@ -16,6 +16,7 @@ mod number;
 mod bench;
 mod eval;
 mod preprocess;
+mod var;
 
 use std::io::prelude::*;
 use std::process::exit;

@@ -18,18 +18,14 @@ use jsrs_common::ast::Exp::*;
 use jsrs_common::ast::Stmt::*;
 
 use number::eval_binop;
+use var::*;
 
 use unescape::unescape;
 
 
-// Helper to avoid repeating this everywhere
-fn scalar(v: JsType) -> (JsVar, Option<JsPtrEnum>) {
-    (JsVar::new(v), None)
-}
-
 /// Evaluate a string containing some JavaScript statements (or sequences of statements).
 /// Returns a JsVar which is the return value of those statements.
-pub fn eval_string(string: &str, state: &mut ScopeManager) -> (JsVar, Option<JsPtrEnum>) {
+pub fn eval_string(string: &str, state: &mut ScopeManager) -> JsVarValue {
     println!("{}", string);
     match parse_Stmt(string) {
         Ok(stmt) => {
@@ -42,7 +38,7 @@ pub fn eval_string(string: &str, state: &mut ScopeManager) -> (JsVar, Option<JsP
 /// Evaluate a single JS statement (which may be a block or sequence of statements).
 /// Returns tuple of (evaluated final value, return value), where return value requires that
 /// `return` be used to generate it.
-pub fn eval_stmt(s: &Stmt, mut state: &mut ScopeManager) -> ((JsVar, Option<JsPtrEnum>), Option<JsVar>) {
+pub fn eval_stmt(s: &Stmt, mut state: &mut ScopeManager) -> (JsVarValue, JsReturnValue) {
     match *s {
         // var_string = exp;
         Assign(ref var_string, ref exp) => {
@@ -129,7 +125,7 @@ pub fn eval_stmt(s: &Stmt, mut state: &mut ScopeManager) -> ((JsVar, Option<JsPt
 }
 
 /// Evaluate an expression into a JsVar.
-pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> (JsVar, Option<JsPtrEnum>) {
+pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> JsVarValue {
     match e {
         // e1 [op] e2
         &BinExp(ref e1, ref op, ref e2) => {
