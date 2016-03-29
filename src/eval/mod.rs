@@ -19,7 +19,7 @@ use jsrs_common::ast::Stmt::*;
 
 use number::eval_binop;
 use var::*;
-use error::Result;
+use error::{Result, JsError};
 
 use unescape::unescape;
 
@@ -28,7 +28,7 @@ use unescape::unescape;
 /// Returns a JsVar which is the return value of those statements.
 pub fn eval_string(string: &str, state: &mut ScopeManager) -> Result<JsVarValue> {
     match parse_Stmt(string) {
-        Ok(stmt) => Ok(eval_stmt(&stmt, state).0),
+        Ok(stmt) => Ok(eval_stmt(&stmt, state).unwrap().0),
         Err(e) => Err(JsError::ParseError(format!("{:?}", e))),
     }
 }
@@ -36,7 +36,7 @@ pub fn eval_string(string: &str, state: &mut ScopeManager) -> Result<JsVarValue>
 /// Evaluate a single JS statement (which may be a block or sequence of statements).
 /// Returns tuple of (evaluated final value, return value), where return value requires that
 /// `return` be used to generate it.
-pub fn eval_stmt(s: &Stmt, mut state: &mut ScopeManager) -> (JsVarValue, JsReturnValue) {
+pub fn eval_stmt(s: &Stmt, mut state: &mut ScopeManager) -> Result<(JsVarValue, JsReturnValue)> {
     match *s {
         // var_string = exp;
         Assign(ref var_string, ref exp) => {
@@ -52,19 +52,19 @@ pub fn eval_stmt(s: &Stmt, mut state: &mut ScopeManager) -> (JsVarValue, JsRetur
                 e @ Err(_) => println!("{:?}", e),
             }
 
-            ((js_var, js_ptr), None)
+            Ok(((js_var, js_ptr), None))
         },
 
         // exp;
-        BareExp(ref exp) => (eval_exp(exp, &mut state), None),
+        BareExp(ref exp) => Ok((eval_exp(exp, &mut state), None)),
 
         // var var_string = exp
         Decl(ref var_string, ref exp) => {
             let (mut js_var, js_ptr) = eval_exp(exp, state);
             js_var.binding = Binding::new(var_string.clone());
             match state.alloc(js_var, js_ptr) {
-                Ok(_) => (scalar(JsUndef), None),
-                e @ Err(_) => panic!("{:?}", e),
+                Ok(_) => Ok((scalar(JsUndef), None)),
+                Err(e) => Err(JsError::GcError(e)),
             }
         },
 
@@ -80,17 +80,17 @@ pub fn eval_stmt(s: &Stmt, mut state: &mut ScopeManager) -> (JsVarValue, JsRetur
                 if let Some(ref block) = *else_block {
                     eval_stmt(&*block, state)
                 } else {
-                    (scalar(JsUndef), None)
+                    Ok((scalar(JsUndef), None))
                 }
             }
         },
 
-        Empty => (scalar(JsUndef), None),
+        Empty => Ok((scalar(JsUndef), None)),
 
         // return exp
         Ret(ref exp) => {
             let js_var = eval_exp(&exp, &mut state);
-            (js_var.clone(), Some(js_var.0))
+            Ok((js_var.clone(), Some(js_var.0)))
         }
 
         // a sequence of any two expressions
@@ -111,11 +111,11 @@ pub fn eval_stmt(s: &Stmt, mut state: &mut ScopeManager) -> (JsVarValue, JsRetur
             loop {
                 if eval_exp(&condition, state).0.as_bool() {
                     // TODO: check to see if a return stmt has been reached.
-                    let (_, v) = eval_stmt(&*block, state);
+                    let (_, v) = eval_stmt(&*block, state).unwrap();
                     ret_val = v;
                 } else {
                     // condition is no longer true, return a return value
-                    return (scalar(JsUndef), ret_val);
+                    return Ok((scalar(JsUndef), ret_val));
                 }
             }
         }
@@ -169,7 +169,7 @@ pub fn eval_exp(e: &Exp, mut state: &mut ScopeManager) -> JsVarValue {
                 .expect("Unable to store function argument in scope");
             }
 
-            let (_, v) = eval_stmt(&js_fn_struct.stmt, state);
+            let (_, v) = eval_stmt(&js_fn_struct.stmt, state).unwrap();
 
             // If the return value of a function is `None` (void),
             // or is not a pointer to a function, a closure is not being
