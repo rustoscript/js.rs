@@ -140,8 +140,6 @@ fn repl(scope_manager: Rc<RefCell<ScopeManager>>) -> i32 {
     let mut rl = Editor::new();
     let mut stderr = io::stderr();
 
-    scope_manager.borrow_mut().push_scope(&Exp::Undefined);
-
     if metadata(".history").is_ok() && rl.load_history(".history").is_err() {
         writeln!(stderr, "Error: unable to load history on startup").unwrap();
     }
