@@ -9,11 +9,9 @@ use jsrs_common::types::coerce::{AsBool,AsNumber};
 
 use french_press::ScopeManager;
 use french_press::alloc::AllocBox;
-
 use jsrs_parser::lalr::parse_Stmt;
 use jsrs_common::ast::*;
 use jsrs_common::ast::Exp::*;
-use jsrs_common::ast::BinOp::*;
 use jsrs_common::ast::Stmt::*;
 
 use jsrs_common::types::binding::Binding;
@@ -23,29 +21,25 @@ use jsrs_common::types::js_str::JsStrStruct;
 use jsrs_common::types::js_var::{JsVar, JsType, JsPtrEnum, JsKey, JsPtrTag};
 use jsrs_common::types::js_var::JsType::*;
 use jsrs_common::backend::Backend;
-
+use number::eval_binop;
+use var::*;
+use error::{Result, JsError};
 use unescape::unescape;
 
-// Helper to avoid repeating this everywhere
-fn scalar(v: JsType) -> (JsVar, Option<JsPtrEnum>) {
-    (JsVar::new(v), None)
-}
 
 /// Evaluate a string containing some JavaScript statements (or sequences of statements).
 /// Returns a JsVar which is the return value of those statements.
-pub fn eval_string(string: &str, state: Rc<RefCell<ScopeManager>>) -> (JsVar, Option<JsPtrEnum>) {
+pub fn eval_string(string: &str, state: Rc<RefCell<ScopeManager>>) -> Result<JsVarValue> {
     match parse_Stmt(string) {
-        Ok(stmt) => {
-            eval_stmt(&stmt, state.clone()).0
-        }
-        Err(e) => panic!("parse error: {:?}", e),
+        Ok(stmt) => Ok(eval_stmt(&stmt, state).unwrap().0),
+        Err(e) => Err(JsError::ParseError(format!("{:?}", e))),
     }
 }
 
 /// Evaluate a single JS statement (which may be a block or sequence of statements).
 /// Returns tuple of (evaluated final value, return value), where return value requires that
 /// `return` be used to generate it.
-pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>) -> ((JsVar, Option<JsPtrEnum>), Option<JsVar>) {
+pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>) -> Result<(JsVarValue, JsReturnValue)> {
     match *s {
         // var_string = exp;
         Assign(ref var_string, ref exp) => {
@@ -61,19 +55,19 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>) -> ((JsVar, Option<
                 e @ Err(_) => println!("{:?}", e),
             }
 
-            ((js_var, js_ptr), None)
+            Ok(((js_var, js_ptr), None))
         },
 
         // exp;
-        BareExp(ref exp) => (eval_exp(exp, state.clone()), None),
+        BareExp(ref exp) => Ok((eval_exp(exp, state.clone()), None)),
 
         // var var_string = exp
         Decl(ref var_string, ref exp) => {
             let (mut js_var, js_ptr) = eval_exp(exp, state.clone());
             js_var.binding = Binding::new(var_string.clone());
             match state.borrow_mut().alloc(js_var, js_ptr) {
-                Ok(_) => (scalar(JsUndef), None),
-                e @ Err(_) => panic!("{:?}", e),
+                Ok(_) => Ok((scalar(JsUndef), None)),
+                Err(e) => Err(JsError::GcError(e)),
             }
         },
 
@@ -89,22 +83,22 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>) -> ((JsVar, Option<
                 if let Some(ref block) = *else_block {
                     eval_stmt(&*block, state.clone())
                 } else {
-                    (scalar(JsUndef), None)
+                    Ok((scalar(JsUndef), None))
                 }
             }
         },
 
-        Empty => (scalar(JsUndef), None),
+        Empty => Ok((scalar(JsUndef), None)),
 
         // return exp
         Ret(ref exp) => {
             let js_var = eval_exp(&exp, state.clone());
-            (js_var.clone(), Some(js_var.0))
+            Ok((js_var.clone(), Some(js_var.0)))
         }
 
         // a sequence of any two expressions
         Seq(ref s1, ref s2) => {
-            eval_stmt(&*s1, state.clone());
+            try!(eval_stmt(&*s1, state.clone()));
             eval_stmt(&*s2, state.clone())
         },
 
@@ -120,11 +114,11 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>) -> ((JsVar, Option<
             loop {
                 if eval_exp(&condition, state.clone()).0.as_bool() {
                     // TODO: check to see if a return stmt has been reached.
-                    let (_, v) = eval_stmt(&*block, state.clone());
+                    let (_, v) = eval_stmt(&*block, state.clone()).unwrap();
                     ret_val = v;
                 } else {
                     // condition is no longer true, return a return value
-                    return (scalar(JsUndef), ret_val);
+                    return Ok((scalar(JsUndef), ret_val));
                 }
             }
         }
@@ -132,31 +126,15 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>) -> ((JsVar, Option<
 }
 
 /// Evaluate an expression into a JsVar.
-pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> (JsVar, Option<JsPtrEnum>) {
+pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> JsVarValue {
     match e {
         // e1 [op] e2
         &BinExp(ref e1, ref op, ref e2) => {
             let val1 = eval_exp(e1, state.clone()).0;
             let val2 = eval_exp(e2, state.clone()).0;
 
-            match *op {
-                And => scalar(JsBool(val1.as_bool() && val2.as_bool())),
-                Or  => scalar(JsBool(val1.as_bool() || val2.as_bool())),
-
-                Ge  => scalar(JsBool(val1.as_bool() >= val2.as_bool())),
-                Gt  => scalar(JsBool(val1.as_bool() >  val2.as_bool())),
-                Le  => scalar(JsBool(val1.as_bool() <= val2.as_bool())),
-                Lt  => scalar(JsBool(val1.as_bool() <  val2.as_bool())),
-                Neq => scalar(JsBool(val1.as_bool() != val2.as_bool())),
-                Eql => scalar(JsBool(val1.as_bool() == val2.as_bool())),
-
-                Minus => scalar(JsNum(val1.as_number() - val2.as_number())),
-                Plus  => scalar(JsNum(val1.as_number() + val2.as_number())),
-                Slash => scalar(JsNum(val1.as_number() / val2.as_number())),
-                Star  => scalar(JsNum(val1.as_number() * val2.as_number())),
-
-                _ => scalar(JsType::JsNull)
-            }
+            let result = eval_binop(op, val1, val2);
+            scalar(result)
         }
         &Bool(b) => scalar(JsBool(b)),
 
@@ -183,7 +161,10 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> (JsVar, Option<JsP
                 }
             };
 
-            state.deref().borrow_mut().push_scope(e);
+            match js_fn_struct.name {
+                Some(_) => state.deref().borrow_mut().push_scope(e),
+                None => state.deref().borrow_mut().push_closure_scope(&fun_binding.unique).expect("Unable to push closure scope"),
+            };
 
             for param in js_fn_struct.params {
                 let mut arg = if args.is_empty() {
@@ -197,20 +178,21 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> (JsVar, Option<JsP
                 .expect("Unable to store function argument in scope");
             }
 
-            let (_, v) = eval_stmt(&js_fn_struct.stmt, state.clone());
+            let (_, v) = eval_stmt(&js_fn_struct.stmt, state.clone()).unwrap();
 
             // If the return value of a function is `None` (void),
             // or is not a pointer to a function, a closure is not being
             // returned from the function. If the function is returning a
             // function, and the function being returned has no name, a closure
             // is being returned.
-            let returning_closure = v.as_ref().map_or(false, |ref var| {
+            let returning_closure = v.as_ref().map_or(None, |ref var| {
                 match var.t {
                     JsType::JsPtr(ref tag) => match tag {
-                        &JsPtrTag::JsFn { ref name } => name.is_none(),
-                        _ => false,
+                        &JsPtrTag::JsFn { ref name } =>
+                            if name.is_none() { Some(var.unique.clone()) } else { None },
+                        _ => None,
                     },
-                    _ => false,
+                    _ => None,
                 }
             });
 
@@ -304,17 +286,17 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> (JsVar, Option<JsP
 #[cfg(test)]
 mod test {
     use super::*;
-    use std::collections::hash_set::HashSet;
+    use std::cell::RefCell;
+    use std::rc::Rc;
     use french_press::init_gc;
-    use js_types::js_var::JsType;
-    use js_types::binding::Binding;
+    use jsrs_common::types::js_var::JsType;
 
     #[test]
     fn test_eval_literals() {
         let state = Rc::new(RefCell::new(init_gc()));
-        assert_eq!(JsType::JsNum(5.0f64), eval_string("5.0;\n", state.clone()).t);
-        assert_eq!(JsType::JsNum(0.0f64), eval_string("0.0;\n", state.clone()).t);
-        assert_eq!(JsType::JsUndef, eval_string("undefined;\n", state.clone()).t);
+        assert_eq!(JsType::JsNum(5.0f64), eval_string("5.0;\n", state.clone()).unwrap().0.t);
+        assert_eq!(JsType::JsNum(0.0f64), eval_string("0.0;\n", state.clone()).unwrap().0.t);
+        assert_eq!(JsType::JsUndef, eval_string("undefined;\n", state.clone()).unwrap().0.t);
     }
 
     //// TODO: handle `var` and no `var` separately
@@ -329,7 +311,7 @@ mod test {
 
     #[test]
     fn test_inc_dec() {
-        let state = Rc::new(RefCell::new(init_gc()));
+        // let state = Rc::new(RefCell::new(init_gc()));
         //assert_eq!(JsType::JsNum(1.0f64), eval_string("var a = 1;\n", &mut state).t);
         //assert_eq!(&JsType::JsNum(1.0), state.load(&Binding::new("a")).unwrap());
 
@@ -348,10 +330,10 @@ mod test {
 
     #[test]
     fn test_binexp() {
-        let mut state = init_gc();
-        assert_eq!(JsType::JsNum(6.0f64),  eval_string("2.0 + 4.0;\n", state.clone().t));
-        assert_eq!(JsType::JsNum(0.5f64),  eval_string("2.0 / 4.0;\n", state.clone().t));
-        assert_eq!(JsType::JsNum(-2.0f64), eval_string("2.0 - 4.0;\n", state.clone().t));
-        assert_eq!(JsType::JsNum(8.0f64),  eval_string("2.0 * 4.0;\n", state.clone().t));
+        let state = Rc::new(RefCell::new(init_gc()));
+        assert_eq!(JsType::JsNum(6.0f64),  eval_string("2.0 + 4.0;\n", state.clone()).unwrap().0.t);
+        assert_eq!(JsType::JsNum(0.5f64),  eval_string("2.0 / 4.0;\n", state.clone()).unwrap().0.t);
+        assert_eq!(JsType::JsNum(-2.0f64), eval_string("2.0 - 4.0;\n", state.clone()).unwrap().0.t);
+        assert_eq!(JsType::JsNum(8.0f64),  eval_string("2.0 * 4.0;\n", state.clone()).unwrap().0.t);
     }
 }

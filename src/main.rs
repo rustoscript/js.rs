@@ -1,6 +1,8 @@
 #![feature(plugin)]
 #![plugin(docopt_macros)]
 
+#![feature(test)] 
+
 extern crate jsrs_common;
 extern crate jsrs_parser;
 extern crate french_press;
@@ -11,9 +13,15 @@ extern crate rustyline;
 extern crate rustc_serialize;
 extern crate docopt;
 
-mod bench;
+extern crate test;
+
+mod error;
+mod var;
+
 mod eval;
 mod native;
+mod number;
+mod bench;
 mod preprocess;
 
 use std::cell::RefCell;
@@ -150,7 +158,7 @@ fn repl(scope_manager: Rc<RefCell<ScopeManager>>) -> i32 {
                 clean_string(input).map(|input| {
                     rl.add_history_entry(&input);
 
-                    let (var, ptr) = eval_string(&input, scope_manager.clone());
+                    let (var, ptr) = eval_string(&input, scope_manager.clone()).unwrap();
 
                     match ptr {
                         Some(JsPtrEnum::JsSym(s)) => println!("=> Symbol({:?})", s),

@@ -16,7 +16,7 @@ git = "https://github.com/rustoscript/js.rs-common.git"
 git = "https://github.com/rustoscript/french-press"
 
 [dependencies]
-rustyline = "0.2.1"
+rustyline = "0.2.2"
 uuid = "0.1"
 walkdir = "0.1"
 unescape = "0.1.0"

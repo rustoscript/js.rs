@@ -3,6 +3,8 @@
 #[cfg(test)]
 mod benchmarks {
     use ::eval::eval_string;
+    use std::cell::RefCell;
+    use std::rc::Rc;
     use french_press::init_gc;
     use test::Bencher;
 
@@ -14,8 +16,8 @@ mod benchmarks {
         var z = x + y;
         ";
 
-        let mut sm = init_gc();
-        b.iter(|| eval_string(code, &mut sm));
+        let sm = Rc::new(RefCell::new(init_gc()));
+        b.iter(|| eval_string(code, sm.clone()));
     }
 
     #[bench]
@@ -34,7 +36,7 @@ mod benchmarks {
         }
         ";
 
-        let mut sm = init_gc();
-        b.iter(|| eval_string(code, &mut sm));
+        let sm = Rc::new(RefCell::new(init_gc()));
+        b.iter(|| eval_string(code, sm.clone()));
     }
 }
