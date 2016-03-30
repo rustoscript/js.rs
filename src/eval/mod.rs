@@ -31,7 +31,7 @@ use unescape::unescape;
 /// Returns a JsVar which is the return value of those statements.
 pub fn eval_string(string: &str, state: Rc<RefCell<ScopeManager>>) -> Result<JsVarValue> {
     match parse_Stmt(string) {
-        Ok(stmt) => Ok(eval_stmt(&stmt, state).unwrap().0),
+        Ok(stmt) => { Ok(eval_stmt(&stmt, state).expect("Error evaluating statement").0) }
         Err(e) => Err(JsError::ParseError(format!("{:?}", e))),
     }
 }
@@ -50,6 +50,7 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>) -> Result<(JsVarVal
 
             // Clone the js_var to store into the ScopeManager
             let cloned = js_var.clone();
+
             match state.deref().borrow_mut().store(cloned, js_ptr.clone()) {
                 Ok(_) => (),
                 e @ Err(_) => println!("{:?}", e),
@@ -64,10 +65,13 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>) -> Result<(JsVarVal
         // var var_string = exp
         Decl(ref var_string, ref exp) => {
             let (mut js_var, js_ptr) = eval_exp(exp, state.clone());
-            js_var.binding = Binding::new(var_string.clone());
+            let _ = js_var.deanonymize(&var_string);
+
             match state.borrow_mut().alloc(js_var, js_ptr) {
                 Ok(_) => Ok((scalar(JsUndef), None)),
-                Err(e) => Err(JsError::GcError(e)),
+                Err(e) => {
+                    Err(JsError::GcError(e))
+                }
             }
         },
 
@@ -93,7 +97,7 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>) -> Result<(JsVarVal
         // return exp
         Ret(ref exp) => {
             let js_var = eval_exp(&exp, state.clone());
-            Ok((js_var.clone(), Some(js_var.0)))
+            Ok((js_var.clone(), Some(js_var)))
         }
 
         // a sequence of any two expressions
@@ -150,9 +154,7 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> JsVarValue {
 
             let js_fn_struct = match fun_ptr {
                 Some(JsPtrEnum::JsFn(fun)) => fun,
-                Some(JsPtrEnum::NativeFn(func)) => {
-                    return func.call(state.clone(), None, args)
-                }
+                Some(JsPtrEnum::NativeFn(func)) => return func.call(state.clone(), None, args),
                 Some(_) => panic!("ReferenceError: {:?} is not a function", fun_name),
                 None => match state.deref().borrow().load(&fun_binding.binding) {
                     Ok((_, Some(JsPtrEnum::JsFn(fun)))) => fun,
@@ -163,7 +165,10 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> JsVarValue {
 
             match js_fn_struct.name {
                 Some(_) => state.deref().borrow_mut().push_scope(e),
-                None => state.deref().borrow_mut().push_closure_scope(&fun_binding.unique).expect("Unable to push closure scope"),
+                None => {
+                    println!("anonymous function binding: {:#?}", fun_binding.unique);
+                    state.deref().borrow_mut().push_closure_scope(&fun_binding.unique).expect("Unable to push closure scope")
+                }
             };
 
             for param in js_fn_struct.params {
@@ -178,7 +183,7 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> JsVarValue {
                 .expect("Unable to store function argument in scope");
             }
 
-            let (_, v) = eval_stmt(&js_fn_struct.stmt, state.clone()).unwrap();
+            let (_, v) = eval_stmt(&js_fn_struct.stmt, state.clone()).expect("Error running function body");
 
             // If the return value of a function is `None` (void),
             // or is not a pointer to a function, a closure is not being
@@ -186,10 +191,9 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> JsVarValue {
             // function, and the function being returned has no name, a closure
             // is being returned.
             let returning_closure = v.as_ref().map_or(None, |ref var| {
-                match var.t {
+                match var.0.t {
                     JsType::JsPtr(ref tag) => match tag {
-                        &JsPtrTag::JsFn { ref name } =>
-                            if name.is_none() { Some(var.unique.clone()) } else { None },
+                        &JsPtrTag::JsFn {..} => Some(var.0.unique.clone()),
                         _ => None,
                     },
                     _ => None,
@@ -198,8 +202,7 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> JsVarValue {
 
             // Should we yield here? Not sure, so for now it doesn't
             state.deref().borrow_mut().pop_scope(returning_closure, false).expect("Unable to clear scope for function");
-            // TODO handle obj
-            v.map(|x| (x, None)).unwrap_or(scalar(JsUndef))
+            v.unwrap_or(scalar(JsUndef))
         }
 
         // function([param1, params]) { body }
