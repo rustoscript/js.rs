@@ -45,8 +45,12 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>) -> Result<(JsVarVal
         Assign(ref var_string, ref exp) => {
             let (new_var, js_ptr) = eval_exp(exp, state.clone());
             // TODO error handling
-            let (mut js_var, _) = state.borrow().load(&Binding::new(var_string.clone())).unwrap();
+            let (mut js_var, _) = state.deref().borrow().load(&Binding::new(var_string.clone())).unwrap();
             js_var.t = new_var.t;
+
+            let old_binding = js_var.unique.clone();
+            let _ = js_var.deanonymize(var_string);
+            let _ = state.deref().borrow_mut().rename_closure(&old_binding, &js_var.unique);
 
             // Clone the js_var to store into the ScopeManager
             let cloned = js_var.clone();
@@ -65,9 +69,12 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>) -> Result<(JsVarVal
         // var var_string = exp
         Decl(ref var_string, ref exp) => {
             let (mut js_var, js_ptr) = eval_exp(exp, state.clone());
-            let _ = js_var.deanonymize(&var_string);
+            let old_binding = js_var.unique.clone();
+            let _ = js_var.deanonymize(var_string);
 
-            match state.borrow_mut().alloc(js_var, js_ptr) {
+            let _ = state.deref().borrow_mut().rename_closure(&old_binding, &js_var.unique);
+
+            match state.deref().borrow_mut().alloc(js_var, js_ptr) {
                 Ok(_) => Ok((scalar(JsUndef), None)),
                 Err(e) => {
                     Err(JsError::GcError(e))
@@ -165,10 +172,7 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> JsVarValue {
 
             match js_fn_struct.name {
                 Some(_) => state.deref().borrow_mut().push_scope(e),
-                None => {
-                    println!("anonymous function binding: {:#?}", fun_binding.unique);
-                    state.deref().borrow_mut().push_closure_scope(&fun_binding.unique).expect("Unable to push closure scope")
-                }
+                None => state.deref().borrow_mut().push_closure_scope(&fun_binding.unique).expect("Unable to push closure scope")
             };
 
             for param in js_fn_struct.params {
@@ -202,6 +206,7 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> JsVarValue {
 
             // Should we yield here? Not sure, so for now it doesn't
             state.deref().borrow_mut().pop_scope(returning_closure, false).expect("Unable to clear scope for function");
+
             v.unwrap_or(scalar(JsUndef))
         }
 
