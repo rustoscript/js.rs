@@ -1,7 +1,7 @@
 #![feature(plugin)]
 #![plugin(docopt_macros)]
 
-#![feature(test)] 
+#![feature(test)]
 
 extern crate jsrs_common;
 extern crate jsrs_parser;
@@ -36,7 +36,6 @@ use rustyline::error::ReadlineError;
 use rustyline::Editor;
 use walkdir::WalkDir;
 
-use jsrs_common::ast::Exp;
 use jsrs_common::types::js_var::JsPtrEnum;
 use french_press::{init_gc, ScopeManager};
 

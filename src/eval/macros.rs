@@ -7,8 +7,9 @@ macro_rules! eval_float_post_op {
                 Ok((orig_var, _)) => {
                     let $f: f64 = orig_var.as_number();
                     let new_num: f64 = $new;
-                    let new_var = JsVar::bind(&binding, JsNum(new_num));
-                    $state.deref().borrow_mut().alloc(new_var, None).unwrap();
+                    let mut new_var = orig_var.clone();
+                    new_var.t = JsNum(new_num);
+                    $state.deref().borrow_mut().store(new_var, None).unwrap();
                     orig_var
                 }
                 _ => panic!(format!("ReferenceError: {} is not defined", binding))
@@ -27,8 +28,9 @@ macro_rules! eval_float_pre_op {
                 Ok((orig_var, _)) => {
                     let $f: f64 = orig_var.as_number();
                     let new_num: f64 = $new;
-                    let new_var = JsVar::bind(&binding, JsNum(new_num));
-                    $state.deref().borrow_mut().alloc(new_var.clone(), None).unwrap();
+                    let mut new_var = orig_var.clone();
+                    new_var.t = JsNum(new_num);
+                    $state.deref().borrow_mut().store(new_var.clone(), None).unwrap();
                     new_var
                 }
                 _ => panic!(format!("ReferenceError: {} is not defined", binding))
