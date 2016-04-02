@@ -7,6 +7,8 @@ use jsrs_common::gc_error::GcError;
 pub enum JsError {
     ParseError(String),
     GcError(GcError),
+    TypeError(String),
+    ReferenceError(String),
 }
 
 impl fmt::Display for JsError {
@@ -14,6 +16,8 @@ impl fmt::Display for JsError {
         match *self {
             JsError::ParseError(ref s) => write!(f, "ParseError: {}", s),
             JsError::GcError(ref gc) => write!(f, "GcError: {}", gc),
+            JsError::TypeError(ref s) => write!(f, "TypeError: {}", s),
+            JsError::ReferenceError(ref s) => write!(f, "ReferenceError: {}", s),
         }
     }
 }

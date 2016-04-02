@@ -15,7 +15,7 @@ extern crate docopt;
 
 extern crate test;
 
-mod error;
+mod js_error;
 mod var;
 
 mod eval;
