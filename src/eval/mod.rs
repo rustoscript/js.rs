@@ -68,7 +68,7 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>) -> js_error::Result
         Decl(ref var_string, ref exp) => {
             let (mut js_var, js_ptr) = try!(eval_exp(exp, state.clone()));
             let old_binding = js_var.unique.clone();
-            let _ = js_var.deanonymize(var_string);
+            js_var.binding = Binding::new(var_string.clone());
 
             let _ = state.deref().borrow_mut().rename_closure(&old_binding, &js_var.unique);
 
