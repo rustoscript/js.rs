@@ -8,5 +8,4 @@ pub fn scalar(v: JsType) -> (JsVar, Option<JsPtrEnum>) {
     (JsVar::new(v), None)
 }
 
-fn push_args() {
-}
+// fn push_args() { }

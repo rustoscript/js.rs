@@ -1,7 +1,9 @@
 use std::fmt;
 use std::result;
 
+use var::JsVarValue;
 use jsrs_common::gc_error::GcError;
+
 
 #[derive(Debug)]
 pub enum JsError {
@@ -9,6 +11,7 @@ pub enum JsError {
     GcError(GcError),
     TypeError(String),
     ReferenceError(String),
+    JsVar(JsVarValue),
 }
 
 impl fmt::Display for JsError {
@@ -18,7 +21,14 @@ impl fmt::Display for JsError {
             JsError::GcError(ref gc) => write!(f, "GcError: {}", gc),
             JsError::TypeError(ref s) => write!(f, "TypeError: {}", s),
             JsError::ReferenceError(ref s) => write!(f, "ReferenceError: {}", s),
+            JsError::JsVar(ref var_value) => write!(f, "{:?}", var_value),
         }
+    }
+}
+
+impl From<GcError> for JsError {
+    fn from(e: GcError)-> Self {
+        JsError::GcError(e)
     }
 }
 

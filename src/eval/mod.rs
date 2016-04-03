@@ -25,13 +25,13 @@ use jsrs_common::backend::Backend;
 use unescape::unescape;
 use number::eval_binop;
 use var::*;
-use js_error::{Result, JsError};
+use js_error::JsError;
 use js_error;
 
 
 /// Evaluate a string containing some JavaScript statements (or sequences of statements).
 /// Returns a JsVar which is the return value of those statements.
-pub fn eval_string(string: &str, state: Rc<RefCell<ScopeManager>>) -> Result<JsVarValue> {
+pub fn eval_string(string: &str, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<JsVarValue> {
     match parse_Stmt(string) {
         Ok(stmt) => { Ok(eval_stmt(&stmt, state).expect("Error evaluating statement").0) }
         Err(e) => Err(JsError::ParseError(format!("{:?}", e))),
@@ -41,13 +41,12 @@ pub fn eval_string(string: &str, state: Rc<RefCell<ScopeManager>>) -> Result<JsV
 /// Evaluate a single JS statement (which may be a block or sequence of statements).
 /// Returns tuple of (evaluated final value, return value), where return value requires that
 /// `return` be used to generate it.
-pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>) -> Result<(JsVarValue, JsReturnValue)> {
+pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<(JsVarValue, JsReturnValue)> {
     match *s {
         // var_string = exp;
         Assign(ref var_string, ref exp) => {
-            let (new_var, js_ptr) = eval_exp(exp, state.clone()).unwrap();
-            // TODO error handling
-            let (mut js_var, _) = state.deref().borrow().load(&Binding::new(var_string.clone())).unwrap();
+            let (new_var, js_ptr) = try!(eval_exp(exp, state.clone()));
+            let (mut js_var, _) = try!(state.deref().borrow().load(&Binding::new(var_string.clone())));
             js_var.t = new_var.t;
 
             let old_binding = js_var.unique.clone();
@@ -57,20 +56,17 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>) -> Result<(JsVarVal
             // Clone the js_var to store into the ScopeManager
             let cloned = js_var.clone();
 
-            match state.deref().borrow_mut().store(cloned, js_ptr.clone()) {
-                Ok(_) => (),
-                e @ Err(_) => println!("{:?}", e),
-            }
+            try!(state.deref().borrow_mut().store(cloned, js_ptr.clone()));
 
             Ok(((js_var, js_ptr), None))
         },
 
         // exp;
-        BareExp(ref exp) => Ok((eval_exp(exp, state.clone()).unwrap(), None)),
+        BareExp(ref exp) => Ok((try!(eval_exp(exp, state.clone())), None)),
 
         // var var_string = exp
         Decl(ref var_string, ref exp) => {
-            let (mut js_var, js_ptr) = eval_exp(exp, state.clone()).unwrap();
+            let (mut js_var, js_ptr) = try!(eval_exp(exp, state.clone()));
             let old_binding = js_var.unique.clone();
             let _ = js_var.deanonymize(var_string);
 
@@ -87,7 +83,7 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>) -> Result<(JsVarVal
         // if (condition) { if_block } else { else_block }
         If(ref condition, ref if_block, ref else_block) => {
             // evaluate expression
-            if eval_exp(&condition, state.clone()).unwrap().0.as_bool() {
+            if try!(eval_exp(&condition, state.clone())).0.as_bool() {
                 // condition = true, evaluate if-block.
                 eval_stmt(&*if_block, state.clone())
             } else {
@@ -105,7 +101,7 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>) -> Result<(JsVarVal
 
         // return exp
         Ret(ref exp) => {
-            let js_var = eval_exp(&exp, state.clone()).unwrap();
+            let js_var = try!(eval_exp(&exp, state.clone()));
             Ok((js_var.clone(), Some(js_var)))
         }
 
@@ -116,7 +112,10 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>) -> Result<(JsVarVal
         },
 
         // throw <expression>;
-        Throw(..) => unimplemented!(),
+        Throw(ref exp) => {
+            let (var, ptr) = try!(eval_exp(exp, state));
+            Err(JsError::JsVar((var, ptr)))
+        }
 
         // try { block } [catch <expression> { block} &&/|| finally { block }]
         Try(..) => unimplemented!(),
@@ -236,7 +235,7 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
         // var.binding
         &InstanceVar(ref instance_exp, ref var) => {
             // TODO: this needs better type-reasoning and errors
-            let (instance_var, var_ptr) = (eval_exp(instance_exp, state.clone())).unwrap();
+            let (instance_var, var_ptr) = try!(eval_exp(instance_exp, state.clone()));
             if let JsPtr(_) = instance_var.t {
                 match var_ptr {
                     Some(JsPtrEnum::JsObj(obj_struct)) => {

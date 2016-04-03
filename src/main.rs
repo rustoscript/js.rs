@@ -145,7 +145,6 @@ fn repl(scope_manager: Rc<RefCell<ScopeManager>>) -> i32 {
 
     loop {
         // prompt
-
         let readline = rl.readline(">> ");
 
         match readline {
