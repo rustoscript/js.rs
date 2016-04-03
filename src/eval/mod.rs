@@ -31,17 +31,31 @@ use js_error;
 
 /// Evaluate a string containing some JavaScript statements (or sequences of statements).
 /// Returns a JsVar which is the return value of those statements.
-pub fn eval_string(string: &str, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<JsVarValue> {
+pub fn eval_string(string: &str, state: Rc<RefCell<ScopeManager>>)
+        -> js_error::Result<JsVarValue> {
     match parse_Stmt(string) {
         Ok(stmt) => { Ok(eval_stmt(&stmt, state).expect("Error evaluating statement").0) }
         Err(e) => Err(JsError::ParseError(format!("{:?}", e))),
     }
 }
 
+pub fn eval_stmt_block(block: &Vec<Stmt>, state: Rc<RefCell<ScopeManager>>)
+        -> js_error::Result<(JsVarValue, JsReturnValue)> {
+    let mut ret = (scalar(JsUndef), None);
+    for stmt in &*block {
+        ret = try!(eval_stmt(stmt, state.clone()));
+        if let Some(..) = ret.1 {
+            return Ok(ret);
+        }
+    }
+    Ok(ret)
+}
+
 /// Evaluate a single JS statement (which may be a block or sequence of statements).
 /// Returns tuple of (evaluated final value, return value), where return value requires that
 /// `return` be used to generate it.
-pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<(JsVarValue, JsReturnValue)> {
+pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>)
+        -> js_error::Result<(JsVarValue, JsReturnValue)> {
     match *s {
         // var_string = exp;
         Assign(ref var_string, ref exp) => {
@@ -84,16 +98,12 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>) -> js_error::Result
         If(ref condition, ref if_block, ref else_block) => {
             // evaluate expression
             if try!(eval_exp(&condition, state.clone())).0.as_bool() {
-                // condition = true, evaluate if-block.
-                eval_stmt(&*if_block, state.clone())
+                // condition = true => evaluate if-block.
+                return eval_stmt_block(&*if_block, state.clone());
             } else {
-                // condition = false
+                // condition = false =>
                 // evaluate else-block if it exists, otherwise return undefined.
-                if let Some(ref block) = *else_block {
-                    eval_stmt(&*block, state.clone())
-                } else {
-                    Ok((scalar(JsUndef), None))
-                }
+                return eval_stmt_block(&*else_block, state.clone());
             }
         },
 
@@ -118,19 +128,21 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>) -> js_error::Result
         }
 
         // try { block } [catch <expression> { block} &&/|| finally { block }]
-        Try(..) => unimplemented!(),
+        Try(..) => {
+            unimplemented!();
+        }
 
         // while (condition) { block }
         While(ref condition, ref block) => {
-            let mut ret_val = None;
             loop {
-                if eval_exp(&condition, state.clone()).unwrap().0.as_bool() {
-                    // TODO: check to see if a return stmt has been reached.
-                    let (_, v) = eval_stmt(&*block, state.clone()).unwrap();
-                    ret_val = v;
+                if try!(eval_exp(&condition, state.clone())).0.as_bool() {
+                    let (js_var, js_ret_var) = try!(eval_stmt_block(block, state.clone()));
+                    if let Some(..) = js_ret_var {
+                        return Ok((js_var, js_ret_var));
+                    }
                 } else {
                     // condition is no longer true, return a return value
-                    return Ok((scalar(JsUndef), ret_val));
+                    return Ok((scalar(JsUndef), None));
                 }
             }
         }
@@ -191,7 +203,7 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
                 .expect("Unable to store function argument in scope");
             }
 
-            let (_, v) = eval_stmt(&js_fn_struct.stmt, state.clone()).expect("Error running function body");
+            let (_, v) = try!(eval_stmt_block(&js_fn_struct.stmt, state.clone()));
 
             // If the return value of a function is `None` (void),
             // or is not a pointer to a function, a closure is not being
@@ -217,7 +229,7 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
         // function([param1, params]) { body }
         // function opt_binding([param1, params]) { body }
         &Defun(ref opt_binding, ref params, ref body) => {
-            let js_fun = JsFnStruct::new(opt_binding, params, &**body);
+            let js_fun = JsFnStruct::new(opt_binding, params, body);
 
             let var = if let &Some(ref s) = opt_binding {
                 JsVar::bind(s, JsPtr(JsPtrTag::JsFn { name: opt_binding.clone() }))
