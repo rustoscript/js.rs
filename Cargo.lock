@@ -7,7 +7,7 @@ dependencies = [
  "french_press 0.1.0 (git+https://github.com/rustoscript/french-press)",
  "jsrs-common 0.1.0 (git+https://github.com/rustoscript/js.rs-common.git)",
  "jsrs-parser 0.1.0 (git+https://github.com/rustoscript/js.rs-parser.git)",
- "rustc-serialize 0.3.18 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rustc-serialize 0.3.19 (registry+https://github.com/rust-lang/crates.io-index)",
  "rustyline 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "unescape 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "uuid 0.1.18 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -61,7 +61,7 @@ version = "0.6.78"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "regex 0.1.62 (registry+https://github.com/rust-lang/crates.io-index)",
- "rustc-serialize 0.3.18 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rustc-serialize 0.3.19 (registry+https://github.com/rust-lang/crates.io-index)",
  "strsim 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -81,7 +81,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "french_press"
 version = "0.1.0"
-source = "git+https://github.com/rustoscript/french-press#c4faefb7dea13fee3a5a7de7e3ed2e28d8f547a5"
+source = "git+https://github.com/rustoscript/french-press#f7b6b6224c90490461f4f392a580a86d00c9944b"
 dependencies = [
  "jsrs-common 0.1.0 (git+https://github.com/rustoscript/js.rs-common.git)",
  "matches 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -95,7 +95,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "jsrs-common"
 version = "0.1.0"
-source = "git+https://github.com/rustoscript/js.rs-common.git#1cdf7023565d6f04f6a09db341ef2988a7dca305"
+source = "git+https://github.com/rustoscript/js.rs-common.git#b5feafd4728f335c3806ef59cd5b224dd4852a45"
 dependencies = [
  "uuid 0.1.18 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -137,7 +137,7 @@ dependencies = [
  "petgraph 0.1.18 (registry+https://github.com/rust-lang/crates.io-index)",
  "regex 0.1.62 (registry+https://github.com/rust-lang/crates.io-index)",
  "regex-syntax 0.2.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "rustc-serialize 0.3.18 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rustc-serialize 0.3.19 (registry+https://github.com/rust-lang/crates.io-index)",
  "term 0.4.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "time 0.1.35 (registry+https://github.com/rust-lang/crates.io-index)",
  "unicode-xid 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -239,7 +239,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "rustc-serialize"
-version = "0.3.18"
+version = "0.3.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
@@ -302,7 +302,7 @@ version = "0.1.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "rand 0.3.14 (registry+https://github.com/rust-lang/crates.io-index)",
- "rustc-serialize 0.3.18 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rustc-serialize 0.3.19 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
