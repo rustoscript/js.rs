@@ -1,5 +1,3 @@
-
-
 #[cfg(test)]
 mod benchmarks {
     use ::eval::eval_string;

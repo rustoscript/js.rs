@@ -32,7 +32,10 @@ use js_error;
 pub fn eval_string(string: &str, state: Rc<RefCell<ScopeManager>>)
         -> js_error::Result<JsVarValue> {
     match parse_Stmt(string) {
-        Ok(stmt) => { Ok(eval_stmt(&stmt, state).expect("Error evaluating statement").0) }
+        Ok(stmt) => {
+            //println!("{:?}", stmt);
+            Ok(eval_stmt(&stmt, state).expect("Error evaluating statement").0)
+        }
         Err(e) => Err(JsError::ParseError(format!("{:?}", e))),
     }
 }
@@ -126,7 +129,31 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>)
         }
 
         // try { block } [catch <expression> { block} &&/|| finally { block }]
-        Try(ref try_block, ref opt_catch_block, ref opt_finally_block) => {
+        Try(ref try_block, ref catch_var, ref catch_block, ref finally_block) => {
+            match eval_stmt_block(try_block, state.clone()) {
+                Ok(_) => {
+                    try!(eval_stmt_block(finally_block, state.clone()));
+                }
+                Err(_) => {
+                    // TODO: figure out how to bind error to variable in scope.
+                    let mut var = JsVar::new(JsType::JsPtr(JsPtrTag::JsObj));
+                    var.binding = Binding::new(catch_var.clone());
+                    let mut state_ref = (*state).borrow_mut();
+                    let obj = JsObjStruct::new(None, "", Vec::new(),
+                            &mut *(state_ref.alloc_box.borrow_mut()));
+
+                    // Add error to scope.
+                    state.borrow_mut().push_scope(&Exp::Null);
+                    state.borrow_mut().alloc(var, Some(JsPtrEnum::JsObj(obj)))
+                        .expect("Could not allocate variable.");
+                    try!(eval_stmt_block(catch_block, state.clone()));
+
+                    state.borrow_mut().pop_scope(None, false)
+                        .expect("Unable to clear scope for function");
+
+                    try!(eval_stmt_block(finally_block, state.clone()));
+                }
+            }
             unimplemented!();
         }
 
@@ -186,7 +213,8 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
 
             match js_fn_struct.name {
                 Some(_) => (*state).borrow_mut().push_scope(e),
-                None => (*state).borrow_mut().push_closure_scope(&fun_binding.unique).expect("Unable to push closure scope")
+                None => (*state).borrow_mut().push_closure_scope(&fun_binding.unique)
+                            .expect("Unable to push closure scope")
             };
 
             for param in js_fn_struct.params {
@@ -219,7 +247,8 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
             });
 
             // Should we yield here? Not sure, so for now it doesn't
-            (*state).borrow_mut().pop_scope(returning_closure, false).expect("Unable to clear scope for function");
+            (*state).borrow_mut().pop_scope(returning_closure, false)
+                .expect("Unable to clear scope for function");
 
             Ok(v.unwrap_or(scalar(JsUndef)))
         }

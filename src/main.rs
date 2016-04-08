@@ -69,8 +69,6 @@ fn eval_file(filename: String, debug: bool, should_repl: bool,
             let input = String::from(line.expect(&format!("Cannot read from {}", filename))
                                          .trim());
             if let Some(input) = clean_string(input) {
-                //println!("{}", input);
-
                 let mut last = '\0';
                 // Match braces to see if we should wait for more input
                 for c in input.chars() {
@@ -100,10 +98,10 @@ fn eval_file(filename: String, debug: bool, should_repl: bool,
 
                 if braces.len() == 0 {
                     clean_string(line_builder.clone()).map(|js_string| {
-                        println!("{:?}\n", line_builder);
+                        println!("\n{}", js_string);
                         line_builder = String::new();
                         if debug {
-                            println!(">> {}", js_string);
+                            //println!(">> {}", js_string);
                         }
 
                         let ret = eval_string(&js_string, scope_manager.clone());
