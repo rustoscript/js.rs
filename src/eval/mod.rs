@@ -138,23 +138,22 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>)
                     // TODO: figure out how to bind error to variable in scope.
                     let mut var = JsVar::new(JsType::JsPtr(JsPtrTag::JsObj));
                     var.binding = Binding::new(catch_var.clone());
-                    let mut state_ref = (*state).borrow_mut();
+                    let mut state_ref = state.borrow_mut();
                     let obj = JsObjStruct::new(None, "", Vec::new(),
                             &mut *(state_ref.alloc_box.borrow_mut()));
 
                     // Add error to scope.
-                    state.borrow_mut().push_scope(&Exp::Null);
-                    state.borrow_mut().alloc(var, Some(JsPtrEnum::JsObj(obj)))
+                    state_ref.push_scope(&Exp::Null);
+                    state_ref.alloc(var, Some(JsPtrEnum::JsObj(obj)))
                         .expect("Could not allocate variable.");
                     try!(eval_stmt_block(catch_block, state.clone()));
 
-                    state.borrow_mut().pop_scope(None, false)
+                    state_ref.pop_scope(None, false)
                         .expect("Unable to clear scope for function");
 
                     try!(eval_stmt_block(finally_block, state.clone()));
                 }
             }
-            unimplemented!();
         }
 
         // while (condition) { block }

@@ -151,12 +151,17 @@ fn repl(scope_manager: Rc<RefCell<ScopeManager>>) -> i32 {
                 clean_string(input).map(|input| {
                     rl.add_history_entry(&input);
 
-                    let (var, ptr) = eval_string(&input, scope_manager.clone()).unwrap();
-
-                    match ptr {
-                        Some(JsPtrEnum::JsSym(s)) => println!("=> Symbol({:?})", s),
-                        Some(JsPtrEnum::JsStr(s)) => println!("=> {:?}", s.text),
-                        _ => println!("=> {:?}", var.t),
+                    match eval_string(&input, scope_manager.clone()) {
+                        Ok((var, ptr)) => {
+                            match ptr {
+                                Some(JsPtrEnum::JsSym(s)) => println!("=> Symbol({:?})", s),
+                                Some(JsPtrEnum::JsStr(s)) => println!("=> {:?}", s.text),
+                                _ => println!("=> {:?}", var.t),
+                            }
+                        },
+                        Err(e) => {
+                            println!("{:?}", e);
+                        }
                     }
                 });
             },
@@ -191,7 +196,6 @@ fn repl(scope_manager: Rc<RefCell<ScopeManager>>) -> i32 {
 fn main() {
     let args: Args = Args::docopt().decode().unwrap_or_else(|e| e.exit());
     if args.flag_test {
-        //let dir_name = "tests/numeric";
         let dir_name = "tests/numeric";
 
         test_dir(String::from(dir_name))
