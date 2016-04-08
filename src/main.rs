@@ -122,14 +122,13 @@ fn eval_file(filename: String, debug: bool, should_repl: bool,
     }
 }
 
-fn test_dir() {
-    let dir_name = "tests/numeric";
-
+fn test_dir(dir_name: String) {
     for entry in WalkDir::new(dir_name) {
         let entry = entry.unwrap();
         if !entry.path().is_dir() {
             let entry_path = entry.path().display().to_string();
             let scope_manager = Rc::new(RefCell::new(init_gc()));
+            add_pervasives(scope_manager.clone());
             eval_file(entry_path, false, false, scope_manager.clone());
         }
     }
@@ -194,7 +193,10 @@ fn repl(scope_manager: Rc<RefCell<ScopeManager>>) -> i32 {
 fn main() {
     let args: Args = Args::docopt().decode().unwrap_or_else(|e| e.exit());
     if args.flag_test {
-        test_dir()
+        //let dir_name = "tests/numeric";
+        let dir_name = "tests/numeric";
+
+        test_dir(String::from(dir_name))
     } else {
         let scope_manager = Rc::new(RefCell::new(init_gc()));
         add_pervasives(scope_manager.clone());

@@ -126,7 +126,7 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>)
         }
 
         // try { block } [catch <expression> { block} &&/|| finally { block }]
-        Try(..) => {
+        Try(ref try_block, ref opt_catch_block, ref opt_finally_block) => {
             unimplemented!();
         }
 
