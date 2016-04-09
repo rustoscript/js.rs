@@ -19,8 +19,8 @@ pub fn eval_binop(op: &BinOp, val1: JsVar, val2: JsVar) -> JsType {
         Neq => JsBool(val1.as_bool() != val2.as_bool()),
         Eql => JsBool(val1.as_bool() == val2.as_bool()),
 
-        EqlStrict => JsBool(val1 == val2),
-        NeqStrict => JsBool(val1 != val2),
+        EqlStrict => JsBool(val1.t == val2.t),
+        NeqStrict => JsBool(val1.t != val2.t),
 
         Minus => JsNum(val1.as_number() - val2.as_number()),
         Plus  => JsNum(val1.as_number() + val2.as_number()),

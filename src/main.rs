@@ -53,7 +53,7 @@ jsrs --test
 ");
 
 fn eval_file(filename: String, debug: bool, should_repl: bool,
-             scope_manager: Rc<RefCell<ScopeManager>>) {
+             scope_manager: Rc<RefCell<ScopeManager>>) -> Result<(), ()> {
     println!("Reading from \"{}\"", filename);
     let path = Path::new(&filename);
     let file = File::open(&path)
@@ -118,6 +118,7 @@ fn eval_file(filename: String, debug: bool, should_repl: bool,
     if should_repl {
         repl(scope_manager);
     }
+    Ok(())
 }
 
 fn test_dir(dir_name: String) {
@@ -196,7 +197,7 @@ fn repl(scope_manager: Rc<RefCell<ScopeManager>>) -> i32 {
 fn main() {
     let args: Args = Args::docopt().decode().unwrap_or_else(|e| e.exit());
     if args.flag_test {
-        let dir_name = "tests/numeric";
+        let dir_name = "sputnik/11.6_Additive_Operators";
 
         test_dir(String::from(dir_name))
     } else {

@@ -33,8 +33,7 @@ pub fn eval_string(string: &str, state: Rc<RefCell<ScopeManager>>)
         -> js_error::Result<JsVarValue> {
     match parse_Stmt(string) {
         Ok(stmt) => {
-            //println!("{:?}", stmt);
-            Ok(eval_stmt(&stmt, state).expect("Error evaluating statement").0)
+            Ok(try!(eval_stmt(&stmt, state)).0)
         }
         Err(e) => Err(JsError::ParseError(format!("{:?}", e))),
     }
@@ -133,25 +132,29 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>)
             match eval_stmt_block(try_block, state.clone()) {
                 Ok(_) => {
                     try!(eval_stmt_block(finally_block, state.clone()));
+                    return Ok((scalar(JsUndef), None));
                 }
                 Err(_) => {
                     // TODO: figure out how to bind error to variable in scope.
                     let mut var = JsVar::new(JsType::JsPtr(JsPtrTag::JsObj));
                     var.binding = Binding::new(catch_var.clone());
-                    let mut state_ref = state.borrow_mut();
-                    let obj = JsObjStruct::new(None, "", Vec::new(),
+                    {
+                        let mut state_ref = state.borrow_mut();
+                        let obj = JsObjStruct::new(None, "", Vec::new(),
                             &mut *(state_ref.alloc_box.borrow_mut()));
+                        // Add error to scope.
+                        state_ref.push_scope(&Exp::Null);
+                        state_ref.alloc(var, Some(JsPtrEnum::JsObj(obj)))
+                            .expect("Unable to allocate variable.");
+                    }
 
-                    // Add error to scope.
-                    state_ref.push_scope(&Exp::Null);
-                    state_ref.alloc(var, Some(JsPtrEnum::JsObj(obj)))
-                        .expect("Could not allocate variable.");
                     try!(eval_stmt_block(catch_block, state.clone()));
 
-                    state_ref.pop_scope(None, false)
+                    state.borrow_mut().pop_scope(None, false)
                         .expect("Unable to clear scope for function");
 
                     try!(eval_stmt_block(finally_block, state.clone()));
+                    return Ok((scalar(JsUndef), None));
                 }
             }
         }
@@ -330,8 +333,10 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
             )),
         &Undefined => Ok(scalar(JsUndef)),
         &Var(ref var_binding) => {
-            Ok((*state).borrow_mut().load(&Binding::new(var_binding.clone()))
-                .expect("ReferenceError: {} is not defined"))
+            match state.borrow_mut().load(&Binding::new(var_binding.clone())) {
+                Ok((var, ptr)) => Ok((var, ptr)),
+                Err(_) => Err(JsError::ReferenceError(format!("{:?} is not defined", var_binding))),
+            }
         }
     }
 }
