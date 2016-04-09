@@ -43,6 +43,7 @@ use eval::eval_string;
 use native::add_pervasives;
 use preprocess::clean_string;
 
+
 docopt!(Args derive Debug, "
 js.rs - a javascript interpreter
 
@@ -53,8 +54,11 @@ jsrs --test
 ");
 
 fn eval_file(filename: String, debug: bool, should_repl: bool,
-             scope_manager: Rc<RefCell<ScopeManager>>) -> Result<(), ()> {
-    println!("Reading from \"{}\"", filename);
+             scope_manager: Rc<RefCell<ScopeManager>>) -> js_error::Result<()> {
+    if debug {
+        println!("Reading from \"{}\"", filename);
+    }
+
     let path = Path::new(&filename);
     let file = File::open(&path)
         .expect(&format!("Cannot open \"{}\": no such file or directory", filename));
@@ -97,18 +101,17 @@ fn eval_file(filename: String, debug: bool, should_repl: bool,
                 line_builder.push_str(&input);
 
                 if braces.len() == 0 {
-                    clean_string(line_builder.clone()).map(|js_string| {
-                        println!("\n{}", js_string);
+                    if let Some(js_string) = clean_string(line_builder.clone()) {
                         line_builder = String::new();
                         if debug {
-                            //println!(">> {}", js_string);
+                            println!("\n{}", js_string);
                         }
 
-                        let ret = eval_string(&js_string, scope_manager.clone());
+                        let ret = try!(eval_string(&js_string, scope_manager.clone()));
                         if debug {
                             println!("=> {:?}", ret);
                         }
-                    });
+                    }
                 }
             }
         } else {
@@ -128,7 +131,14 @@ fn test_dir(dir_name: String) {
             let entry_path = entry.path().display().to_string();
             let scope_manager = Rc::new(RefCell::new(init_gc()));
             add_pervasives(scope_manager.clone());
-            eval_file(entry_path, false, false, scope_manager.clone());
+            match eval_file(entry_path.clone(), false, false, scope_manager.clone()) {
+                Ok(_) => {
+                    println!("{}: {}", entry_path, "OK");
+                }
+                Err(e) => {
+                    println!("{}: {}", entry_path, e);
+                }
+            }
         }
     }
 }

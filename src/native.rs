@@ -47,6 +47,7 @@ fn log(_scope: Rc<RefCell<Backend>>, _this: Option<JsPtrEnum>,
 
 fn error(_scope: Rc<RefCell<Backend>>, _this: Option<JsPtrEnum>,
        args: Vec<(JsVar, Option<JsPtrEnum>)>) -> (JsVar, Option<JsPtrEnum>) {
+    print!("$ERROR: ");
     match args.first() {
         Some(&(_, Some(ref var))) => println!("{}", var.as_string()),
         Some(&(ref var, _)) => println!("{}", var.t.as_string()),

@@ -12,6 +12,7 @@ pub enum JsError {
     TypeError(String),
     ReferenceError(String),
     JsVar(JsVarValue),
+    UnimplementedError,
 }
 
 impl fmt::Display for JsError {
@@ -22,6 +23,7 @@ impl fmt::Display for JsError {
             JsError::TypeError(ref s) => write!(f, "TypeError: {}", s),
             JsError::ReferenceError(ref s) => write!(f, "ReferenceError: {}", s),
             JsError::JsVar(ref var_value) => write!(f, "{:?}", var_value),
+            JsError::UnimplementedError => write!(f, "Unimplemented"),
         }
     }
 }

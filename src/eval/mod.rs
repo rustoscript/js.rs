@@ -144,14 +144,12 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>)
                             &mut *(state_ref.alloc_box.borrow_mut()));
                         // Add error to scope.
                         state_ref.push_scope(&Exp::Null);
-                        state_ref.alloc(var, Some(JsPtrEnum::JsObj(obj)))
-                            .expect("Unable to allocate variable.");
+                        try!(state_ref.alloc(var, Some(JsPtrEnum::JsObj(obj))));
                     }
 
                     try!(eval_stmt_block(catch_block, state.clone()));
 
-                    state.borrow_mut().pop_scope(None, false)
-                        .expect("Unable to clear scope for function");
+                    try!(state.borrow_mut().pop_scope(None, false));
 
                     try!(eval_stmt_block(finally_block, state.clone()));
                     return Ok((scalar(JsUndef), None));
@@ -215,8 +213,7 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
 
             match js_fn_struct.name {
                 Some(_) => (*state).borrow_mut().push_scope(e),
-                None => (*state).borrow_mut().push_closure_scope(&fun_binding.unique)
-                            .expect("Unable to push closure scope")
+                None => try!((*state).borrow_mut().push_closure_scope(&fun_binding.unique))
             };
 
             for param in js_fn_struct.params {
@@ -288,11 +285,11 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
                         }
                     },
                     // TODO: all JsPtrs can have instance vars/methods, not just JsObjs
-                    _ => unimplemented!()
+                    _ => Err(JsError::UnimplementedError)
                 }
             } else {
                 // TODO: Things which are not ptrs can also have instance vars/methods
-                unimplemented!()
+                Err(JsError::UnimplementedError)
             }
         },
 
@@ -307,7 +304,7 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
         &PreDec(ref exp)  => Ok((eval_float_pre_op!(exp, f, f - 1.0, state),  None)),
         &PreInc(ref exp)  => Ok((eval_float_pre_op!(exp, f, f + 1.0, state),  None)),
 
-        &NewObject(_, _) => unimplemented!(),
+        &NewObject(_, _) => Err(JsError::UnimplementedError),
         &Object(ref fields) => {
             let mut kv_tuples = Vec::new();
             for f in fields {
