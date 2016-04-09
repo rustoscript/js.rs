@@ -207,7 +207,7 @@ fn repl(scope_manager: Rc<RefCell<ScopeManager>>) -> i32 {
 fn main() {
     let args: Args = Args::docopt().decode().unwrap_or_else(|e| e.exit());
     if args.flag_test {
-        let dir_name = "sputnik/11.6_Additive_Operators";
+        let dir_name = "sputnik";
 
         test_dir(String::from(dir_name))
     } else {
