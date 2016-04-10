@@ -103,7 +103,7 @@ dependencies = [
 [[package]]
 name = "jsrs-parser"
 version = "0.1.0"
-source = "git+https://github.com/rustoscript/js.rs-parser.git#9a04c15e4a7edcc454d2ab513befa3fab6ab9c55"
+source = "git+https://github.com/rustoscript/js.rs-parser.git#7c767eaa94073c82cea4412b587b91d654663d7a"
 dependencies = [
  "jsrs-common 0.1.0 (git+https://github.com/rustoscript/js.rs-common.git)",
  "lalrpop 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
