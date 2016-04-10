@@ -313,8 +313,7 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
                 let f_exp = try!(eval_exp(&*f.1, state.clone())).0;
                 kv_tuples.push((f_key, f_exp, None));
             }
-            let mut state_ref = (*state).borrow_mut();
-            let obj = JsObjStruct::new(None, "", kv_tuples, &mut *(state_ref.alloc_box.borrow_mut()));
+            let obj = JsObjStruct::new(None, "", kv_tuples, &mut *(state.borrow_mut().alloc_box.borrow_mut()));
             Ok((JsVar::new(JsPtr(JsPtrTag::JsObj)), Some(JsPtrEnum::JsObj(obj))))
         }
 

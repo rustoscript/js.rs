@@ -9,3 +9,13 @@ pub fn scalar(v: JsType) -> (JsVar, Option<JsPtrEnum>) {
 }
 
 // fn push_args() { }
+
+#[macro_export]
+macro_rules! js_var_value_as_number {
+    ($vv:expr) => {
+        match $vv {
+            (_, Some(ptr)) => ptr.as_number(),
+            (var, None) => var.as_number(),
+        }
+    }
+}
