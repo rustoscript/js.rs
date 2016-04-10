@@ -1,7 +1,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use var::JsVarValue;
+use var::{js_str_key, JsVarValue};
 
 use jsrs_common::backend::Backend;
 use jsrs_common::types::coerce::{AsNumber, AsString};
@@ -44,7 +44,7 @@ pub fn array_length_setter(state: Rc<RefCell<Backend>>, old_var: JsVar, old_ptr:
 
     if new_len < old_len {
         for i in new_len_int..old_len_int {
-            let key = JsKey::JsStr(JsStrStruct::new(&JsType::JsNum(i as f64).as_string()));
+            let key = js_str_key(&JsType::JsNum(i as f64).as_string());
             let _ = this_obj.dict.remove(&key);
         }
     }

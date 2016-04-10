@@ -16,13 +16,13 @@ extern crate docopt;
 extern crate test;
 
 mod js_error;
-#[macro_use] mod var;
 
 mod eval;
 mod native;
 mod number;
 mod bench;
 mod preprocess;
+mod var;
 
 use std::cell::RefCell;
 use std::fs::{File, metadata};
