@@ -60,17 +60,17 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>)
         // var_string = exp;
         Assign(ref var_string, ref exp) => {
             let (new_var, js_ptr) = try!(eval_exp(exp, state.clone()));
-            let (mut js_var, _) = try!((*state).borrow_mut().load(&Binding::new(var_string.clone())));
+            let (mut js_var, _) = try!(state.borrow_mut().load(&Binding::new(var_string.clone())));
             js_var.t = new_var.t;
 
             let old_binding = js_var.unique.clone();
             let _ = js_var.deanonymize(var_string);
-            let _ = (*state).borrow_mut().rename_closure(&old_binding, &js_var.unique);
+            let _ = state.borrow_mut().rename_closure(&old_binding, &js_var.unique);
 
             // Clone the js_var to store into the ScopeManager
             let cloned = js_var.clone();
 
-            try!((*state).borrow_mut().store(cloned, js_ptr.clone()));
+            try!(state.borrow_mut().store(cloned, js_ptr.clone()));
 
             Ok(((js_var, js_ptr), None))
         },
@@ -84,9 +84,9 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>)
             let old_binding = js_var.unique.clone();
             js_var.binding = Binding::new(var_string.clone());
 
-            let _ = (*state).borrow_mut().rename_closure(&old_binding, &js_var.unique);
+            let _ = state.borrow_mut().rename_closure(&old_binding, &js_var.unique);
 
-            match (*state).borrow_mut().alloc(js_var, js_ptr) {
+            match state.borrow_mut().alloc(js_var, js_ptr) {
                 Ok(_) => Ok((scalar(JsUndef), None)),
                 Err(e) => {
                     Err(JsError::GcError(e))
@@ -212,8 +212,8 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
             };
 
             match js_fn_struct.name {
-                Some(_) => (*state).borrow_mut().push_scope(e),
-                None => try!((*state).borrow_mut().push_closure_scope(&fun_binding.unique))
+                Some(_) => state.borrow_mut().push_scope(e),
+                None => try!(state.borrow_mut().push_closure_scope(&fun_binding.unique))
             };
 
             for param in js_fn_struct.params {
@@ -224,7 +224,7 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
                 };
 
                 arg.0.binding = Binding::new(param.to_owned());
-                (*state).borrow_mut().alloc(arg.0, arg.1)
+                state.borrow_mut().alloc(arg.0, arg.1)
                 .expect("Unable to store function argument in scope");
             }
 
@@ -246,7 +246,7 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
             });
 
             // Should we yield here? Not sure, so for now it doesn't
-            (*state).borrow_mut().pop_scope(returning_closure, false)
+            state.borrow_mut().pop_scope(returning_closure, false)
                 .expect("Unable to clear scope for function");
 
             Ok(v.unwrap_or(scalar(JsUndef)))
@@ -263,7 +263,7 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
                 JsVar::new(JsPtr(JsPtrTag::JsFn { name: None }))
             };
 
-            if let Err(e) = (*state).borrow_mut().alloc(var.clone(), Some(JsPtrEnum::JsFn(js_fun.clone()))) {
+            if let Err(e) = state.borrow_mut().alloc(var.clone(), Some(JsPtrEnum::JsFn(js_fun.clone()))) {
                 return Err(JsError::GcError(e));
             }
 
@@ -313,7 +313,7 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
                 let f_exp = try!(eval_exp(&*f.1, state.clone())).0;
                 kv_tuples.push((f_key, f_exp, None));
             }
-            let mut state_ref = (*state).borrow_mut();
+            let mut state_ref = state.borrow_mut();
             let obj = JsObjStruct::new(None, "", kv_tuples, &mut *(state_ref.alloc_box.borrow_mut()));
             Ok((JsVar::new(JsPtr(JsPtrTag::JsObj)), Some(JsPtrEnum::JsObj(obj))))
         }
