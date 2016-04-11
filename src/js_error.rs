@@ -15,6 +15,12 @@ pub enum JsError {
     UnimplementedError,
 }
 
+impl JsError {
+    pub fn invalid_lhs() -> JsError {
+        JsError::ReferenceError(String::from("Invalid left-hand side in assignment"))
+    }
+}
+
 impl fmt::Display for JsError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {

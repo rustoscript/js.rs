@@ -27,8 +27,7 @@ use var::*;
 
 /// Evaluate a string containing some JavaScript statements (or sequences of statements).
 /// Returns a JsVar which is the return value of those statements.
-pub fn eval_string(string: &str, state: Rc<RefCell<ScopeManager>>)
-        -> js_error::Result<JsVarValue> {
+pub fn eval_string(string: &str, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<JsVarValue> {
     match parse_Stmt(string) {
         Ok(stmt) => {
             Ok(try!(eval_stmt(&stmt, state)).0)
@@ -56,20 +55,30 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>)
         -> js_error::Result<(JsVarValue, JsReturnValue)> {
     match *s {
         // var_string = exp;
-        Assign(ref var_string, ref exp) => {
+        Assign(ref lhs, ref exp) => {
             let (new_var, js_ptr) = try!(eval_exp(exp, state.clone()));
-            let (mut js_var, _) = try!(state.borrow_mut().load(&Binding::new(var_string.clone())));
-            js_var.t = new_var.t;
 
-            let old_binding = js_var.unique.clone();
-            let _ = js_var.deanonymize(var_string);
-            let _ = state.borrow_mut().rename_closure(&old_binding, &js_var.unique);
+            let js_var = match lhs {
+                &Var(ref string) => {
+                    let mut v = try!(state.borrow_mut().load(&Binding::new(string.to_owned()))).0;
+                    v.t = new_var.t;
+                    let old_binding = v.unique.clone();
+                    let _ = v.deanonymize(string);
+                    let _ = state.borrow_mut().rename_closure(&old_binding, &v.unique);
+                    v
+                }
+                &InstanceVar(ref e, ref string) => {
+                    let mut v = try!(eval_exp(&InstanceVar(e.clone(), string.clone()), state.clone())).0;
+                    println!("var assigned to: {:#?}", v);
+                    v.t = new_var.t;
+                    v
+                }
+                _ => return Err(JsError::invalid_lhs())
+            };
 
-            // Clone the js_var to store into the ScopeManager
-            let cloned = js_var.clone();
+            println!("var assigned to: {:#?}", js_var);
 
-            try!(state.borrow_mut().store(cloned, js_ptr.clone()));
-
+            try!(state.borrow_mut().store(js_var.clone(), js_ptr.clone()));
             Ok(((js_var, js_ptr), None))
         },
 
