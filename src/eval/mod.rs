@@ -306,10 +306,10 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
         &Neg(ref exp) => Ok(scalar(JsNum(-try!(eval_exp(exp, state.clone())).0.as_number()))),
         &Pos(ref exp) => Ok(scalar(JsNum(try!(eval_exp(exp, state.clone())).0.as_number()))),
 
-        &PostDec(ref exp) => Ok((eval_float_post_op!(exp, f, f - 1.0, state), None)),
-        &PostInc(ref exp) => Ok((eval_float_post_op!(exp, f, f + 1.0, state), None)),
-        &PreDec(ref exp)  => Ok((eval_float_pre_op!(exp, f, f - 1.0, state),  None)),
-        &PreInc(ref exp)  => Ok((eval_float_pre_op!(exp, f, f + 1.0, state),  None)),
+        &PostDec(ref exp) => eval_float_post_op!(exp, f, f - 1.0, state),
+        &PostInc(ref exp) => eval_float_post_op!(exp, f, f + 1.0, state),
+        &PreDec(ref exp)  => eval_float_pre_op!(exp, f, f - 1.0, state),
+        &PreInc(ref exp)  => eval_float_pre_op!(exp, f, f + 1.0, state),
 
         &NewObject(_, _) => Err(JsError::UnimplementedError),
         &Object(ref fields) => {
@@ -327,8 +327,15 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
 
         &Str(ref s) => {
             let var = JsVar::new(JsPtr(JsPtrTag::JsStr));
-            let ptr = Some(JsPtrEnum::JsStr(JsStrStruct::new(&unescape(s).expect("Invalid string"))));
-            Ok((var, ptr))
+            match unescape(s) {
+                Some(s) =>  {
+                    let ptr = Some(JsPtrEnum::JsStr(JsStrStruct::new(&s)));
+                    return Ok((var, ptr))
+                },
+                None => {
+                    return Err(JsError::ParseError(String::from("invalid string")))
+                }
+            }
         }
         &TypeOf(ref e) =>
             Ok((
