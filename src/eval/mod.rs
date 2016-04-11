@@ -56,30 +56,34 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>)
     match *s {
         // var_string = exp;
         Assign(ref lhs, ref exp) => {
-            let (new_var, js_ptr) = try!(eval_exp(exp, state.clone()));
+            let (rhs_var, rhs_ptr) = try!(eval_exp(exp, state.clone()));
 
-            let js_var = match lhs {
+            let var = match lhs {
                 &Var(ref string) => {
                     let mut v = try!(state.borrow_mut().load(&Binding::new(string.to_owned()))).0;
-                    v.t = new_var.t;
+                    v.t = rhs_var.t.clone();
                     let old_binding = v.unique.clone();
                     let _ = v.deanonymize(string);
                     let _ = state.borrow_mut().rename_closure(&old_binding, &v.unique);
+                    try!(state.borrow_mut().store(rhs_var.clone(), rhs_ptr.clone()));
                     v
                 }
                 &InstanceVar(ref e, ref string) => {
-                    let mut v = try!(eval_exp(&InstanceVar(e.clone(), string.clone()), state.clone())).0;
-                    println!("var assigned to: {:#?}", v);
-                    v.t = new_var.t;
-                    v
+                    let (_, ptr) = try!(eval_exp(&e.clone(), state.clone()));
+
+                    let mut obj = match ptr {
+                        Some(JsPtrEnum::JsObj(obj)) => obj,
+                        _ => return Ok(((rhs_var, rhs_ptr), None))
+                    };
+
+                    let mut state_ref = state.borrow_mut();
+                    obj.add_key(JsKey::JsStr(JsStrStruct::new(string)), rhs_var.clone(), rhs_ptr.clone(), &mut *(state_ref.alloc_box.borrow_mut()));
+                    rhs_var
                 }
                 _ => return Err(JsError::invalid_lhs())
             };
 
-            println!("var assigned to: {:#?}", js_var);
-
-            try!(state.borrow_mut().store(js_var.clone(), js_ptr.clone()));
-            Ok(((js_var, js_ptr), None))
+            Ok(((var, rhs_ptr), None))
         },
 
         // exp;
