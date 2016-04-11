@@ -4,14 +4,14 @@ mod macros;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use jsrs_common::types::coerce::{AsBool,AsNumber};
+use js_error::{self, JsError};
 
 use french_press::ScopeManager;
 use jsrs_parser::lalr::parse_Stmt;
 use jsrs_common::ast::*;
 use jsrs_common::ast::Exp::*;
 use jsrs_common::ast::Stmt::*;
-
+use jsrs_common::types::coerce::{AsBool,AsNumber};
 use jsrs_common::types::binding::Binding;
 use jsrs_common::types::js_fn::JsFnStruct;
 use jsrs_common::types::js_obj::JsObjStruct;
@@ -23,8 +23,6 @@ use jsrs_common::backend::Backend;
 use unescape::unescape;
 use number::eval_binop;
 use var::*;
-use js_error::JsError;
-use js_error;
 
 
 /// Evaluate a string containing some JavaScript statements (or sequences of statements).
