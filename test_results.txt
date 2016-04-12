@@ -1,4 +1,3 @@
-   Compiling jsrs v0.1.0 (file:///home/sun/src/jsrs/jsrs)
      Running `target/debug/jsrs --test`
 sputnik/08_Types/8.6_The_Object_Type/S8.6_A2_T1.js: ReferenceError: ReferenceError: invalid left-hand expression for postfix operation
 sputnik/08_Types/8.6_The_Object_Type/8.6.1_Property_Attributes/S8.6.1_A1.js: ReferenceError: "Math" is not defined
@@ -110,10 +109,10 @@ JsObjStruct {
             }
         ): JsVar {
             unique: UniqueBinding(
-                "%---%--->anon_js_var<---%46c78118efc7447ea15cca5f8f561177---%995a189f14894647b523a5eab3ffdabd"
+                "%---%--->anon_js_var<---%689952e50dd04a5aaba18378739a5443---%09dfd0f15ee5497da4bb0e2640fc27d8"
             ),
             binding: Binding(
-                "%--->anon_js_var<---%46c78118efc7447ea15cca5f8f561177"
+                "%--->anon_js_var<---%689952e50dd04a5aaba18378739a5443"
             ),
             t: JsNum(
                 50
@@ -1077,10 +1076,10 @@ JsObjStruct {
             }
         ): JsVar {
             unique: UniqueBinding(
-                "%---%--->anon_js_var<---%9cd29617a39c4b9f9466ede4b9e0a885---%e23f2b0cb9c941f2876d04dd5e69d976"
+                "%---%--->anon_js_var<---%0ee91c7ec6f447fba127fcd2cbece4cc---%37e4e25ff1244e6fa9ddca630b81b0a1"
             ),
             binding: Binding(
-                "%--->anon_js_var<---%9cd29617a39c4b9f9466ede4b9e0a885"
+                "%--->anon_js_var<---%0ee91c7ec6f447fba127fcd2cbece4cc"
             ),
             t: JsNum(
                 10.5
@@ -1107,10 +1106,10 @@ JsObjStruct {
             }
         ): JsVar {
             unique: UniqueBinding(
-                "%---%--->anon_js_var<---%e7ae4d35bbfa4cf39458c08fa775eeb1---%505a64487c1f4be79d6f1cc94f989363"
+                "%---%--->anon_js_var<---%ca774e4a58f3401a9ea13986e609ad17---%5a261fe7465f4e1fa552a3af9a6596a2"
             ),
             binding: Binding(
-                "%--->anon_js_var<---%e7ae4d35bbfa4cf39458c08fa775eeb1"
+                "%--->anon_js_var<---%ca774e4a58f3401a9ea13986e609ad17"
             ),
             t: JsNum(
                 10
@@ -1139,10 +1138,10 @@ JsObjStruct {
             }
         ): JsVar {
             unique: UniqueBinding(
-                "%---%--->anon_js_var<---%d1f73211bc5e4ddfbd281500e0eb3a3e---%7c6a95b0d4dd4c1bb1a1660388a5b27b"
+                "%---%--->anon_js_var<---%3382d2a6e92d4cdca44f7590d6cad44e---%ddb3adee02b54099ac4f8b4f407d74c3"
             ),
             binding: Binding(
-                "%--->anon_js_var<---%d1f73211bc5e4ddfbd281500e0eb3a3e"
+                "%--->anon_js_var<---%3382d2a6e92d4cdca44f7590d6cad44e"
             ),
             t: JsPtr(
                 JsStr
@@ -4743,7 +4742,7 @@ sputnik/11_Expressions/11.4_Unary_Operators/11.4.7_Unary_minus_Operator/S11.4.7_
 sputnik/11_Expressions/11.4_Unary_Operators/11.4.7_Unary_minus_Operator/S11.4.7_A3_T1.js: UnimplementedError: NewObject, eval/mod.rs:314
 sputnik/11_Expressions/11.4_Unary_Operators/11.4.7_Unary_minus_Operator/S11.4.7_A2.2_T1.js: ParseError: UnrecognizedToken { token: Some((44, (53, "}"), 45)), expected: [] }
 sputnik/11_Expressions/11.4_Unary_Operators/11.4.7_Unary_minus_Operator/S11.4.7_A3_T5.js: ParseError: UnrecognizedToken { token: Some((13, (7, ")"), 14)), expected: [] }
-sputnik/11_Expressions/11.4_Unary_Operators/11.4.7_Unary_minus_Operator/S11.4.7_A4.2.js: GcError: Invalid store of var JsVar { unique: UniqueBinding("%---%--->anon_js_var<---%65b9d1a4c2c84be0b0c2c834fec73b4e---%a7d40e34175f484dab2313e7ce6edcf8"), binding: Binding("%--->anon_js_var<---%65b9d1a4c2c84be0b0c2c834fec73b4e"), t: JsNum(-0) }, ptr None
+sputnik/11_Expressions/11.4_Unary_Operators/11.4.7_Unary_minus_Operator/S11.4.7_A4.2.js: GcError: Invalid store of var JsVar { unique: UniqueBinding("%---%--->anon_js_var<---%d1c985717f92440a87462b3930cb2e87---%90bef94ca854486580abcea5227f8286"), binding: Binding("%--->anon_js_var<---%d1c985717f92440a87462b3930cb2e87"), t: JsNum(-0) }, ptr None
 sputnik/11_Expressions/11.4_Unary_Operators/11.4.7_Unary_minus_Operator/S11.4.7_A2.1_T1.js: UnimplementedError: NewObject, eval/mod.rs:314
 $ERROR: NaN
 sputnik/11_Expressions/11.4_Unary_Operators/11.4.7_Unary_minus_Operator/S11.4.7_A3_T3.js: ReferenceError: "isNaN" is not defined
@@ -7416,10 +7415,10 @@ JsObjStruct {
             }
         ): JsVar {
             unique: UniqueBinding(
-                "%---%--->anon_js_var<---%c0a2e8f1f3ef441f9e6a6211e323bc0d---%9edfc5277ec24e8a8e0e7adf9d85f128"
+                "%---%--->anon_js_var<---%94eee8e3ba42466c9e40e2268c706cf3---%4fb4eca8a2444a35ab59ac88a412b256"
             ),
             binding: Binding(
-                "%--->anon_js_var<---%c0a2e8f1f3ef441f9e6a6211e323bc0d"
+                "%--->anon_js_var<---%94eee8e3ba42466c9e40e2268c706cf3"
             ),
             t: JsPtr(
                 JsStr
@@ -7463,10 +7462,10 @@ JsObjStruct {
             }
         ): JsVar {
             unique: UniqueBinding(
-                "%---%--->anon_js_var<---%c4597fb21bb5462fa40f90d2dbde04f8---%0c4d71b03bdd4ecaa34d635fc6bd7a5f"
+                "%---%--->anon_js_var<---%85c39a4c564e4f45941c32a76a5fe12a---%02ea03451d8f4a2fba387349fb763f8f"
             ),
             binding: Binding(
-                "%--->anon_js_var<---%c4597fb21bb5462fa40f90d2dbde04f8"
+                "%--->anon_js_var<---%85c39a4c564e4f45941c32a76a5fe12a"
             ),
             t: JsNum(
                 7
@@ -7762,7 +7761,7 @@ sputnik/12_Statement/12.14_The_try_Statement/S12.14_A16_T7.js: ParseError: Unexp
 sputnik/12_Statement/12.14_The_try_Statement/S12.14_A16_T3.js: ParseError: UnrecognizedToken { token: Some((0, (37, "finally"), 7)), expected: [] }
 sputnik/12_Statement/12.14_The_try_Statement/S12.14_A12_T4.js: ParseError: UnrecognizedToken { token: Some((5, (18, ";"), 6)), expected: [] }
 sputnik/12_Statement/12.14_The_try_Statement/S12.14_A16_T4.js: ParseError: UnrecognizedToken { token: Some((4, (53, "}"), 5)), expected: [] }
-sputnik/12_Statement/12.14_The_try_Statement/S12.14_A13_T3.js: GcError: Invalid store of var JsVar { unique: UniqueBinding("%---%--->anon_js_var<---%9c21b3d95ac341aca703ee57d8181539---%7209355c6e564a4d82be830e73e85cb1"), binding: Binding("%--->anon_js_var<---%9c21b3d95ac341aca703ee57d8181539"), t: JsNum(1) }, ptr None
+sputnik/12_Statement/12.14_The_try_Statement/S12.14_A13_T3.js: GcError: Invalid store of var JsVar { unique: UniqueBinding("%---%--->anon_js_var<---%0c65783f8da243c8a04c19c4c1886590---%6914c79040b34119a23dd5ba1c01f0d6"), binding: Binding("%--->anon_js_var<---%0c65783f8da243c8a04c19c4c1886590"), t: JsNum(1) }, ptr None
 sputnik/12_Statement/12.14_The_try_Statement/S12.14_A10_T5.js: ParseError: UnrecognizedToken { token: Some((7, (12, ","), 8)), expected: [] }
 sputnik/12_Statement/12.14_The_try_Statement/S12.14_A10_T4.js: ParseError: UnrecognizedToken { token: Some((8, (12, ","), 9)), expected: [] }
 sputnik/12_Statement/12.14_The_try_Statement/S12.14_A2.js: ParseError: UnrecognizedToken { token: None, expected: [] }
@@ -7771,7 +7770,7 @@ sputnik/12_Statement/12.14_The_try_Statement/S12.14_A18_T7.js: UnimplementedErro
 sputnik/12_Statement/12.14_The_try_Statement/S12.14_A12_T2.js: ParseError: UnrecognizedToken { token: Some((5, (18, ";"), 6)), expected: [] }
 sputnik/12_Statement/12.14_The_try_Statement/S12.14_A7_T1.js: ParseError: UnrecognizedToken { token: None, expected: [] }
 sputnik/12_Statement/12.14_The_try_Statement/S12.14_A16_T13.js: ParseError: UnrecognizedToken { token: None, expected: [] }
-sputnik/12_Statement/12.14_The_try_Statement/S12.14_A13_T2.js: GcError: Invalid store of var JsVar { unique: UniqueBinding("%---%--->anon_js_var<---%dc002251c4164b219cd70551ac3331d5---%d71b778deb37403789213437184e1223"), binding: Binding("%--->anon_js_var<---%dc002251c4164b219cd70551ac3331d5"), t: JsNum(1) }, ptr None
+sputnik/12_Statement/12.14_The_try_Statement/S12.14_A13_T2.js: GcError: Invalid store of var JsVar { unique: UniqueBinding("%---%--->anon_js_var<---%639de3b2a62248068c016ed06075e88d---%32447eecc2bc4fe2971c61f8d3e011ed"), binding: Binding("%--->anon_js_var<---%639de3b2a62248068c016ed06075e88d"), t: JsNum(1) }, ptr None
 sputnik/12_Statement/12.14_The_try_Statement/S12.14_A16_T1.js: ParseError: UnrecognizedToken { token: None, expected: [] }
 sputnik/12_Statement/12.14_The_try_Statement/S12.14_A16_T2.js: ParseError: UnrecognizedToken { token: Some((0, (34, "catch"), 5)), expected: [] }
 sputnik/12_Statement/12.14_The_try_Statement/S12.14_A4.js: ParseError: UnrecognizedToken { token: None, expected: [] }
