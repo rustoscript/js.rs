@@ -41,7 +41,7 @@ use french_press::{init_gc, ScopeManager};
 
 use eval::eval_string;
 use native::add_pervasives;
-use preprocess::clean_string;
+use preprocess::{clean_string, add_semicolon};
 use js_error::JsError;
 
 
@@ -73,46 +73,48 @@ fn eval_file(filename: String, debug: bool, should_repl: bool,
         if let Some(line) = file_iter.next() {
             let input = String::from(line.expect(&format!("Cannot read from {}", filename))
                                          .trim());
-            if let Some(input) = clean_string(input) {
-                let mut last = '\0';
-                // Match braces to see if we should wait for more input
-                for c in input.chars() {
-                    if c == '(' {
-                        braces.push('(');
-                    } else if c == '{' {
-                        braces.push('{');
-                    } else if c == '*' && last == '/' {
-                        braces.push('/');
-                    } else if c == ')' {
-                        if braces.pop() != Some('(') {
-                            return Err(JsError::ParseError(format!("parse error: unexpected token {}", c)));
-                        }
-                    } else if c == '}' {
-                        if braces.pop() != Some('{') {
-                            return Err(JsError::ParseError(format!("parse error: unexpected token {}", c)));
-                        }
-                    } else if c == '/' && last == '*' {
-                        if braces.pop() != Some('/') {
-                            return Err(JsError::ParseError(format!("parse error: unexpected token {}", c)));
-                        }
+            let input = clean_string(input);
+            let mut last = '\0';
+            // Match braces to see if we should wait for more input
+            for c in input.chars() {
+                if c == '(' {
+                    braces.push('(');
+                } else if c == '{' {
+                    braces.push('{');
+                } else if c == '*' && last == '/' {
+                    braces.push('/');
+                } else if c == ')' {
+                    if braces.pop() != Some('(') {
+                        return Err(JsError::ParseError(format!("Unexpected token {}", c)));
                     }
-                    last = c;
+                } else if c == '}' {
+                    if braces.pop() != Some('{') {
+                        return Err(JsError::ParseError(format!("Unexpected token {}", c)));
+                    }
+                } else if c == '/' && last == '*' {
+                    if braces.pop() != Some('/') {
+                        return Err(JsError::ParseError(format!("Unexpected token {}", c)));
+                    }
+                }
+                last = c;
+            }
+
+            line_builder.push_str(&input);
+
+            if braces.len() == 0 {
+                let js_string = clean_string(line_builder.clone());
+                line_builder = String::new();
+                if js_string == "" {
+                    continue;
                 }
 
-                line_builder.push_str(&input);
+                if debug {
+                    println!("\n{}", js_string);
+                }
 
-                if braces.len() == 0 {
-                    if let Some(js_string) = clean_string(line_builder.clone()) {
-                        line_builder = String::new();
-                        if debug {
-                            println!("\n{}", js_string);
-                        }
-
-                        let ret = try!(eval_string(&js_string, scope_manager.clone()));
-                        if debug {
-                            println!("=> {:?}", ret);
-                        }
-                    }
+                let ret = try!(eval_string(&js_string, scope_manager.clone()));
+                if debug {
+                    println!("=> {:?}", ret);
                 }
             }
         } else {
@@ -160,22 +162,24 @@ fn repl(scope_manager: Rc<RefCell<ScopeManager>>) -> i32 {
             Ok(line) => {
                 rl.add_history_entry(&line);
                 let input = String::from(line.trim());
-                clean_string(input).map(|input| {
-                    rl.add_history_entry(&input);
+                let input = add_semicolon(clean_string(input));
+                if input == "" {
+                    continue;
+                }
+                rl.add_history_entry(&input);
 
-                    match eval_string(&input, scope_manager.clone()) {
-                        Ok((var, ptr)) => {
-                            match ptr {
-                                Some(JsPtrEnum::JsSym(s)) => println!("=> Symbol({:?})", s),
-                                Some(JsPtrEnum::JsStr(s)) => println!("=> {:?}", s.text),
-                                _ => println!("=> {:?}", var.t),
-                            }
-                        },
-                        Err(e) => {
-                            println!("{:?}", e);
+                match eval_string(&input, scope_manager.clone()) {
+                    Ok((var, ptr)) => {
+                        match ptr {
+                            Some(JsPtrEnum::JsSym(s)) => println!("=> Symbol({:?})", s),
+                            Some(JsPtrEnum::JsStr(s)) => println!("=> {:?}", s.text),
+                            _ => println!("=> {:?}", var.t),
                         }
+                    },
+                    Err(e) => {
+                        println!("{:?}", e);
                     }
-                });
+                }
             },
             Err(ReadlineError::Interrupted) => {
                 if rl.save_history(".history").is_err() {
