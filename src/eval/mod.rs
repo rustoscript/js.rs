@@ -188,6 +188,8 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>)
 /// Evaluate an expression into a JsVar.
 pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<JsVarValue> {
     match e {
+        // [ e1, e2, ... ]
+        &Array(_) => unimplemented!(),
         // e1 [op] e2
         &BinExp(ref e1, ref op, ref e2) => {
             let val1 = try!(eval_exp(e1, state.clone())).0;
@@ -304,6 +306,7 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
             }
         },
 
+        &KeyAccessor(..) => unimplemented!(),
         &Null => Ok(scalar(JsNull)),
 
         &Float(f) => Ok(scalar(JsType::JsNum(f))),
