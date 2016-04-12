@@ -69,10 +69,15 @@ fn eval_file(filename: String, debug: bool, should_repl: bool,
     let mut braces = Vec::new();
 
     let mut file_iter = file_buffer.lines();
+    let mut negative_test = false;
     loop {
         if let Some(line) = file_iter.next() {
             let input = String::from(line.expect(&format!("Cannot read from {}", filename)));
             let input = clean_string(input);
+            if input.contains("@negative") {
+                negative_test = true;
+            }
+
             let mut last = '\0';
             // Match braces to see if we should wait for more input
             for c in input.chars() {
@@ -111,7 +116,23 @@ fn eval_file(filename: String, debug: bool, should_repl: bool,
                     println!("\n{}", js_string);
                 }
 
-                let ret = try!(eval_string(&js_string, scope_manager.clone()));
+                let ret;
+                let eval_result = eval_string(&js_string, scope_manager.clone());
+                if negative_test {
+                    match eval_result {
+                        Ok((var, ptr)) => ret = (var, ptr),
+                        Err(e) => {
+                            if !e.is_meta_error() {
+                                continue;
+                            } else {
+                                return Err(e);
+                            }
+                        }
+                    }
+                } else {
+                    ret = try!(eval_result);
+                }
+
                 if debug {
                     println!("=> {:?}", ret);
                 }
@@ -221,7 +242,8 @@ fn main() {
             let ret = repl(scope_manager.clone());
             exit(ret)
         } else {
-            eval_file(args.arg_file, true, true, scope_manager.clone()).expect("Error evaluating file");
+            eval_file(args.arg_file, true, true, scope_manager.clone())
+                .expect("Error evaluating file");
         }
     }
 }

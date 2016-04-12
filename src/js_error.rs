@@ -19,6 +19,18 @@ impl JsError {
     pub fn invalid_lhs() -> JsError {
         JsError::ReferenceError(String::from("Invalid left-hand side in assignment"))
     }
+
+    /// Meta errors are problems with the interpreter -- parsing, gc, or unimplemented methods.
+    pub fn is_meta_error(&self) -> bool {
+        match self {
+            &JsError::ParseError(_) => true,
+            &JsError::GcError(_) => true,
+            &JsError::TypeError(_) => false,
+            &JsError::ReferenceError(_) => false,
+            &JsError::JsVar(_) => false,
+            &JsError::UnimplementedError(_) => true,
+        }
+    }
 }
 
 impl fmt::Display for JsError {
