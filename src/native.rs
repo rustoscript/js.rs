@@ -5,8 +5,10 @@ use std::rc::Rc;
 use french_press::ScopeManager;
 use jsrs_common::backend::Backend;
 use jsrs_common::types::native_fn::NativeFn;
-use jsrs_common::types::coerce::AsString;
+use jsrs_common::types::coerce::{AsString, AsNumber};
 use jsrs_common::types::js_var::{JsType, JsPtrEnum, JsPtrTag, JsVar};
+use var::scalar;
+
 
 macro_rules! add_pervasive {
     ($func:ident, $sm:expr) => {{
@@ -31,6 +33,7 @@ macro_rules! add_named_pervasive {
 
 pub fn add_pervasives(scope_manager: Rc<RefCell<ScopeManager>>) {
     add_pervasive!(log, scope_manager);
+    add_pervasive!(isNaN, scope_manager);
     add_named_pervasive!(error, "$ERROR", scope_manager);
 }
 
@@ -43,6 +46,16 @@ fn log(_scope: Rc<RefCell<Backend>>, _this: Option<JsPtrEnum>,
     };
 
     (JsVar::new(JsType::JsNull), None)
+}
+
+#[allow(non_snake_case)]
+fn isNaN(_scope: Rc<RefCell<Backend>>, _this: Option<JsPtrEnum>,
+       args: Vec<(JsVar, Option<JsPtrEnum>)>) -> (JsVar, Option<JsPtrEnum>) {
+    if let Some(&(ref var, _)) = args.first() {
+        scalar(JsType::JsBool(var.as_number().is_nan()))
+    } else {
+        scalar(JsType::JsBool(true))
+    }
 }
 
 fn error(_scope: Rc<RefCell<Backend>>, _this: Option<JsPtrEnum>,
