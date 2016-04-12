@@ -3,6 +3,8 @@ pub fn clean_string(mut input: String) -> String {
         return input;
     }
 
+    input.trim();
+
     // remove line-comments
     let mut last = '\0';
     let mut len = input.len();
@@ -20,7 +22,7 @@ pub fn clean_string(mut input: String) -> String {
 }
 
 pub fn add_semicolon(mut input: String) -> String {
-    if !input.ends_with(';') && !input.ends_with("*/") {
+    if !input.ends_with(';') && !input.ends_with("*/") && !input.ends_with('}') {
         input.push_str(";")
     }
     input

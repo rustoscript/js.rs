@@ -71,8 +71,7 @@ fn eval_file(filename: String, debug: bool, should_repl: bool,
     let mut file_iter = file_buffer.lines();
     loop {
         if let Some(line) = file_iter.next() {
-            let input = String::from(line.expect(&format!("Cannot read from {}", filename))
-                                         .trim());
+            let input = String::from(line.expect(&format!("Cannot read from {}", filename)));
             let input = clean_string(input);
             let mut last = '\0';
             // Match braces to see if we should wait for more input
@@ -161,8 +160,7 @@ fn repl(scope_manager: Rc<RefCell<ScopeManager>>) -> i32 {
         match readline {
             Ok(line) => {
                 rl.add_history_entry(&line);
-                let input = String::from(line.trim());
-                let input = add_semicolon(clean_string(input));
+                let input = add_semicolon(clean_string(String::from(line)));
                 if input == "" {
                     continue;
                 }
