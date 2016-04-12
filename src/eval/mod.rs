@@ -298,11 +298,11 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
                         }
                     },
                     // TODO: all JsPtrs can have instance vars/methods, not just JsObjs
-                    _ => Err(JsError::UnimplementedError)
+                    _ => Err(JsError::UnimplementedError(String::from("InstanceVar, eval/mod.rs:295")))
                 }
             } else {
                 // TODO: Things which are not ptrs can also have instance vars/methods
-                Err(JsError::UnimplementedError)
+                Err(JsError::UnimplementedError(String::from("InstanceVar, eval/mod.rs:299")))
             }
         },
 
@@ -318,7 +318,7 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
         &PreDec(ref exp)  => eval_float_pre_op!(exp, f, f - 1.0, state),
         &PreInc(ref exp)  => eval_float_pre_op!(exp, f, f + 1.0, state),
 
-        &NewObject(_, _) => Err(JsError::UnimplementedError),
+        &NewObject(_, _) => Err(JsError::UnimplementedError(String::from("NewObject, eval/mod.rs:314"))),
         &Object(ref fields) => {
             let mut kv_tuples = Vec::new();
             for f in fields {
