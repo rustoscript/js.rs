@@ -1,17 +1,29 @@
-pub fn clean_string(input: String) -> Option<String> {
+pub fn clean_string(mut input: String) -> String {
     if input == "" {
-        return None;
+        return input;
     }
 
-    // insert semicolon if necessary
-    //if !input.ends_with(";") && !input.ends_with("}") {
-    //    input.push_str(";");
-    //}
+    input.trim();
 
-    // ignore comments
-    if input.starts_with("//"){
-        return None;
+    // remove line-comments
+    let mut last = '\0';
+    let mut len = input.len();
+    for (i, c) in input.chars().enumerate() {
+        if last == '/' && c == '/' {
+            len = i-1;
+            break;
+        }
+        last = c;
     }
 
-    Some(input)
+    input.truncate(len);
+
+    input
+}
+
+pub fn add_semicolon(mut input: String) -> String {
+    if !input.ends_with(';') && !input.ends_with("*/") && !input.ends_with('}') {
+        input.push_str(";")
+    }
+    input
 }

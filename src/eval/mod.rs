@@ -11,7 +11,7 @@ use jsrs_parser::lalr::parse_Stmt;
 use jsrs_common::ast::*;
 use jsrs_common::ast::Exp::*;
 use jsrs_common::ast::Stmt::*;
-use jsrs_common::types::coerce::{AsBool,AsNumber};
+use jsrs_common::types::coerce::{AsBool, AsNumber};
 use jsrs_common::types::binding::Binding;
 use jsrs_common::types::js_fn::JsFnStruct;
 use jsrs_common::types::js_obj::JsObjStruct;
@@ -307,13 +307,11 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
         },
 
         &Float(f) => Ok(scalar(JsType::JsNum(f))),
-        &Neg(ref exp) => Ok(scalar(JsNum(-try!(eval_exp(exp, state.clone())).0.as_number()))),
-        &Pos(ref exp) => Ok(scalar(JsNum(try!(eval_exp(exp, state.clone())).0.as_number()))),
-
         &KeyAccessor(..) => Err(JsError::unimplemented("KeyAccessor")),
-        &LogNot(..) => Err(JsError::unimplemented("LogNot")),
+        &LogNot(ref exp) => Ok(scalar(JsBool(!try!(eval_exp(exp, state.clone())).0.as_bool()))),
+        &Neg(ref exp) => Ok(scalar(JsNum(-try!(eval_exp(exp, state.clone())).0.as_number()))),
         &Null => Ok(scalar(JsNull)),
-
+        &Pos(ref exp) => Ok(scalar(JsNum(try!(eval_exp(exp, state.clone())).0.as_number()))),
 
         &PostDec(ref exp) => eval_float_post_op!(exp, f, f - 1.0, state),
         &PostInc(ref exp) => eval_float_post_op!(exp, f, f + 1.0, state),
