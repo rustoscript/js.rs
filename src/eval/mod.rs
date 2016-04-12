@@ -310,6 +310,7 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
         &Null => Ok(scalar(JsNull)),
 
         &Float(f) => Ok(scalar(JsType::JsNum(f))),
+        &LogNot(ref exp) => Ok(scalar(JsBool(!try!(eval_exp(exp, state.clone())).0.as_bool()))),
         &Neg(ref exp) => Ok(scalar(JsNum(-try!(eval_exp(exp, state.clone())).0.as_number()))),
         &Pos(ref exp) => Ok(scalar(JsNum(try!(eval_exp(exp, state.clone())).0.as_number()))),
 
