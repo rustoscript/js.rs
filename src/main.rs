@@ -42,6 +42,7 @@ use french_press::{init_gc, ScopeManager};
 use eval::eval_string;
 use native::add_pervasives;
 use preprocess::clean_string;
+use js_error::JsError;
 
 
 docopt!(Args derive Debug, "
@@ -84,15 +85,15 @@ fn eval_file(filename: String, debug: bool, should_repl: bool,
                         braces.push('/');
                     } else if c == ')' {
                         if braces.pop() != Some('(') {
-                            panic!("parse error: unexpected token {}", c);
+                            return Err(JsError::ParseError(format!("parse error: unexpected token {}", c)));
                         }
                     } else if c == '}' {
                         if braces.pop() != Some('{') {
-                            panic!("parse error: unexpected token {}", c);
+                            return Err(JsError::ParseError(format!("parse error: unexpected token {}", c)));
                         }
                     } else if c == '/' && last == '*' {
                         if braces.pop() != Some('/') {
-                            panic!("parse error: unexpected token {}", c);
+                            return Err(JsError::ParseError(format!("parse error: unexpected token {}", c)));
                         }
                     }
                     last = c;

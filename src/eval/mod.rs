@@ -4,14 +4,14 @@ mod macros;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use jsrs_common::types::coerce::{AsBool,AsNumber};
+use js_error::{self, JsError};
 
 use french_press::ScopeManager;
 use jsrs_parser::lalr::parse_Stmt;
 use jsrs_common::ast::*;
 use jsrs_common::ast::Exp::*;
 use jsrs_common::ast::Stmt::*;
-
+use jsrs_common::types::coerce::{AsBool,AsNumber};
 use jsrs_common::types::binding::Binding;
 use jsrs_common::types::js_fn::JsFnStruct;
 use jsrs_common::types::js_obj::JsObjStruct;
@@ -23,14 +23,11 @@ use jsrs_common::backend::Backend;
 use unescape::unescape;
 use number::eval_binop;
 use var::*;
-use js_error::JsError;
-use js_error;
 
 
 /// Evaluate a string containing some JavaScript statements (or sequences of statements).
 /// Returns a JsVar which is the return value of those statements.
-pub fn eval_string(string: &str, state: Rc<RefCell<ScopeManager>>)
-        -> js_error::Result<JsVarValue> {
+pub fn eval_string(string: &str, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<JsVarValue> {
     match parse_Stmt(string) {
         Ok(stmt) => {
             Ok(try!(eval_stmt(&stmt, state)).0)
@@ -58,21 +55,35 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>)
         -> js_error::Result<(JsVarValue, JsReturnValue)> {
     match *s {
         // var_string = exp;
-        Assign(ref var_string, ref exp) => {
-            let (new_var, js_ptr) = try!(eval_exp(exp, state.clone()));
-            let (mut js_var, _) = try!((*state).borrow_mut().load(&Binding::new(var_string.clone())));
-            js_var.t = new_var.t;
+        Assign(ref lhs, ref exp) => {
+            let (rhs_var, rhs_ptr) = try!(eval_exp(exp, state.clone()));
 
-            let old_binding = js_var.unique.clone();
-            let _ = js_var.deanonymize(var_string);
-            let _ = (*state).borrow_mut().rename_closure(&old_binding, &js_var.unique);
+            let var = match lhs {
+                &Var(ref string) => {
+                    let mut v = try!(state.borrow_mut().load(&Binding::new(string.to_owned()))).0;
+                    v.t = rhs_var.t.clone();
+                    let old_binding = v.unique.clone();
+                    let _ = v.deanonymize(string);
+                    let _ = state.borrow_mut().rename_closure(&old_binding, &v.unique);
+                    try!(state.borrow_mut().store(rhs_var.clone(), rhs_ptr.clone()));
+                    v
+                }
+                &InstanceVar(ref e, ref string) => {
+                    let (_, ptr) = try!(eval_exp(&e.clone(), state.clone()));
 
-            // Clone the js_var to store into the ScopeManager
-            let cloned = js_var.clone();
+                    let mut obj = match ptr {
+                        Some(JsPtrEnum::JsObj(obj)) => obj,
+                        _ => return Ok(((rhs_var, rhs_ptr), None))
+                    };
 
-            try!((*state).borrow_mut().store(cloned, js_ptr.clone()));
+                    let mut state_ref = state.borrow_mut();
+                    obj.add_key(JsKey::JsStr(JsStrStruct::new(string)), rhs_var.clone(), rhs_ptr.clone(), &mut *(state_ref.alloc_box.borrow_mut()));
+                    rhs_var
+                }
+                _ => return Err(JsError::invalid_lhs())
+            };
 
-            Ok(((js_var, js_ptr), None))
+            Ok(((var, rhs_ptr), None))
         },
 
         // exp;
@@ -84,9 +95,9 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>)
             let old_binding = js_var.unique.clone();
             js_var.binding = Binding::new(var_string.clone());
 
-            let _ = (*state).borrow_mut().rename_closure(&old_binding, &js_var.unique);
+            let _ = state.borrow_mut().rename_closure(&old_binding, &js_var.unique);
 
-            match (*state).borrow_mut().alloc(js_var, js_ptr) {
+            match state.borrow_mut().alloc(js_var, js_ptr) {
                 Ok(_) => Ok((scalar(JsUndef), None)),
                 Err(e) => {
                     Err(JsError::GcError(e))
@@ -177,6 +188,8 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>)
 /// Evaluate an expression into a JsVar.
 pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<JsVarValue> {
     match e {
+        // [ e1, e2, ... ]
+        &Array(_) => Err(JsError::unimplemented("Array")),
         // e1 [op] e2
         &BinExp(ref e1, ref op, ref e2) => {
             let val1 = try!(eval_exp(e1, state.clone())).0;
@@ -212,8 +225,8 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
             };
 
             match js_fn_struct.name {
-                Some(_) => (*state).borrow_mut().push_scope(e),
-                None => try!((*state).borrow_mut().push_closure_scope(&fun_binding.unique))
+                Some(_) => state.borrow_mut().push_scope(e),
+                None => try!(state.borrow_mut().push_closure_scope(&fun_binding.unique))
             };
 
             for param in js_fn_struct.params {
@@ -224,7 +237,7 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
                 };
 
                 arg.0.binding = Binding::new(param.to_owned());
-                (*state).borrow_mut().alloc(arg.0, arg.1)
+                state.borrow_mut().alloc(arg.0, arg.1)
                 .expect("Unable to store function argument in scope");
             }
 
@@ -246,7 +259,7 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
             });
 
             // Should we yield here? Not sure, so for now it doesn't
-            (*state).borrow_mut().pop_scope(returning_closure, false)
+            state.borrow_mut().pop_scope(returning_closure, false)
                 .expect("Unable to clear scope for function");
 
             Ok(v.unwrap_or(scalar(JsUndef)))
@@ -263,7 +276,7 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
                 JsVar::new(JsPtr(JsPtrTag::JsFn { name: None }))
             };
 
-            if let Err(e) = (*state).borrow_mut().alloc(var.clone(), Some(JsPtrEnum::JsFn(js_fun.clone()))) {
+            if let Err(e) = state.borrow_mut().alloc(var.clone(), Some(JsPtrEnum::JsFn(js_fun.clone()))) {
                 return Err(JsError::GcError(e));
             }
 
@@ -285,26 +298,29 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
                         }
                     },
                     // TODO: all JsPtrs can have instance vars/methods, not just JsObjs
-                    _ => Err(JsError::UnimplementedError)
+                    _ => Err(JsError::UnimplementedError(String::from("InstanceVar, eval/mod.rs:295")))
                 }
             } else {
                 // TODO: Things which are not ptrs can also have instance vars/methods
-                Err(JsError::UnimplementedError)
+                Err(JsError::UnimplementedError(String::from("InstanceVar, eval/mod.rs:299")))
             }
         },
-
-        &Null => Ok(scalar(JsNull)),
 
         &Float(f) => Ok(scalar(JsType::JsNum(f))),
         &Neg(ref exp) => Ok(scalar(JsNum(-try!(eval_exp(exp, state.clone())).0.as_number()))),
         &Pos(ref exp) => Ok(scalar(JsNum(try!(eval_exp(exp, state.clone())).0.as_number()))),
 
-        &PostDec(ref exp) => Ok((eval_float_post_op!(exp, f, f - 1.0, state), None)),
-        &PostInc(ref exp) => Ok((eval_float_post_op!(exp, f, f + 1.0, state), None)),
-        &PreDec(ref exp)  => Ok((eval_float_pre_op!(exp, f, f - 1.0, state),  None)),
-        &PreInc(ref exp)  => Ok((eval_float_pre_op!(exp, f, f + 1.0, state),  None)),
+        &KeyAccessor(..) => Err(JsError::unimplemented("KeyAccessor")),
+        &LogNot(..) => Err(JsError::unimplemented("LogNot")),
+        &Null => Ok(scalar(JsNull)),
 
-        &NewObject(_, _) => Err(JsError::UnimplementedError),
+
+        &PostDec(ref exp) => eval_float_post_op!(exp, f, f - 1.0, state),
+        &PostInc(ref exp) => eval_float_post_op!(exp, f, f + 1.0, state),
+        &PreDec(ref exp)  => eval_float_pre_op!(exp, f, f - 1.0, state),
+        &PreInc(ref exp)  => eval_float_pre_op!(exp, f, f + 1.0, state),
+
+        &NewObject(_, _) => Err(JsError::UnimplementedError(String::from("NewObject, eval/mod.rs:314"))),
         &Object(ref fields) => {
             let mut kv_tuples = Vec::new();
             for f in fields {
@@ -314,15 +330,23 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
                 kv_tuples.push((f_key, f_exp, None));
             }
 
-            let alloc_box = state.borrow_mut().get_alloc_box();
-            let obj = JsObjStruct::new(None, "", kv_tuples, &mut *(alloc_box.borrow_mut()));
+            let mut state_ref = state.borrow_mut();
+            let obj = JsObjStruct::new(None, "", kv_tuples, &mut *(state_ref.alloc_box.borrow_mut()));
+
             Ok((JsVar::new(JsPtr(JsPtrTag::JsObj)), Some(JsPtrEnum::JsObj(obj))))
         }
 
         &Str(ref s) => {
             let var = JsVar::new(JsPtr(JsPtrTag::JsStr));
-            let ptr = Some(JsPtrEnum::JsStr(JsStrStruct::new(&unescape(s).expect("Invalid string"))));
-            Ok((var, ptr))
+            match unescape(s) {
+                Some(s) =>  {
+                    let ptr = Some(JsPtrEnum::JsStr(JsStrStruct::new(&s)));
+                    return Ok((var, ptr))
+                },
+                None => {
+                    return Err(JsError::ParseError(String::from("invalid string")))
+                }
+            }
         }
         &TypeOf(ref e) =>
             Ok((

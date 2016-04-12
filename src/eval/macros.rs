@@ -10,12 +10,12 @@ macro_rules! eval_float_post_op {
                     let mut new_var = orig_var.clone();
                     new_var.t = JsNum(new_num);
                     $state.borrow_mut().store(new_var, None).unwrap();
-                    orig_var
+                    Ok((orig_var, None))
                 }
-                _ => panic!(format!("ReferenceError: {} is not defined", binding))
+                _ => Err(JsError::ReferenceError(format!("ReferenceError: {} is not defined", binding)))
             }
         } else {
-            panic!("invalid left-hand expression for postfix operation");
+            Err(JsError::ReferenceError(format!("ReferenceError: invalid left-hand expression for postfix operation")))
         }
     }
 }
@@ -31,12 +31,12 @@ macro_rules! eval_float_pre_op {
                     let mut new_var = orig_var.clone();
                     new_var.t = JsNum(new_num);
                     $state.borrow_mut().store(new_var.clone(), None).unwrap();
-                    new_var
+                    Ok((new_var, None))
                 }
-                _ => panic!(format!("ReferenceError: {} is not defined", binding))
+                _ => Err(JsError::ReferenceError(format!("ReferenceError: {} is not defined", binding)))
             }
         } else {
-            panic!("invalid left-hand expression for postfix operation");
+            Err(JsError::ReferenceError(format!("ReferenceError: invalid left-hand expression for prefix operation")))
         }
     }
 }
