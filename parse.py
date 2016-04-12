@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import re
 import operator
 from collections import defaultdict
@@ -31,3 +32,6 @@ print("Recap:")
 for k in counts.keys():
     print("{}:\t{} groups,\t{} total".format(k[:6], len(counts[k]),
         sum(v for k, v in counts[k].items())))
+
+ok = sum(v for k, v in counts["OK"].items())
+print("Passed: {}/{} = {}%".format(ok, 5295, ok/5295. * 100))
