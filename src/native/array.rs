@@ -23,18 +23,18 @@ pub fn array_push(state: Rc<RefCell<Backend>>, this: Option<JsPtrEnum>, args: Ve
         None => panic!("Trying to push onto array, but `this` is None")
     };
 
-    let length_var = match this_obj.dict.get(&js_str_key("length")) {
-        Some(js_var) => js_var.binding.clone(),
+    let mut length_ptr = match this_obj.dict.get(&js_str_key("length")) {
+        Some(js_var) => {
+            let state_ref = state.borrow_mut();
+            let alloc_box = state_ref.get_alloc_box();
+            let alloc_ref = alloc_box.borrow_mut();
+            match alloc_ref.find_id(&js_var.unique).map(|p| p.borrow().clone()) {
+                Some(JsPtrEnum::NativeVar(native_var)) => native_var,
+                Some(_) => panic!("Array length pointer is not a native variable"),
+                None => panic!("No pointer for array length"),
+            }
+        }
         None => panic!("No length field on array"),
-    };
-
-    println!("length_var: {:#?}", length_var);
-
-    let mut length_ptr = match state.borrow_mut().load(&length_var) {
-        Ok((_, Some(JsPtrEnum::NativeVar(native_var)))) => native_var,
-        Ok((_, Some(_))) => panic!("Array length pointer is not a native variable"),
-        Ok((_, None)) => panic!("No pointer for array length"),
-        Err(e) => panic!("{}", e),
     };
 
     let length = match length_ptr.get(state.clone(), this.clone()).0.t {
