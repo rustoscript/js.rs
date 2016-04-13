@@ -292,7 +292,12 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
                     Some(JsPtrEnum::JsObj(obj_struct)) => {
                         let try_inner = obj_struct.dict.get(&JsKey::JsStr(JsStrStruct::new(var)));
                         if let Some(inner_var) = try_inner {
-                            state.borrow_mut().load(&inner_var.binding).map_err(|e| JsError::GcError(e))
+                            let state_ref = state.borrow_mut();
+                            let ptr = state_ref.alloc_box.borrow_mut().find_id(&inner_var.unique).map(|p| {
+                                p.borrow().clone()
+                            });
+
+                            Ok((inner_var.clone(), ptr))
                         } else {
                             Ok(scalar(JsUndef))
                         }
