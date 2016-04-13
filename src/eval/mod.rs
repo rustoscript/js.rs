@@ -5,6 +5,9 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use js_error::{self, JsError};
+use native::get_array_proto;
+use number::eval_binop;
+use var::*;
 
 use french_press::ScopeManager;
 use jsrs_parser::lalr::parse_Stmt;
@@ -21,8 +24,6 @@ use jsrs_common::types::js_var::JsType::*;
 use jsrs_common::backend::Backend;
 
 use unescape::unescape;
-use number::eval_binop;
-use var::*;
 
 
 /// Evaluate a string containing some JavaScript statements (or sequences of statements).
@@ -189,7 +190,20 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>)
 pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<JsVarValue> {
     match e {
         // [ e1, e2, ... ]
-        &Array(_) => Err(JsError::unimplemented("Array")),
+        &Array(ref elems) => {
+            let proto = Some(Box::new(get_array_proto(state.clone())));
+
+            let mut kv_tuples = Vec::new();
+            for (i, elem) in elems.iter().enumerate() {
+                let (var, ptr) = try!(eval_exp(elem, state.clone()));
+                kv_tuples.push((js_str_key(&format!("{}", i)), var, ptr));
+            }
+
+            let mut state_ref = state.borrow_mut();
+            let obj = JsObjStruct::new(proto, "array", kv_tuples, &mut *(state_ref.alloc_box.borrow_mut()));
+
+            Ok((JsVar::new(JsType::JsPtr(JsPtrTag::JsObj)), Some(JsPtrEnum::JsObj(obj))))
+        }
         // e1 [op] e2
         &BinExp(ref e1, ref op, ref e2) => {
             let val1 = try!(eval_exp(e1, state.clone())).0;

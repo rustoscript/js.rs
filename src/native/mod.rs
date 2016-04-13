@@ -43,13 +43,7 @@ pub fn add_pervasives(state: Rc<RefCell<ScopeManager>>) {
     add_array(state)
 }
 
-fn default_getter(_backend: Rc<RefCell<Backend>>, var: JsVar, ptr: Option<JsPtrEnum>, _this: Option<JsPtrEnum>) -> JsVarValue {
-    (var, ptr)
-}
-
-fn add_array(state: Rc<RefCell<ScopeManager>>) {
-    let mut state_ref = state.borrow_mut();
-
+pub fn get_array_proto(state: Rc<RefCell<ScopeManager>>) -> JsObjStruct {
     let (zero, undef) = scalar(JsType::JsNum(0.0));
     let array_length = NativeVar::new(zero, undef, default_getter, array::array_length_setter);
 
@@ -57,14 +51,24 @@ fn add_array(state: Rc<RefCell<ScopeManager>>) {
     let length_var = JsVar::new(JsType::JsPtr(JsPtrTag::NativeVar { type_string: String::from("number") }));
     let length_ptr = JsPtrEnum::NativeVar(array_length);
 
+    let mut state_ref = state.borrow_mut();
     let mut array_proto = JsObjStruct::new(
         None, "Array", vec![(js_str_key("length"), length_var, Some(length_ptr))], &mut *(state_ref.alloc_box.borrow_mut()));
 
-    // No joke: the array prototype actually is an array...
+    // No joke, the array prototype actually is an array...
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/prototype
     array_proto.proto = Some(Box::new(array_proto.clone()));
 
+    array_proto
+}
+
+fn default_getter(_backend: Rc<RefCell<Backend>>, var: JsVar, ptr: Option<JsPtrEnum>, _this: Option<JsPtrEnum>) -> JsVarValue {
+    (var, ptr)
+}
+
+fn add_array(state: Rc<RefCell<ScopeManager>>) {
     let array_var = JsVar::bind("Array", JsType::JsPtr(JsPtrTag::JsObj));
-    let array_ptr = Some(JsPtrEnum::JsObj(array_proto));
+    let array_ptr = Some(JsPtrEnum::JsObj(get_array_proto(state.clone())));
+    let mut state_ref = state.borrow_mut();
     state_ref.alloc(array_var, array_ptr).expect("Unable to alloc Array prototype");
 }
