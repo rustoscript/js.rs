@@ -37,7 +37,6 @@ use rustyline::Editor;
 use walkdir::WalkDir;
 
 use jsrs_common::types::coerce::AsString;
-use jsrs_common::types::js_var::JsPtrEnum;
 use french_press::{init_gc, ScopeManager};
 
 use eval::eval_string;
