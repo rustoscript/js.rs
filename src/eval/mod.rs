@@ -306,9 +306,9 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
                     Some(JsPtrEnum::JsObj(obj_struct)) => {
                         let try_inner = obj_struct.dict.get(&JsKey::JsStr(JsStrStruct::new(var)));
                         if let Some(inner_var) = try_inner {
-                            return Ok((inner_var.clone(), None));
+                            state.borrow_mut().load(&inner_var.binding).map_err(|e| JsError::GcError(e))
                         } else {
-                            return Ok(scalar(JsUndef));
+                            Ok(scalar(JsUndef))
                         }
                     },
                     // TODO: all JsPtrs can have instance vars/methods, not just JsObjs
@@ -338,8 +338,8 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
             for f in fields {
                 let f_key = JsKey::JsStr(JsStrStruct::new(&f.0));
                 // TODO: handle obj as key/value pair
-                let f_exp = try!(eval_exp(&*f.1, state.clone())).0;
-                kv_tuples.push((f_key, f_exp, None));
+                let f_exp = try!(eval_exp(&*f.1, state.clone()));
+                kv_tuples.push((f_key, f_exp.0, f_exp.1));
             }
 
             let mut state_ref = state.borrow_mut();
