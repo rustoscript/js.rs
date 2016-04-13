@@ -45,7 +45,7 @@ pub fn add_pervasives(state: Rc<RefCell<ScopeManager>>) {
 
 pub fn get_array_proto(len: f64, state: Rc<RefCell<ScopeManager>>) -> JsObjStruct {
     let (zero, undef) = scalar(JsType::JsNum(len));
-    let array_length = NativeVar::new(zero, undef, default_getter, array::array_length_setter);
+    let array_length = NativeVar::new(zero, undef, "length", default_getter, array::array_length_setter);
     let array_push = NativeFn::new(array::array_push);
 
     let length_var = JsVar::new(JsType::JsPtr(JsPtrTag::NativeVar { type_string: String::from("number") }));

@@ -44,16 +44,22 @@ macro_rules! eval_float_pre_op {
 macro_rules! instance_var_eval {
     ($var:expr, $ptr:expr, $name:expr, $state:expr) => {
         if let JsPtr(_) = $var.t {
-            match $ptr {
+            match $ptr.clone() {
                 Some(JsPtrEnum::JsObj(obj_struct)) => {
                     let try_inner = obj_struct.dict.get(&JsKey::JsStr(JsStrStruct::new($name)));
                     if let Some(inner_var) = try_inner {
-                        let state_ref = $state.borrow_mut();
-                        let ptr = state_ref.alloc_box.borrow_mut().find_id(&inner_var.unique).map(|p| {
-                            p.borrow().clone()
-                        });
+                        let ptr = {
+                            let state_ref = $state.borrow_mut();
+                            let alloc_box = state_ref.alloc_box.borrow_mut();
+                            alloc_box.find_id(&inner_var.unique).map(|p| {
+                                p.borrow().clone()
+                            })
+                        };
 
-                        Ok((inner_var.clone(), ptr))
+                        match ptr.clone() {
+                            Some(JsPtrEnum::NativeVar(nv)) => Ok(nv.get($state.clone(), ptr.clone())),
+                            _ => Ok((inner_var.clone(), ptr)),
+                        }
                     } else {
                         Ok(scalar(JsUndef))
                     }

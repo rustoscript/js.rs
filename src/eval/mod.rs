@@ -101,17 +101,6 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>)
                         return Ok(((nv.var.clone(), nv.clone().ptr.map(|x| *x)), None));
                     }
 
-                    // if let Some(ref var) = obj.dict.get(&js_str_key(string)) {
-                    //
-                    //     if let Some(val_ptr) =  {
-                    //         let borrowed = val_ptr.borrow().clone();
-                    //         if let JsPtrEnum::NativeVar(mut native_var) = borrowed.clone() {
-                    //             native_var.set(state.clone(), ptr.clone(), rhs_var, rhs_ptr);
-                    //             return Ok(((native_var.var.clone(), native_var.clone().ptr.map(|x| *x)), None));
-                    //         }
-                    //     }
-                    // }
-
                     let mut state_ref = state.borrow_mut();
                     obj.add_key(JsKey::JsStr(JsStrStruct::new(string)), rhs_var.clone(), rhs_ptr.clone(), &mut *(state_ref.alloc_box.borrow_mut()));
                     rhs_var
