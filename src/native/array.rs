@@ -15,6 +15,46 @@ fn var_type_as_number(var: &JsVar, ptr: Option<&JsPtrEnum>) -> f64 {
     }
 }
 
+pub fn array_push(state: Rc<RefCell<Backend>>, this: Option<JsPtrEnum>, args: Vec<(JsVar, Option<JsPtrEnum>)>) -> (JsVar, Option<JsPtrEnum>) {
+    // TODO: Change panics to actual errors
+    let mut this_obj = match this.clone() {
+        Some(JsPtrEnum::JsObj(obj)) => obj,
+        Some(_) => panic!("Trying to push onto array, but `this` is not an object"),
+        None => panic!("Trying to push onto array, but `this` is None")
+    };
+
+    let length_var = match this_obj.dict.get(&js_str_key("length")) {
+        Some(js_var) => js_var.binding.clone(),
+        None => panic!("No length field on array"),
+    };
+
+    println!("length_var: {:#?}", length_var);
+
+    let mut length_ptr = match state.borrow_mut().load(&length_var) {
+        Ok((_, Some(JsPtrEnum::NativeVar(native_var)))) => native_var,
+        Ok((_, Some(_))) => panic!("Array length pointer is not a native variable"),
+        Ok((_, None)) => panic!("No pointer for array length"),
+        Err(e) => panic!("{}", e),
+    };
+
+    let length = match length_ptr.get(state.clone(), this.clone()).0.t {
+        JsType::JsNum(f) => f,
+        _ => panic!("Array length value is not a number"),
+    };
+
+    let new_length = JsVar::new(JsType::JsNum(length + args.len() as f64));
+    length_ptr.set(state.clone(), this, new_length.clone(), None);
+    let state_ref = state.borrow_mut();
+    let alloc_box = state_ref.get_alloc_box();
+
+    for (i, (var, ptr)) in args.into_iter().enumerate() {
+        let key = JsKey::JsStr(JsStrStruct::new(&JsType::JsNum(length + i as f64).as_string()));
+        this_obj.add_key(key, var, ptr, &mut *(alloc_box.borrow_mut()));
+    }
+
+    (new_length, None)
+}
+
 pub fn array_length_setter(state: Rc<RefCell<Backend>>, old_var: JsVar, old_ptr: Option<JsPtrEnum>, this: Option<JsPtrEnum>,
                new_var: JsVar, new_ptr: Option<JsPtrEnum>) -> JsVarValue {
     let new_len = var_type_as_number(&new_var, new_ptr.as_ref());
@@ -34,10 +74,12 @@ pub fn array_length_setter(state: Rc<RefCell<Backend>>, old_var: JsVar, old_ptr:
     let new_len_int = new_len as i32;
     let old_len_int = old_len as i32;
 
+    let state_ref = state.borrow_mut();
+
     if new_len > old_len {
         for i in old_len_int..new_len_int {
             let key = JsKey::JsStr(JsStrStruct::new(&JsType::JsNum(i as f64).as_string()));
-            let alloc_box = state.borrow_mut().get_alloc_box();
+            let alloc_box = state_ref.get_alloc_box();
             this_obj.add_key(key, JsVar::new(JsType::JsUndef), None, &mut *(alloc_box.borrow_mut()));
         }
     }
@@ -45,7 +87,9 @@ pub fn array_length_setter(state: Rc<RefCell<Backend>>, old_var: JsVar, old_ptr:
     if new_len < old_len {
         for i in new_len_int..old_len_int {
             let key = js_str_key(&JsType::JsNum(i as f64).as_string());
-            let _ = this_obj.dict.remove(&key);
+            let alloc_box = state_ref.get_alloc_box();
+            println!("key: {:#?}", key);
+            this_obj.remove_key(&key, &mut *(alloc_box.borrow_mut()));
         }
     }
 

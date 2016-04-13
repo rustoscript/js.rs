@@ -40,3 +40,30 @@ macro_rules! eval_float_pre_op {
         }
     }
 }
+
+macro_rules! instance_var_eval {
+    ($var:expr, $ptr:expr, $name:expr, $state:expr) => {
+        if let JsPtr(_) = $var.t {
+            match $ptr {
+                Some(JsPtrEnum::JsObj(obj_struct)) => {
+                    let try_inner = obj_struct.dict.get(&JsKey::JsStr(JsStrStruct::new($name)));
+                    if let Some(inner_var) = try_inner {
+                        let state_ref = $state.borrow_mut();
+                        let ptr = state_ref.alloc_box.borrow_mut().find_id(&inner_var.unique).map(|p| {
+                            p.borrow().clone()
+                        });
+
+                        Ok((inner_var.clone(), ptr))
+                    } else {
+                        Ok(scalar(JsUndef))
+                    }
+                },
+                // TODO: all JsPtrs can have instance vars/methods, not just JsObjs
+                _ => Err(JsError::UnimplementedError(String::from("InstanceVar, eval/mod.rs:295")))
+            }
+        } else {
+            // TODO: Things which are not ptrs can also have instance vars/methods
+            Err(JsError::UnimplementedError(String::from("InstanceVar, eval/mod.rs:299")))
+        }
+    }
+}

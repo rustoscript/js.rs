@@ -14,7 +14,7 @@ use jsrs_parser::lalr::parse_Stmt;
 use jsrs_common::ast::*;
 use jsrs_common::ast::Exp::*;
 use jsrs_common::ast::Stmt::*;
-use jsrs_common::types::coerce::{AsBool, AsNumber};
+use jsrs_common::types::coerce::{AsBool, AsNumber, AsString};
 use jsrs_common::types::binding::Binding;
 use jsrs_common::types::js_fn::JsFnStruct;
 use jsrs_common::types::js_obj::JsObjStruct;
@@ -61,21 +61,56 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>)
 
             let var = match lhs {
                 &Var(ref string) => {
-                    let mut v = try!(state.borrow_mut().load(&Binding::new(string.to_owned()))).0;
-                    v.t = rhs_var.t.clone();
-                    let old_binding = v.unique.clone();
-                    let _ = v.deanonymize(string);
-                    let _ = state.borrow_mut().rename_closure(&old_binding, &v.unique);
+                    let (mut var, ptr) = try!(state.borrow_mut().load(&Binding::new(string.to_owned())));
+
+                    match ptr {
+                        Some(JsPtrEnum::NativeVar(mut native_var)) => {
+                            native_var.set(state.clone(), None, rhs_var, rhs_ptr);
+                            return Ok(((native_var.var, native_var.ptr.map(|x| *x)), None));
+                        }
+                        _ => ()
+                    };
+
+                    var.t = rhs_var.t.clone();
+                    let old_binding = var.unique.clone();
+                    let _ = var.deanonymize(string);
+                    let _ = state.borrow_mut().rename_closure(&old_binding, &var.unique);
                     try!(state.borrow_mut().store(rhs_var.clone(), rhs_ptr.clone()));
-                    v
+                    var
                 }
                 &InstanceVar(ref e, ref string) => {
                     let (_, ptr) = try!(eval_exp(&e.clone(), state.clone()));
 
-                    let mut obj = match ptr {
+                    let mut obj = match ptr.clone() {
                         Some(JsPtrEnum::JsObj(obj)) => obj,
                         _ => return Ok(((rhs_var, rhs_ptr), None))
                     };
+
+
+                    let native_var = match obj.dict.get(&js_str_key(string)) {
+                        Some(ref var) => {
+                            let state_ref = state.borrow_mut();
+                            let alloc_box = state_ref.alloc_box.borrow_mut();
+                            alloc_box.find_id(&var.unique).map(|p| p.borrow().clone())
+                        }
+                        None => None
+                    };
+
+                    if let Some(JsPtrEnum::NativeVar(mut nv)) = native_var {
+                        nv.set(state.clone(), ptr.clone(), rhs_var, rhs_ptr);
+                        return Ok(((nv.var.clone(), nv.clone().ptr.map(|x| *x)), None));
+                    }
+
+                    // if let Some(ref var) = obj.dict.get(&js_str_key(string)) {
+                    //
+                    //     if let Some(val_ptr) =  {
+                    //         let borrowed = val_ptr.borrow().clone();
+                    //         if let JsPtrEnum::NativeVar(mut native_var) = borrowed.clone() {
+                    //             native_var.set(state.clone(), ptr.clone(), rhs_var, rhs_ptr);
+                    //             return Ok(((native_var.var.clone(), native_var.clone().ptr.map(|x| *x)), None));
+                    //         }
+                    //     }
+                    // }
 
                     let mut state_ref = state.borrow_mut();
                     obj.add_key(JsKey::JsStr(JsStrStruct::new(string)), rhs_var.clone(), rhs_ptr.clone(), &mut *(state_ref.alloc_box.borrow_mut()));
@@ -191,7 +226,7 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
     match e {
         // [ e1, e2, ... ]
         &Array(ref elems) => {
-            let proto = Some(Box::new(get_array_proto(state.clone())));
+            let proto = Some(Box::new(get_array_proto(elems.len() as f64, state.clone())));
 
             let mut kv_tuples = Vec::new();
             for (i, elem) in elems.iter().enumerate() {
@@ -216,7 +251,15 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
 
         // fun_name([arg_exp1, arg_exps])
         &Call(ref fun_name, ref arg_exps) => {
-            let (fun_binding, fun_ptr) = try!(eval_exp(fun_name, state.clone()));
+
+            let ((fun_binding, fun_ptr), this) = match **fun_name {
+                InstanceVar(ref lhs, ref name) => {
+                    let (obj_var, obj_ptr) = try!(eval_exp(lhs, state.clone()));
+                    let state_clone = state.clone();
+                    (try!(instance_var_eval!(obj_var, obj_ptr.clone(), name, state_clone)), obj_ptr)
+                }
+                _ => (try!(eval_exp(fun_name, state.clone())), None)
+            };
 
             // Create vector of arguments, evaluated to JsVars.
             let mut args = Vec::new();
@@ -226,7 +269,7 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
 
             let js_fn_struct = match fun_ptr {
                 Some(JsPtrEnum::JsFn(fun)) => fun,
-                Some(JsPtrEnum::NativeFn(func)) => return Ok(func.call(state.clone(), None, args)),
+                Some(JsPtrEnum::NativeFn(func)) => return Ok(func.call(state.clone(), this, args)),
                 Some(_) =>
                     return Err(JsError::TypeError(format!("{:?} is not a function", fun_name))),
                 None => match state.borrow_mut().load(&fun_binding.binding) {
@@ -301,32 +344,16 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
         &InstanceVar(ref instance_exp, ref var) => {
             // TODO: this needs better type-reasoning and errors
             let (instance_var, var_ptr) = try!(eval_exp(instance_exp, state.clone()));
-            if let JsPtr(_) = instance_var.t {
-                match var_ptr {
-                    Some(JsPtrEnum::JsObj(obj_struct)) => {
-                        let try_inner = obj_struct.dict.get(&JsKey::JsStr(JsStrStruct::new(var)));
-                        if let Some(inner_var) = try_inner {
-                            let state_ref = state.borrow_mut();
-                            let ptr = state_ref.alloc_box.borrow_mut().find_id(&inner_var.unique).map(|p| {
-                                p.borrow().clone()
-                            });
-
-                            Ok((inner_var.clone(), ptr))
-                        } else {
-                            Ok(scalar(JsUndef))
-                        }
-                    },
-                    // TODO: all JsPtrs can have instance vars/methods, not just JsObjs
-                    _ => Err(JsError::UnimplementedError(String::from("InstanceVar, eval/mod.rs:295")))
-                }
-            } else {
-                // TODO: Things which are not ptrs can also have instance vars/methods
-                Err(JsError::UnimplementedError(String::from("InstanceVar, eval/mod.rs:299")))
-            }
+            let state_clone = state.clone();
+            instance_var_eval!(instance_var, var_ptr, var, state_clone)
         },
 
         &Float(f) => Ok(scalar(JsType::JsNum(f))),
-        &KeyAccessor(..) => Err(JsError::unimplemented("KeyAccessor")),
+        &KeyAccessor(ref obj, ref key) => {
+            let (var, ptr) = try!(eval_exp(key, state.clone()));
+            let string = ptr.map(|p| p.as_string()).unwrap_or(var.t.as_string());
+            eval_exp(&InstanceVar(obj.clone(), string), state)
+        }
         &LogNot(ref exp) => Ok(scalar(JsBool(!try!(eval_exp(exp, state.clone())).0.as_bool()))),
         &Neg(ref exp) => Ok(scalar(JsNum(-try!(eval_exp(exp, state.clone())).0.as_number()))),
         &Null => Ok(scalar(JsNull)),

@@ -20,7 +20,7 @@ impl JsError {
         JsError::ReferenceError(String::from("Invalid left-hand side in assignment"))
     }
 
-
+    #[allow(dead_code)]
     pub fn unimplemented(typ: &str) -> JsError {
         JsError::UnimplementedError(format!("{} not implemented", typ))
     }
