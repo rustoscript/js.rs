@@ -36,6 +36,7 @@ use rustyline::error::ReadlineError;
 use rustyline::Editor;
 use walkdir::WalkDir;
 
+use jsrs_common::types::coerce::AsString;
 use jsrs_common::types::js_var::JsPtrEnum;
 use french_press::{init_gc, ScopeManager};
 
@@ -188,16 +189,8 @@ fn repl(scope_manager: Rc<RefCell<ScopeManager>>) -> i32 {
                 rl.add_history_entry(&input);
 
                 match eval_string(&input, scope_manager.clone()) {
-                    Ok((var, ptr)) => {
-                        match ptr {
-                            Some(JsPtrEnum::JsSym(s)) => println!("=> Symbol({:?})", s),
-                            Some(JsPtrEnum::JsStr(s)) => println!("=> {:?}", s.text),
-                            _ => println!("=> {:?}", var.t),
-                        }
-                    },
-                    Err(e) => {
-                        println!("{:?}", e);
-                    }
+                    Ok((var, ptr)) => println!("{}", ptr.map(|p| p.as_string()).unwrap_or(var.t.as_string())),
+                    Err(e) => println!("{:?}", e),
                 }
             },
             Err(ReadlineError::Interrupted) => {
