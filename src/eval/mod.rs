@@ -4,13 +4,13 @@ mod macros;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use js_error::{self, JsError};
 use native::get_array_proto;
 use number::eval_binop;
 use var::*;
 
 use french_press::ScopeManager;
 use jsrs_parser::lalr::parse_Stmt;
+use jsrs_common::js_error::{self, JsError};
 use jsrs_common::ast::*;
 use jsrs_common::ast::Exp::*;
 use jsrs_common::ast::Stmt::*;
