@@ -5,7 +5,7 @@ use jsrs_common::backend::Backend;
 use jsrs_common::types::coerce::AsString;
 use jsrs_common::types::js_var::{JsType, JsPtrEnum, JsVar};
 
-pub fn log(_scope: Rc<RefCell<Backend>>, _this: Option<JsPtrEnum>,
+pub fn log(_scope: Rc<RefCell<Backend>>, _this: Option<(JsVar, JsPtrEnum)>,
        args: Vec<(JsVar, Option<JsPtrEnum>)>) -> (JsVar, Option<JsPtrEnum>) {
     match args.first() {
         Some(&(_, Some(ref var))) => println!("{}", var.as_string()),

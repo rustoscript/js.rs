@@ -15,10 +15,10 @@ fn var_type_as_number(var: &JsVar, ptr: Option<&JsPtrEnum>) -> f64 {
     }
 }
 
-pub fn array_push(state: Rc<RefCell<Backend>>, this: Option<JsPtrEnum>, args: Vec<(JsVar, Option<JsPtrEnum>)>) -> (JsVar, Option<JsPtrEnum>) {
+pub fn array_push(state: Rc<RefCell<Backend>>, this: Option<(JsVar, JsPtrEnum)>, args: Vec<(JsVar, Option<JsPtrEnum>)>) -> (JsVar, Option<JsPtrEnum>) {
     // TODO: Change panics to actual errors
-    let mut this_obj = match this.clone() {
-        Some(JsPtrEnum::JsObj(obj)) => obj,
+    let (this_var, mut this_obj) = match this.clone() {
+        Some((v, JsPtrEnum::JsObj(obj))) => (v, obj),
         Some(_) => panic!("Trying to push onto array, but `this` is not an object"),
         None => panic!("Trying to push onto array, but `this` is None")
     };
@@ -37,7 +37,7 @@ pub fn array_push(state: Rc<RefCell<Backend>>, this: Option<JsPtrEnum>, args: Ve
         None => panic!("No length field on array"),
     };
 
-    let length = match length_ptr.get(state.clone(), this.clone()).0.t {
+    let length = match length_ptr.get(state.clone(), this.clone().map(|x| x.1)).0.t {
         JsType::JsNum(f) => f,
         _ => panic!("Array length value is not a number"),
     };
@@ -49,14 +49,14 @@ pub fn array_push(state: Rc<RefCell<Backend>>, this: Option<JsPtrEnum>, args: Ve
 
     for (i, (var, ptr)) in args.into_iter().enumerate() {
         let key = JsKey::JsStr(JsStrStruct::new(&JsType::JsNum(length + i as f64).as_string()));
-        this_obj.add_key(key, var, ptr, &mut *(alloc_box.borrow_mut()));
+        this_obj.add_key(&this_var.unique, key, var, ptr, &mut *(alloc_box.borrow_mut()));
     }
 
     (new_length, None)
 }
 
-pub fn array_length_setter(state: Rc<RefCell<Backend>>, old_var: JsVar, old_ptr: Option<JsPtrEnum>, this: Option<JsPtrEnum>,
-               new_var: JsVar, new_ptr: Option<JsPtrEnum>) -> JsVarValue {
+pub fn array_length_setter(state: Rc<RefCell<Backend>>, old_var: JsVar, old_ptr: Option<JsPtrEnum>,
+                           this: Option<(JsVar, JsPtrEnum)>,  new_var: JsVar, new_ptr: Option<JsPtrEnum>) -> JsVarValue {
     let new_len = var_type_as_number(&new_var, new_ptr.as_ref());
     let old_len = var_type_as_number(&old_var, old_ptr.as_ref());
 
@@ -65,8 +65,8 @@ pub fn array_length_setter(state: Rc<RefCell<Backend>>, old_var: JsVar, old_ptr:
         panic!("Invalid array length:\n var: {:#?}\nptr: {:#?}", new_var, new_ptr);
     }
 
-    let mut this_obj = match this {
-        Some(JsPtrEnum::JsObj(obj)) => obj,
+    let (this_var, mut this_obj) = match this.clone() {
+        Some((v, JsPtrEnum::JsObj(obj))) => (v, obj),
         Some(_) => panic!("Trying to set array length, but `this` is not an object"),
         None => panic!("Trying to set array length, but `this` is None")
     };
@@ -80,7 +80,7 @@ pub fn array_length_setter(state: Rc<RefCell<Backend>>, old_var: JsVar, old_ptr:
         for i in old_len_int..new_len_int {
             let key = JsKey::JsStr(JsStrStruct::new(&JsType::JsNum(i as f64).as_string()));
             let alloc_box = state_ref.get_alloc_box();
-            this_obj.add_key(key, JsVar::new(JsType::JsUndef), None, &mut *(alloc_box.borrow_mut()));
+            this_obj.add_key(&this_var.unique, key, JsVar::new(JsType::JsUndef), None, &mut *(alloc_box.borrow_mut()));
         }
     }
 

@@ -79,7 +79,7 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>)
                     var
                 }
                 &InstanceVar(ref e, ref string) => {
-                    let (_, ptr) = try!(eval_exp(&e.clone(), state.clone()));
+                    let (var, ptr) = try!(eval_exp(&e.clone(), state.clone()));
 
                     let mut obj = match ptr.clone() {
                         Some(JsPtrEnum::JsObj(obj)) => obj,
@@ -97,12 +97,12 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>)
                     };
 
                     if let Some(JsPtrEnum::NativeVar(mut nv)) = native_var {
-                        nv.set(state.clone(), ptr.clone(), rhs_var, rhs_ptr);
+                        nv.set(state.clone(), ptr.clone().map(|x| (var.clone(), x)), rhs_var, rhs_ptr);
                         return Ok(((nv.var.clone(), nv.clone().ptr.map(|x| *x)), None));
                     }
 
                     let mut state_ref = state.borrow_mut();
-                    obj.add_key(JsKey::JsStr(JsStrStruct::new(string)), rhs_var.clone(), rhs_ptr.clone(), &mut *(state_ref.alloc_box.borrow_mut()));
+                    obj.add_key(&var.unique, JsKey::JsStr(JsStrStruct::new(string)), rhs_var.clone(), rhs_ptr.clone(), &mut *(state_ref.alloc_box.borrow_mut()));
                     rhs_var
                 }
                 _ => return Err(JsError::invalid_lhs())
@@ -245,7 +245,7 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
                 InstanceVar(ref lhs, ref name) => {
                     let (obj_var, obj_ptr) = try!(eval_exp(lhs, state.clone()));
                     let state_clone = state.clone();
-                    (try!(instance_var_eval!(obj_var, obj_ptr.clone(), name, state_clone)), obj_ptr)
+                    (try!(instance_var_eval!(obj_var.clone(), obj_ptr.clone(), name, state_clone)), obj_ptr.map(|x| (obj_var, x)))
                 }
                 _ => (try!(eval_exp(fun_name, state.clone())), None)
             };
