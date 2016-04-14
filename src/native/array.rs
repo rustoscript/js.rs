@@ -88,7 +88,7 @@ pub fn array_length_setter(state: Rc<RefCell<Backend>>, old_var: JsVar, old_ptr:
         for i in new_len_int..old_len_int {
             let key = js_str_key(&JsType::JsNum(i as f64).as_string());
             let alloc_box = state_ref.get_alloc_box();
-            this_obj.remove_key(&key, &mut *(alloc_box.borrow_mut()));
+            this_obj.remove_key(&this_var.unique, &key, &mut *(alloc_box.borrow_mut()));
         }
     }
 
