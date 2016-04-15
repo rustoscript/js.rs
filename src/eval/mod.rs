@@ -242,7 +242,7 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
             let val1 = try!(eval_exp(e1, state.clone())).0;
             let val2 = try!(eval_exp(e2, state.clone())).0;
 
-            let result = eval_binop(op, val1, val2);
+            let result = try!(eval_binop(op, val1, val2, state.clone()));
             Ok(scalar(result))
         }
         &Bool(b) => Ok(scalar(JsBool(b))),
@@ -388,10 +388,11 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
             match unescape(s) {
                 Some(s) =>  {
                     let ptr = Some(JsPtrEnum::JsStr(JsStrStruct::new(&s)));
-                    return Ok((var, ptr))
+                    try!(state.borrow_mut().alloc(var.clone(), ptr.clone()));
+                    Ok((var, ptr))
                 },
                 None => {
-                    return Err(JsError::ParseError(String::from("invalid string")))
+                    Err(JsError::ParseError(String::from("invalid string")))
                 }
             }
         }

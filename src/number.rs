@@ -1,8 +1,15 @@
+use std::cell::RefCell;
+use std::rc::Rc;
+
+use french_press::ScopeManager;
+use jsrs_common::backend::Backend;
+
 use jsrs_common::ast::*;
 use jsrs_common::ast::BinOp::*;
 use jsrs_common::types::coerce::{AsBool,AsNumber};
 use jsrs_common::types::js_var::{JsVar, JsType};
 use jsrs_common::types::js_var::JsType::*;
+use jsrs_common::js_error::{self, JsError};
 
 macro_rules! b { ($e: expr) => { $e.as_bool() } }
 
@@ -13,8 +20,9 @@ macro_rules! ni32 { ($e: expr) => { $e.as_number() as i32 } }
 macro_rules! nu32 { ($e: expr) => { $e.as_number() as u32 } }
 
 
-pub fn eval_binop(op: &BinOp, val1: JsVar, val2: JsVar) -> JsType {
-    match *op {
+pub fn eval_binop(op: &BinOp, val1: JsVar, val2: JsVar,
+                  state: Rc<RefCell<ScopeManager>>) -> js_error::Result<JsType> {
+    let v = match *op {
         And => JsBool(b!(val1) && b!(val2)),
         Or  => JsBool(b!(val1) || b!(val2)),
 
@@ -27,7 +35,22 @@ pub fn eval_binop(op: &BinOp, val1: JsVar, val2: JsVar) -> JsType {
         Neq => JsBool(b!(val1) != b!(val2)),
         Eql => JsBool(b!(val1) == b!(val2)),
 
-        EqlStrict => JsBool(val1.t == val2.t),
+        EqlStrict => {
+            println!("{}", val1.t);
+            let val1_ptr = match state.borrow_mut().load(&val1.binding) {
+                Ok((_, ptr)) => ptr,
+                Err(e) => {
+                    println!("{}", e);
+                    return Err(JsError::ReferenceError(format!("{:?} is not defined", val1.binding)));
+                }
+            };
+            let val2_ptr = match state.borrow_mut().load(&val2.binding) {
+                Ok((_, ptr)) => ptr,
+                Err(_) => return Err(JsError::ReferenceError(format!("{:?} is not defined", val1.binding))),
+            };
+            println!("{:#?} {:#?}", val1_ptr, val2_ptr);
+            JsBool(val1.t == val2.t)
+        }
         NeqStrict => JsBool(val1.t != val2.t),
 
         BitOr  => JsNum((ni64!(val1) | ni64!(val2)) as f64),
@@ -48,5 +71,6 @@ pub fn eval_binop(op: &BinOp, val1: JsVar, val2: JsVar) -> JsType {
         Star  => JsNum(n!(val1) * n!(val2)),
         Mod   => JsNum(n!(val1) % n!(val2)),
         Exponent   => JsNum(n!(val1) % n!(val2)),
-    }
+    };
+    Ok(v)
 }
