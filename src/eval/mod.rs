@@ -267,7 +267,7 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
 
             let js_fn_struct = match fun_ptr {
                 Some(JsPtrEnum::JsFn(fun)) => fun,
-                Some(JsPtrEnum::NativeFn(func)) => return Ok(func.call(state.clone(), this, args)),
+                Some(JsPtrEnum::NativeFn(func)) => return func.call(state.clone(), this, args),
                 Some(_) =>
                     return Err(JsError::TypeError(format!("{:?} is not a function", fun_name))),
                 None => match state.borrow_mut().load(&fun_binding.binding) {

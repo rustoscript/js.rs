@@ -40,6 +40,7 @@ macro_rules! add_native_var {
 
 pub fn add_pervasives(state: Rc<RefCell<ScopeManager>>) {
     add_native_fn!(log::log, state, "log");
+    add_native_fn!(log::error, state, "$ERROR");
     add_array(state)
 }
 

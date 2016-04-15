@@ -7,6 +7,7 @@ use jsrs_common::backend::Backend;
 use jsrs_common::types::coerce::{AsNumber, AsString};
 use jsrs_common::types::js_str::JsStrStruct;
 use jsrs_common::types::js_var::{JsKey, JsPtrEnum, JsType, JsVar};
+use jsrs_common::js_error;
 
 fn var_type_as_number(var: &JsVar, ptr: Option<&JsPtrEnum>) -> f64 {
     match ptr {
@@ -15,7 +16,9 @@ fn var_type_as_number(var: &JsVar, ptr: Option<&JsPtrEnum>) -> f64 {
     }
 }
 
-pub fn array_push(state: Rc<RefCell<Backend>>, this: Option<(JsVar, JsPtrEnum)>, args: Vec<(JsVar, Option<JsPtrEnum>)>) -> (JsVar, Option<JsPtrEnum>) {
+pub fn array_push(state: Rc<RefCell<Backend>>, this: Option<(JsVar, JsPtrEnum)>,
+                    args: Vec<(JsVar, Option<JsPtrEnum>)>)
+                    -> js_error::Result<(JsVar, Option<JsPtrEnum>)> {
     // TODO: Change panics to actual errors
     let (this_var, mut this_obj) = match this.clone() {
         Some((v, JsPtrEnum::JsObj(obj))) => (v, obj),
@@ -52,7 +55,7 @@ pub fn array_push(state: Rc<RefCell<Backend>>, this: Option<(JsVar, JsPtrEnum)>,
         this_obj.add_key(&this_var.unique, key, var, ptr, &mut *(alloc_box.borrow_mut()));
     }
 
-    (new_length, None)
+    Ok((new_length, None))
 }
 
 pub fn array_length_setter(state: Rc<RefCell<Backend>>, old_var: JsVar, old_ptr: Option<JsPtrEnum>,
