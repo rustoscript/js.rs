@@ -1,5 +1,8 @@
+use unescape::unescape;
+
 pub fn clean_string(mut input: String) -> String {
     input = String::from(input.trim());
+    input = unescape(&input).unwrap_or(String::from(""));
 
     if input == "" {
         return input;
