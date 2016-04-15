@@ -47,7 +47,6 @@ pub fn eval_binop(op: &BinOp, val1: JsVar, val2: JsVar) -> JsType {
         Slash => JsNum(n!(val1) / n!(val2)),
         Star  => JsNum(n!(val1) * n!(val2)),
         Mod   => JsNum(n!(val1) % n!(val2)),
-        //Exponentiation => JsNum(val1.as_number() ** val2.as_number()),
-        _ => panic!()
+        Exponent   => JsNum(n!(val1) % n!(val2)),
     }
 }

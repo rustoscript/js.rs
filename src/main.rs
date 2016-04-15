@@ -15,8 +15,6 @@ extern crate docopt;
 
 extern crate test;
 
-mod js_error;
-
 mod eval;
 mod native;
 mod number;
@@ -42,7 +40,7 @@ use french_press::{init_gc, ScopeManager};
 use eval::eval_string;
 use native::add_pervasives;
 use preprocess::{clean_string, add_semicolon};
-use js_error::JsError;
+use jsrs_common::js_error::{self, JsError};
 
 
 docopt!(Args derive Debug, "
