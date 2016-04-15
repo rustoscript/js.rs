@@ -8,9 +8,9 @@ reg_ok = re.compile("(.*): OK")
 
 f = open('test_results.txt')
 counts = defaultdict(lambda: defaultdict(lambda: 0))
+total = 0
 
 for line in f:
-    #print(line)
     result = reg_err.search(line)
     if result is not None:
         counts[result.group(2)][result.group(3)] += 1
@@ -30,8 +30,9 @@ for k in counts.keys():
 
 print("Recap:")
 for k in counts.keys():
+    total += sum(v for k, v in counts[k].items())
     print("{}:\t{} groups,\t{} total".format(k[:6], len(counts[k]),
         sum(v for k, v in counts[k].items())))
 
 ok = sum(v for k, v in counts["OK"].items())
-print("Passed: {}/{} = {}%".format(ok, 5295, ok/5295. * 100))
+print("Passed: {}/{} = {}%".format(ok, total, ok/total * 100))
