@@ -61,7 +61,8 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>)
 
             let var = match lhs {
                 &Var(ref string) => {
-                    let (mut var, ptr) = try!(state.borrow_mut().load(&Binding::new(string.to_owned())));
+                    let (mut var, ptr) = try!(state.borrow_mut()
+                                              .load(&Binding::new(string.to_owned())));
 
                     match ptr {
                         Some(JsPtrEnum::NativeVar(mut native_var)) => {
@@ -97,12 +98,16 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>)
                     };
 
                     if let Some(JsPtrEnum::NativeVar(mut nv)) = native_var {
-                        nv.set(state.clone(), ptr.clone().map(|x| (var.clone(), x)), rhs_var, rhs_ptr);
+                        nv.set(state.clone(), ptr.clone()
+                               .map(|x| (var.clone(), x)), rhs_var, rhs_ptr);
                         return Ok(((nv.var.clone(), nv.clone().ptr.map(|x| *x)), None));
                     }
 
                     let mut state_ref = state.borrow_mut();
-                    obj.add_key(&var.unique, JsKey::JsStr(JsStrStruct::new(string)), rhs_var.clone(), rhs_ptr.clone(), &mut *(state_ref.alloc_box.borrow_mut()));
+                    obj.add_key(&var.unique,
+                                JsKey::JsStr(JsStrStruct::new(string)),
+                                rhs_var.clone(), rhs_ptr.clone(),
+                                &mut *(state_ref.alloc_box.borrow_mut()));
                     rhs_var
                 }
                 _ => return Err(JsError::invalid_lhs())
@@ -227,6 +232,10 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
             let obj = JsObjStruct::new(proto, "array", kv_tuples, &mut *(state_ref.alloc_box.borrow_mut()));
 
             Ok((JsVar::new(JsType::JsPtr(JsPtrTag::JsObj)), Some(JsPtrEnum::JsObj(obj))))
+        }
+        &BitNot(ref exp) => {
+            let i = try!(eval_exp(exp, state.clone())).0.as_number() as i64;
+            Ok(scalar(JsNum((!i) as f64)))
         }
         // e1 [op] e2
         &BinExp(ref e1, ref op, ref e2) => {
