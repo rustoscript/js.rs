@@ -356,11 +356,16 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
         &NewObject(_, _) => Err(JsError::UnimplementedError(String::from("NewObject, eval/mod.rs:314"))),
         &Object(ref fields) => {
             let mut kv_tuples = Vec::new();
-            for f in fields {
-                let f_key = JsKey::JsStr(JsStrStruct::new(&f.0));
+            for &(ref key, ref val) in fields {
+                let f_key = JsKey::JsStr(JsStrStruct::new(&key));
                 // TODO: handle obj as key/value pair
-                let f_exp = try!(eval_exp(&*f.1, state.clone()));
-                kv_tuples.push((f_key, f_exp.0, f_exp.1));
+                let (mut f_var, f_ptr) = try!(eval_exp(&*val, state.clone()));
+
+                let old_binding = f_var.unique.clone();
+                let _ = f_var.deanonymize(&key);
+                let _ = state.borrow_mut().rename_closure(&old_binding, &f_var.unique);
+
+                kv_tuples.push((f_key, f_var, f_ptr));
             }
 
             let mut state_ref = state.borrow_mut();
