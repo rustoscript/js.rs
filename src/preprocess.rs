@@ -1,9 +1,9 @@
 pub fn clean_string(mut input: String) -> String {
+    input = String::from(input.trim());
+
     if input == "" {
         return input;
     }
-
-    input.trim();
 
     // remove line-comments
     let mut last = '\0';
