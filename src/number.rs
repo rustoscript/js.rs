@@ -36,19 +36,19 @@ pub fn eval_binop(op: &BinOp, val1: JsVar, val2: JsVar,
         Eql => JsBool(b!(val1) == b!(val2)),
 
         EqlStrict => {
-            println!("{}", val1.t);
             let val1_ptr = match state.borrow_mut().load(&val1.binding) {
                 Ok((_, ptr)) => ptr,
                 Err(e) => {
-                    println!("{}", e);
-                    return Err(JsError::ReferenceError(format!("{:?} is not defined", val1.binding)));
+                    return Err(JsError::ReferenceError(format!("{:?} is not defined",
+                                                               val1.binding)));
                 }
             };
             let val2_ptr = match state.borrow_mut().load(&val2.binding) {
                 Ok((_, ptr)) => ptr,
-                Err(_) => return Err(JsError::ReferenceError(format!("{:?} is not defined", val1.binding))),
+                Err(_) => return Err(JsError::ReferenceError(format!("{:?} is not defined",
+                                                                     val2.binding))),
             };
-            println!("{:#?} {:#?}", val1_ptr, val2_ptr);
+            //println!("{:#?} {:#?}", val1_ptr, val2_ptr);
             JsBool(val1.t == val2.t)
         }
         NeqStrict => JsBool(val1.t != val2.t),

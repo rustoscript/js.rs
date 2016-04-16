@@ -224,12 +224,16 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
 
             let mut kv_tuples = Vec::new();
             for (i, elem) in elems.iter().enumerate() {
-                let (var, ptr) = try!(eval_exp(elem, state.clone()));
-                kv_tuples.push((js_str_key(&format!("{}", i)), var, ptr));
+                let i_str = format!("{}", i);
+                let (mut var, ptr) = try!(eval_exp(elem, state.clone()));
+                let key = js_str_key(&i_str);
+                let _ = var.deanonymize(&i_str);
+                kv_tuples.push((key, var, ptr));
             }
 
             let mut state_ref = state.borrow_mut();
-            let obj = JsObjStruct::new(proto, "array", kv_tuples, &mut *(state_ref.alloc_box.borrow_mut()));
+            let obj = JsObjStruct::new(proto, "array", kv_tuples,
+                                       &mut *(state_ref.alloc_box.borrow_mut()));
 
             Ok((JsVar::new(JsType::JsPtr(JsPtrTag::JsObj)), Some(JsPtrEnum::JsObj(obj))))
         }
@@ -366,7 +370,7 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
         &Object(ref fields) => {
             let mut kv_tuples = Vec::new();
             for &(ref key, ref val) in fields {
-                let f_key = JsKey::JsStr(JsStrStruct::new(&key));
+                let f_key = js_str_key(&key);
                 // TODO: handle obj as key/value pair
                 let (mut f_var, f_ptr) = try!(eval_exp(&*val, state.clone()));
 
