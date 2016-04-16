@@ -143,9 +143,28 @@ fn eval_file(filename: String, debug: bool, should_repl: bool,
         }
     }
     if line_builder != "" {
+        let ret;
         let js_string = clean_string(line_builder.clone());
         let eval_result = eval_string(&js_string, scope_manager.clone());
-        try!(eval_result);
+
+        if negative_test {
+            match eval_result {
+                Ok((var, ptr)) => ret = (var, ptr),
+                Err(e) => {
+                    if !e.is_meta_error() {
+                        return Ok(());
+                    } else {
+                        return Err(e);
+                    }
+                }
+            }
+        } else {
+            ret = try!(eval_result);
+        }
+
+        if debug {
+            println!("=> {:?}", ret);
+        }
     }
     if should_repl {
         repl(scope_manager);
