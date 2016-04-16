@@ -29,6 +29,8 @@ for k in counts.keys():
     for errtext in sorted(counts[k].items(), key=operator.itemgetter(1)):
         if COMMON_ERRS_ONLY and int(errtext[1]) > 10:
             print("{}:\t{}".format(errtext[1], errtext[0]))
+        elif COMMON_ERRS_ONLY is False:
+            print("{}:\t{}".format(errtext[1], errtext[0]))
     print()
 
 print("Recap:")
