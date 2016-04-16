@@ -105,6 +105,7 @@ fn eval_file(filename: String, debug: bool, should_repl: bool,
 
             if braces.len() == 0 {
                 let js_string = clean_string(line_builder.clone());
+                line_builder = String::new();
                 if js_string == "" {
                     continue;
                 }
@@ -115,9 +116,6 @@ fn eval_file(filename: String, debug: bool, should_repl: bool,
 
                 let ret;
                 let eval_result = eval_string(&js_string, scope_manager.clone());
-                if let Err(JsError::ParseError(_)) = eval_result {
-                    continue;
-                }
                 if negative_test {
                     match eval_result {
                         Ok((var, ptr)) => ret = (var, ptr),
@@ -136,7 +134,6 @@ fn eval_file(filename: String, debug: bool, should_repl: bool,
                 if debug {
                     println!("=> {:?}", ret);
                 }
-                line_builder = String::new();
             }
         } else {
             break;
