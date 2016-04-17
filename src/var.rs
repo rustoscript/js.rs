@@ -15,4 +15,12 @@ pub fn js_str_key(key: &str) -> JsKey {
     JsKey::JsStr(JsStrStruct::new(key))
 }
 
-// fn push_args() { }
+/// Loads a pointer from the scope, and returns JsError::undefined if not found.
+macro_rules! try_load {
+    ($state:ident, $binding:expr) => {
+        match $state.borrow_mut().load($binding) {
+            Ok((_, ptr)) => ptr,
+            Err(_) => return Err(JsError::undefined(&$binding.0)),
+        }
+    }
+}
