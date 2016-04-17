@@ -10,6 +10,7 @@ use var::*;
 
 use french_press::ScopeManager;
 use jsrs_parser::lalr::parse_Stmt;
+use jsrs_common::gc_error::GcError;
 use jsrs_common::js_error::{self, JsError};
 use jsrs_common::ast::*;
 use jsrs_common::ast::Exp::*;
@@ -61,8 +62,12 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>)
 
             let var = match lhs {
                 &Var(ref string) => {
-                    let (mut var, ptr) = try!(state.borrow_mut()
-                                              .load(&Binding::new(string.to_owned())));
+                    let result = state.borrow_mut().load(&Binding::new(string.to_owned()));
+                    let (mut var, ptr) = match result {
+                        Ok((v, p)) => (v, p),
+                        Err(GcError::Load(_)) => return eval_stmt(&Decl(string.to_owned(), exp.clone()), state.clone()),
+                        Err(e) => return Err(JsError::from(e)),
+                    };
 
                     match ptr {
                         Some(JsPtrEnum::NativeVar(mut native_var)) => {
