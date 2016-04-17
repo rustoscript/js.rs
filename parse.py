@@ -24,7 +24,8 @@ for line in f:
 
 #for k in sorted(counts.items(), key=operator.itemgetter(1)):
 for k in counts.keys():
-    print("---- {} ---- {}".format(k, len(counts[k])))
+    print("---- {} ---- {} different errors".format(k, len(counts[k])))
+    print("Count\tError message".format(k, len(counts[k])))
     #for errtext in counts[k].keys():
     for errtext in sorted(counts[k].items(), key=operator.itemgetter(1)):
         if COMMON_ERRS_ONLY and int(errtext[1]) > 10:
