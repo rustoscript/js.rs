@@ -32,9 +32,47 @@ pub fn eval_binop(op: &BinOp, val1: JsVar, val2: JsVar,
         Le  => JsBool(b!(val1) <= b!(val2)),
         Lt  => JsBool(b!(val1) <  b!(val2)),
 
-        // TODO: equality?
-        Neq => JsBool(b!(val1) != b!(val2)),
-        Eql => JsBool(b!(val1) == b!(val2)),
+        Neq => {
+            if let Ok(JsBool(b)) = eval_binop(&Eql, val1, val2, state) {
+                JsBool(!b)
+            } else {
+                JsBool(false)
+            }
+        }
+        Eql => {
+            let b = match (&val1.t, &val2.t) {
+                (&JsNull,  &JsNull)  => false,
+                (&JsUndef, &JsNull)  => false,
+                (&JsNull,  &JsUndef) => false,
+                (&JsUndef, &JsUndef) => false,
+
+                (&JsNum(ref n1), &JsNum(ref n2)) => n1 == n2,
+                (&JsBool(ref b1), &JsBool(ref b2)) => b1 == b2,
+                (&JsPtr(_), &JsPtr(_)) => {
+                    let ptr1 = try_load!(state, &val1.binding);
+                    let ptr2 = try_load!(state, &val2.binding);
+                    match (&ptr1, &ptr2) {
+                        (&Some(JsSym(_)),      &Some(JsSym(_))) => val1 == val2,
+                        (&Some(JsStr(ref s1)), &Some(JsStr(ref s2))) => s1 == s2,
+                        (&Some(JsObj(_)),      &Some(JsObj(_))) => val1 == val2,
+                        (&Some(JsFn(_)),       &Some(JsFn(_))) => val1 == val2,
+                        _ => false,
+                    }
+                },
+
+                (&JsNum(ref n), &JsPtr(_)) =>
+                    try_load!(state, &val2.binding).map_or(false, |ptr| *n == n!(ptr)),
+                (&JsPtr(_), &JsNum(ref n)) =>
+                    try_load!(state, &val2.binding).map_or(false, |ptr| *n == n!(ptr)),
+
+                (&JsBool(_), &JsPtr(_)) =>
+                    try_load!(state, &val2.binding).map_or(false, |ptr| n!(val1) == n!(ptr)),
+                (&JsPtr(_), &JsBool(_)) =>
+                    try_load!(state, &val2.binding).map_or(false, |ptr| n!(val2) == n!(ptr)),
+                _ => false,
+            };
+            JsBool(b)
+        }
 
         EqlStrict => {
             let b = match (&val1.t, &val2.t) {
