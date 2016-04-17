@@ -31,7 +31,7 @@ pub fn number(state: Rc<RefCell<Backend>>, _this: Option<(JsVar, JsPtrEnum)>,
     Ok((JsVar::new(JsType::JsNum(number)), None))
 }
 
-fn array_to_string_helper(state: Rc<RefCell<Backend>>, var: JsVar, obj: JsObjStruct) -> js_error::Result<String> {
+pub fn array_to_string_helper(state: Rc<RefCell<Backend>>, var: JsVar, obj: JsObjStruct) -> js_error::Result<String> {
     let o_this = Some((var, JsPtrEnum::JsObj(obj)));
     let (o_var, o_ptr) = try!(array_to_string(state.clone(), o_this, Vec::new()));
     Ok(o_ptr.map(|p| p.as_string()).unwrap_or(o_var.t.as_string()))
