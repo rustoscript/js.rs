@@ -118,6 +118,7 @@ fn eval_file(filename: String, debug: bool, should_repl: bool,
             let ret;
             let eval_result = eval_string(&js_string, scope_manager.clone());
             if let Err(JsError::ParseError(_)) = eval_result {
+                line_builder.push_str(" ");
                 continue;
             }
 
