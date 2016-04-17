@@ -1,5 +1,6 @@
 mod array;
 mod log;
+mod types;
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -41,6 +42,9 @@ macro_rules! add_native_var {
 pub fn add_pervasives(state: Rc<RefCell<ScopeManager>>) {
     add_native_fn!(log::log, state, "log");
     add_native_fn!(log::error, state, "$ERROR");
+    add_native_fn!(types::boolean, state, "Boolean");
+    add_native_fn!(types::number, state, "Number");
+    add_native_fn!(types::string, state, "String");
     add_array(state)
 }
 
@@ -48,6 +52,7 @@ pub fn get_array_proto(len: f64, state: Rc<RefCell<ScopeManager>>) -> JsObjStruc
     let (zero, undef) = scalar(JsType::JsNum(len));
     let array_length = NativeVar::new(zero, undef, "length", default_getter, array::array_length_setter);
     let array_push = NativeFn::new(array::array_push);
+    let array_to_string = NativeFn::new(array::array_to_string);
 
     let length_var = JsVar::new(JsType::JsPtr(JsPtrTag::NativeVar { type_string: String::from("number") }));
     let length_ptr = JsPtrEnum::NativeVar(array_length);
@@ -55,12 +60,17 @@ pub fn get_array_proto(len: f64, state: Rc<RefCell<ScopeManager>>) -> JsObjStruc
     let push_var = JsVar::new(JsType::JsPtr(JsPtrTag::NativeFn { name: String::from("push") }));
     let push_ptr = JsPtrEnum::NativeFn(array_push);
 
+    let to_string_var = JsVar::new(JsType::JsPtr(JsPtrTag::NativeFn { name: String::from("toString") }));
+    let to_string_ptr = JsPtrEnum::NativeFn(array_to_string);
+
+
     let mut state_ref = state.borrow_mut();
 
     // Not really sure what the `name` argument is for, but okay
     let mut array_proto = JsObjStruct::new(
         None, "Array", vec![ (js_str_key("length"), length_var, Some(length_ptr))
                            , (js_str_key("push"), push_var, Some(push_ptr))
+                           , (js_str_key("toString"), to_string_var, Some(to_string_ptr))
                            ], &mut *(state_ref.alloc_box.borrow_mut()));
 
     // No joke, the array prototype actually is an array...

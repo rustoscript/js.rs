@@ -6,7 +6,7 @@ use var::{js_str_key, JsVarValue};
 use jsrs_common::backend::Backend;
 use jsrs_common::types::coerce::{AsNumber, AsString};
 use jsrs_common::types::js_str::JsStrStruct;
-use jsrs_common::types::js_var::{JsKey, JsPtrEnum, JsType, JsVar};
+use jsrs_common::types::js_var::{JsKey, JsPtrEnum, JsPtrTag, JsType, JsVar};
 use jsrs_common::js_error;
 
 fn var_type_as_number(var: &JsVar, ptr: Option<&JsPtrEnum>) -> f64 {
@@ -14,6 +14,73 @@ fn var_type_as_number(var: &JsVar, ptr: Option<&JsPtrEnum>) -> f64 {
         Some(ref ptr) => ptr.as_number(),
         None => var.as_number()
     }
+}
+
+pub fn array_to_string(state: Rc<RefCell<Backend>>, this: Option<(JsVar, JsPtrEnum)>,
+                       _args: Vec<(JsVar, Option<JsPtrEnum>)>)
+                       -> js_error::Result<(JsVar, Option<JsPtrEnum>)> {
+    let this_obj = match this.clone() {
+        Some((_, JsPtrEnum::JsObj(obj))) => obj,
+        Some(_) => panic!("Trying to push onto array, but `this` is not an object"),
+        None => panic!("Trying to push onto array, but `this` is None")
+    };
+
+    let length_ptr = match this_obj.dict.get(&js_str_key("length")) {
+        Some(js_var) => {
+            let state_ref = state.borrow_mut();
+            let alloc_box = state_ref.get_alloc_box();
+            let alloc_ref = alloc_box.borrow_mut();
+            match alloc_ref.find_id(&js_var.unique).map(|p| p.borrow().clone()) {
+                Some(JsPtrEnum::NativeVar(native_var)) => native_var,
+                Some(_) => panic!("Array length pointer is not a native variable"),
+                None => panic!("No pointer for array length"),
+            }
+        }
+        None => panic!("No length field on array"),
+    };
+
+    let length = match length_ptr.get(state.clone(), this.clone().map(|x| x.1)).0.t {
+        JsType::JsNum(f) => f,
+        _ => panic!("Array length value is not a number"),
+    };
+
+    let mut out = String::new();
+    let state_ref = state.borrow_mut();
+    let alloc_box = state_ref.get_alloc_box();
+    let alloc_ref = &mut *(alloc_box.borrow_mut());
+
+    for i in 0..length as usize {
+        if i != 0 {
+            out.push_str(",");
+        }
+
+        let key = JsKey::JsStr(JsStrStruct::new(&JsType::JsNum(i as f64).as_string()));
+        let var = match this_obj.dict.get(&key) {
+            Some(var) => var,
+            None => continue,
+        };
+
+        let s = match alloc_ref.find_id(&var.unique) {
+            Some(p) => match &*p.borrow() {
+                &JsPtrEnum::JsObj(ref obj) if obj.proto.is_some() && obj.name == "array" => {
+                    let o_this = Some((var.clone(), JsPtrEnum::JsObj(obj.clone())));
+                    let (o_var, o_ptr) = try!(array_to_string(state.clone(), o_this, Vec::new()));
+                    o_ptr.map(|p| p.as_string()).unwrap_or(o_var.t.as_string())
+                }
+                ref ptr => ptr.as_string(),
+            },
+            None => match &var.t {
+                &JsType::JsUndef => String::new(),
+                ref t => t.as_string(),
+            }
+        };
+        out.push_str(&s);
+    }
+
+    let var = JsVar::new(JsType::JsPtr(JsPtrTag::JsStr));
+    let ptr = Some(JsPtrEnum::JsStr(JsStrStruct::new(&out)));
+
+    Ok((var, ptr))
 }
 
 pub fn array_push(state: Rc<RefCell<Backend>>, this: Option<(JsVar, JsPtrEnum)>,
