@@ -12,19 +12,59 @@ use jsrs_common::types::js_var::JsPtrEnum::*;
 use jsrs_common::types::js_var::JsType::*;
 use jsrs_common::js_error::{self, JsError};
 
+use eval::eval_exp;
+
 macro_rules! b { ($e: expr) => { $e.as_bool() } }
 
 macro_rules! n { ($e: expr) => { $e.as_number() } }
 macro_rules! ni64 { ($e: expr) => { $e.as_number() as i64 } }
 macro_rules! nu64 { ($e: expr) => { $e.as_number() as u64 } }
-macro_rules! ni32 { ($e: expr) => { $e.as_number() as i32 } }
+macro_rules! ni32 { ($e: expr) => { {
+        let n = $e.as_number();
+        if n.is_nan() {
+            0i32
+        } else {
+            n as i32
+        }
+    } } }
 macro_rules! nu32 { ($e: expr) => { $e.as_number() as u32 } }
 
 
-pub fn eval_binop(op: &BinOp, val1: JsVar, val2: JsVar,
+pub fn eval_binop(op: &BinOp, e1: &Exp, e2: &Exp,
                   state: Rc<RefCell<ScopeManager>>) -> js_error::Result<JsType> {
+    if let &And = op {
+        let val1: JsVar = try!(eval_exp(e1, state.clone())).0;
+        println!("{:?}", val1);
+        let b = if b!(val1) == false {
+            JsBool(false)
+        } else {
+            let val2: JsVar = try!(eval_exp(e2, state.clone())).0;
+            JsBool(b!(val2))
+        };
+        return Ok(b);
+    } else if let &Or = op {
+        let val1: JsVar = try!(eval_exp(e1, state.clone())).0;
+        let b = if b!(val1) == true {
+            JsBool(true)
+        } else {
+            let val2: JsVar = try!(eval_exp(e2, state.clone())).0;
+            JsBool(b!(val2))
+        };
+        return Ok(b);
+    }
+
+    let val1: JsVar = try!(eval_exp(e1, state.clone())).0;
+    let val2: JsVar = try!(eval_exp(e2, state.clone())).0;
+
     let v = match *op {
-        And => JsBool(b!(val1) && b!(val2)),
+        And => {
+            println!("{:?}", val1);
+            if b!(val1) == false {
+                JsBool(false)
+            } else {
+                JsBool(b!(val2))
+            }
+        }
         Or  => JsBool(b!(val1) || b!(val2)),
 
         Ge  => JsBool(b!(val1) >= b!(val2)),
@@ -33,7 +73,7 @@ pub fn eval_binop(op: &BinOp, val1: JsVar, val2: JsVar,
         Lt  => JsBool(b!(val1) <  b!(val2)),
 
         Neq => {
-            if let Ok(JsBool(b)) = eval_binop(&Eql, val1, val2, state) {
+            if let Ok(JsBool(b)) = eval_binop(&Eql, e1, e2, state) {
                 JsBool(!b)
             } else {
                 JsBool(false)
@@ -96,16 +136,16 @@ pub fn eval_binop(op: &BinOp, val1: JsVar, val2: JsVar,
             JsBool(b)
         }
         NeqStrict => {
-            if let Ok(JsBool(b)) = eval_binop(&EqlStrict, val1, val2, state) {
+            if let Ok(JsBool(b)) = eval_binop(&EqlStrict, e1, e2, state) {
                 JsBool(!b)
             } else {
                 JsBool(false)
             }
         }
 
-        BitOr  => JsNum((ni64!(val1) | ni64!(val2)) as f64),
-        BitXor => JsNum((ni64!(val1) ^ ni64!(val2)) as f64),
-        BitAnd => JsNum((ni64!(val1) & ni64!(val2)) as f64),
+        BitOr => JsNum((ni32!(val1) | ni32!(val2)) as f64),
+        BitXor => JsNum((ni32!(val1) ^ ni32!(val2)) as f64),
+        BitAnd => JsNum((ni32!(val1) & ni32!(val2)) as f64),
 
         // TODO: Rust panics on shift overflow, and I don't want this.
         ShiftLeft          => JsNum(0.0),

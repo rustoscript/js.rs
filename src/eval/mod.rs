@@ -257,22 +257,18 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
             Ok((JsVar::new(JsType::JsPtr(JsPtrTag::JsObj)), Some(JsPtrEnum::JsObj(obj))))
         }
         &BitNot(ref exp) => {
-            let i = try!(eval_exp(exp, state.clone())).0.as_number() as i64;
+            let i = try!(eval_exp(exp, state.clone())).0.as_number() as i32;
             Ok(scalar(JsNum((!i) as f64)))
         }
         // e1 [op] e2
         &BinExp(ref e1, ref op, ref e2) => {
-            let val1 = try!(eval_exp(e1, state.clone())).0;
-            let val2 = try!(eval_exp(e2, state.clone())).0;
-
-            let result = try!(eval_binop(op, val1, val2, state.clone()));
+            let result = try!(eval_binop(op, e1, e2, state.clone()));
             Ok(scalar(result))
         }
         &Bool(b) => Ok(scalar(JsBool(b))),
 
         // fun_name([arg_exp1, arg_exps])
         &Call(ref fun_name, ref arg_exps) => {
-
             let ((fun_binding, fun_ptr), this) = match **fun_name {
                 InstanceVar(ref lhs, ref name) => {
                     let (obj_var, obj_ptr) = try!(eval_exp(lhs, state.clone()));
