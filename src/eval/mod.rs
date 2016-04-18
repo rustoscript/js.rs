@@ -381,7 +381,9 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
         &PreDec(ref exp)  => eval_float_pre_op!(exp, f, f - 1.0, state),
         &PreInc(ref exp)  => eval_float_pre_op!(exp, f, f + 1.0, state),
 
-        &NewObject(_, _) => Err(JsError::unimplemented("NewObject, eval/mod.rs:314")),
+        &NewObject(ref proto, ref args) => {
+            eval_exp(&Call(proto.clone(), args.clone()), state.clone())
+        }
         &Object(ref fields) => {
             let mut kv_tuples = Vec::new();
             for &(ref key, ref val) in fields {
