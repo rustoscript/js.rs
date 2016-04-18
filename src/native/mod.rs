@@ -46,6 +46,7 @@ pub fn add_pervasives(state: Rc<RefCell<ScopeManager>>) {
     add_native_fn!(types::boolean, state, "Boolean");
     add_native_fn!(types::number, state, "Number");
     add_native_fn!(types::string, state, "String");
+    add_native_fn!(types::object, state, "Object");
 
     add_native_fn!(stdlib::is_nan, state, "isNaN");
     add_array(state)

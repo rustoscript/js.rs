@@ -17,10 +17,16 @@ pub fn js_str_key(key: &str) -> JsKey {
 
 /// Loads a pointer from the scope, and returns JsError::undefined if not found.
 macro_rules! try_load {
-    ($state:ident, $binding:expr) => {
-        match $state.borrow_mut().load($binding) {
-            Ok((_, ptr)) => ptr,
-            Err(_) => return Err(JsError::undefined(&$binding.0)),
+    ($state:ident, $var:expr, $is_instance_var:expr) => {{
+        let mut state_ref = $state.borrow_mut();
+
+        if $is_instance_var {
+            state_ref.alloc_box.borrow_mut().find_id(&$var.unique).map(|p| p.borrow().clone())
+        } else {            
+            match state_ref.load(&$var.binding) {
+                Ok((_, ptr)) => ptr,
+                Err(_) => return Err(JsError::undefined(&$var.binding.0)),
+            }
         }
-    }
+    }}
 }

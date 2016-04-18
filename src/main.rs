@@ -182,6 +182,7 @@ fn test_dir(dir_name: String) {
             let entry_path = entry.path().display().to_string();
             let scope_manager = Rc::new(RefCell::new(init_gc()));
             add_pervasives(scope_manager.clone());
+            println!("file: {}", entry_path.clone());
             match eval_file(entry_path.clone(), false, false, scope_manager.clone()) {
                 Ok(_) => {
                     println!("{}: {}", entry_path, "OK");

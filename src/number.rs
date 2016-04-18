@@ -6,10 +6,11 @@ use jsrs_common::backend::Backend;
 
 use jsrs_common::ast::*;
 use jsrs_common::ast::BinOp::*;
-use jsrs_common::types::coerce::{AsBool,AsNumber};
+use jsrs_common::types::coerce::{AsBool, AsNumber, AsString};
 use jsrs_common::types::js_var::{JsVar, JsType};
 use jsrs_common::types::js_var::JsPtrEnum::*;
 use jsrs_common::types::js_var::JsType::*;
+use jsrs_common::types::js_var::JsPtrTag;
 use jsrs_common::js_error::{self, JsError};
 
 use eval::eval_exp;
@@ -29,12 +30,10 @@ macro_rules! ni32 { ($e: expr) => { {
     } } }
 macro_rules! nu32 { ($e: expr) => { $e.as_number() as u32 } }
 
-
 pub fn eval_binop(op: &BinOp, e1: &Exp, e2: &Exp,
                   state: Rc<RefCell<ScopeManager>>) -> js_error::Result<JsType> {
     if let &And = op {
         let val1: JsVar = try!(eval_exp(e1, state.clone())).0;
-        println!("{:?}", val1);
         let b = if b!(val1) == false {
             JsBool(false)
         } else {
@@ -53,8 +52,28 @@ pub fn eval_binop(op: &BinOp, e1: &Exp, e2: &Exp,
         return Ok(b);
     }
 
-    let val1: JsVar = try!(eval_exp(e1, state.clone())).0;
-    let val2: JsVar = try!(eval_exp(e2, state.clone())).0;
+    let val1_is_instance_var = match e1 {
+        &Exp::InstanceVar(..) |
+        &Exp::KeyAccessor(..) => true,
+        _ => false
+    };
+
+    let val2_is_instance_var = match e2 {
+        &Exp::InstanceVar(..) |
+        &Exp::KeyAccessor(..) => true,
+        _ => false
+    };
+
+    let (val1, ptr1) = try!(eval_exp(e1, state.clone()));
+    let (val2, ptr2) = try!(eval_exp(e2, state.clone()));
+
+    if let Err(e) = state.borrow_mut().alloc(val1.clone(), ptr1) {
+        return Err(JsError::from(e));
+    }
+
+    if let Err(e) = state.borrow_mut().alloc(val2.clone(), ptr2) {
+        return Err(JsError::from(e));
+    }
 
     let v = match *op {
         And => {
@@ -89,8 +108,8 @@ pub fn eval_binop(op: &BinOp, e1: &Exp, e2: &Exp,
                 (&JsNum(ref n1), &JsNum(ref n2)) => n1 == n2,
                 (&JsBool(ref b1), &JsBool(ref b2)) => b1 == b2,
                 (&JsPtr(_), &JsPtr(_)) => {
-                    let ptr1 = try_load!(state, &val1.binding);
-                    let ptr2 = try_load!(state, &val2.binding);
+                    let ptr1 = try_load!(state, &val1, val1_is_instance_var);
+                    let ptr2 = try_load!(state, &val2, val2_is_instance_var);
                     match (&ptr1, &ptr2) {
                         (&Some(JsSym(_)),      &Some(JsSym(_))) => val1 == val2,
                         (&Some(JsStr(ref s1)), &Some(JsStr(ref s2))) => s1 == s2,
@@ -101,14 +120,14 @@ pub fn eval_binop(op: &BinOp, e1: &Exp, e2: &Exp,
                 },
 
                 (&JsNum(ref n), &JsPtr(_)) =>
-                    try_load!(state, &val2.binding).map_or(false, |ptr| *n == n!(ptr)),
+                    try_load!(state, &val2, val2_is_instance_var).map_or(false, |ptr| *n == n!(ptr)),
                 (&JsPtr(_), &JsNum(ref n)) =>
-                    try_load!(state, &val2.binding).map_or(false, |ptr| *n == n!(ptr)),
+                    try_load!(state, &val2,val2_is_instance_var).map_or(false, |ptr| *n == n!(ptr)),
 
                 (&JsBool(_), &JsPtr(_)) =>
-                    try_load!(state, &val2.binding).map_or(false, |ptr| n!(val1) == n!(ptr)),
+                    try_load!(state, &val2, val2_is_instance_var).map_or(false, |ptr| n!(val1) == n!(ptr)),
                 (&JsPtr(_), &JsBool(_)) =>
-                    try_load!(state, &val2.binding).map_or(false, |ptr| n!(val2) == n!(ptr)),
+                    try_load!(state, &val2, val2_is_instance_var).map_or(false, |ptr| n!(val2) == n!(ptr)),
                 _ => false,
             };
             JsBool(b)
@@ -121,8 +140,8 @@ pub fn eval_binop(op: &BinOp, e1: &Exp, e2: &Exp,
                 (&JsNum(ref n1),   &JsNum(ref n2)) => n1 == n2,
                 (&JsBool(ref b1),  &JsBool(ref b2)) => b1 == b2,
                 (&JsPtr(_), &JsPtr(_)) => {
-                    let ptr1 = try_load!(state, &val1.binding);
-                    let ptr2 = try_load!(state, &val2.binding);
+                    let ptr1 = try_load!(state, &val1, val1_is_instance_var);
+                    let ptr2 = try_load!(state, &val2, val2_is_instance_var);
                     match (&ptr1, &ptr2) {
                         (&Some(JsSym(_)),      &Some(JsSym(_))) => val1 == val2,
                         (&Some(JsStr(ref s1)), &Some(JsStr(ref s2))) => s1 == s2,
@@ -161,6 +180,22 @@ pub fn eval_binop(op: &BinOp, e1: &Exp, e2: &Exp,
         Star  => JsNum(n!(val1) * n!(val2)),
         Mod   => JsNum(n!(val1) % n!(val2)),
         Exponent   => JsNum(n!(val1) % n!(val2)),
+        InstanceOf => {
+            let ptr = try_load!(state, &val1, val1_is_instance_var);
+
+            let b = match (ptr, &val2.t) {
+                (Some(JsObj(ref obj)), &JsPtr(JsPtrTag::NativeFn { ref name})) => &obj.name == name,
+                (_, &JsPtr(JsPtrTag::NativeFn {..})) => false,
+                (_, &JsPtr(JsPtrTag::JsFn{..})) => false,
+                _ => {
+                    let ptr2 = try_load!(state, &val2, val2_is_instance_var);
+                    let err_str = ptr2.map(|p| p.as_string()).unwrap_or(val2.t.as_string());
+                    return Err(JsError::TypeError(format!("Expecting a function in instanceof check, but got {}", err_str)));
+                }
+            };
+
+            JsBool(b)
+        }
     };
     Ok(v)
 }

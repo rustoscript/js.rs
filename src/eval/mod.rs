@@ -79,7 +79,7 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>)
 
                     var.t = rhs_var.t.clone();
                     let old_binding = var.unique.clone();
-                    let _ = var.deanonymize(string);
+                    var.mangle(string);
                     let _ = state.borrow_mut().rename_closure(&old_binding, &var.unique);
                     try!(state.borrow_mut().store(rhs_var.clone(), rhs_ptr.clone()));
                     var
@@ -246,7 +246,7 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
                 let i_str = format!("{}", i);
                 let (mut var, ptr) = try!(eval_exp(elem, state.clone()));
                 let key = js_str_key(&i_str);
-                let _ = var.deanonymize(&i_str);
+                var.mangle(&i_str);
                 kv_tuples.push((key, var, ptr));
             }
 
@@ -389,17 +389,18 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
             for &(ref key, ref val) in fields {
                 let f_key = js_str_key(&key);
                 // TODO: handle obj as key/value pair
+
                 let (mut f_var, f_ptr) = try!(eval_exp(&*val, state.clone()));
 
                 let old_binding = f_var.unique.clone();
-                let _ = f_var.deanonymize(&key);
+                f_var.mangle(&key);
                 let _ = state.borrow_mut().rename_closure(&old_binding, &f_var.unique);
 
                 kv_tuples.push((f_key, f_var, f_ptr));
             }
 
             let mut state_ref = state.borrow_mut();
-            let obj = JsObjStruct::new(None, "", kv_tuples, &mut *(state_ref.alloc_box.borrow_mut()));
+            let obj = JsObjStruct::new(None, "Object", kv_tuples, &mut *(state_ref.alloc_box.borrow_mut()));
 
             Ok((JsVar::new(JsPtr(JsPtrTag::JsObj)), Some(JsPtrEnum::JsObj(obj))))
         }

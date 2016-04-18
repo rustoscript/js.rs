@@ -10,6 +10,18 @@ use jsrs_common::types::js_var::{JsPtrEnum, JsPtrTag, JsType, JsVar};
 
 use super::array::array_to_string;
 
+pub fn object(state: Rc<RefCell<Backend>>, _this: Option<(JsVar, JsPtrEnum)>,
+              args: Vec<(JsVar, Option<JsPtrEnum>)>) -> js_error::Result<(JsVar, Option<JsPtrEnum>)> {
+    let state_ref = state.borrow_mut();
+    let alloc_box = state_ref.get_alloc_box();
+    let (var, ptr) = args.first().map(|&(ref var, ref ptr)| (var.clone(), ptr.clone())).unwrap_or((
+        JsVar::new(JsType::JsPtr(JsPtrTag::JsObj)),
+        Some(JsPtrEnum::JsObj(JsObjStruct::new(None, "Object", Vec::new(), &mut *(alloc_box.borrow_mut()))))
+    ));
+
+    Ok((var, ptr))
+}
+
 pub fn boolean(_state: Rc<RefCell<Backend>>, _this: Option<(JsVar, JsPtrEnum)>,
        args: Vec<(JsVar, Option<JsPtrEnum>)>) -> js_error::Result<(JsVar, Option<JsPtrEnum>)> {
     let boolean = args.first().map(|&(ref var, ref ptr)| ptr.as_ref().map(|p| p.as_bool()).unwrap_or(var.as_bool()));
