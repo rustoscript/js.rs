@@ -123,6 +123,8 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>)
 
         // exp;
         BareExp(ref exp) => Ok((try!(eval_exp(exp, state.clone())), None)),
+        Break => Err(JsError::SyntaxError(String::from("Illegal break statement"))),
+        Continue => Err(JsError::SyntaxError(String::from("Illegal continue statement"))),
 
         // var var_string = exp
         Decl(ref var_string, ref exp) => {
@@ -199,6 +201,18 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>)
 
                     try!(eval_stmt_block(finally_block, state.clone()));
                     return Ok((scalar(JsUndef), None));
+                }
+            }
+        }
+
+        // while (condition) { block }
+        VarDecl(ref s) => {
+            let (mut var, ptr) = scalar(JsUndef);
+            var.binding = Binding::new(s.clone());
+            match state.borrow_mut().alloc(var, ptr) {
+                Ok(_) => Ok((scalar(JsUndef), None)),
+                Err(e) => {
+                    Err(JsError::GcError(e))
                 }
             }
         }
