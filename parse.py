@@ -13,6 +13,7 @@ f = open('test_results.txt')
 counts = defaultdict(lambda: defaultdict(lambda: 0))
 total = 0
 all_groups = set()
+pass_groups = set()
 
 for line in f:
     result = reg_err.search(line)
@@ -24,10 +25,9 @@ for line in f:
     result = reg_ok.search(line)
     if result is not None:
         all_groups.add(result.group(2))
+        pass_groups.add(result.group(2))
         counts["OK"][result.group(2)] += 1
         continue
-
-    sys.stderr.write(line)
 
 #for k in sorted(counts.items(), key=operator.itemgetter(1)):
 for k in counts.keys():
@@ -50,3 +50,5 @@ for k in counts.keys():
 print("Number of categories with at least some passes: %s/%s" % (len(counts["OK"]), len(all_groups)))
 ok = sum(v for k, v in counts["OK"].items())
 print("Passed: {}/{} = {}%".format(ok, total, ok/total * 100))
+
+print(sorted(all_groups-pass_groups))
