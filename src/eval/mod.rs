@@ -129,6 +129,23 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>)
                 return eval_stmt_block(&*else_block, state.clone());
             }
         },
+        For(ref init, ref cond, ref step, ref block) => {
+            try!(eval_stmt(&init, state.clone()));
+            loop {
+                try!(eval_stmt_block(block, state.clone()));
+                try!(eval_exp(step, state.clone()));
+                let (var, opt_ptr) = try!(eval_exp(cond, state.clone()));
+                let b = if let Some(ptr) = opt_ptr {
+                    ptr.as_bool()
+                } else {
+                    var.as_bool()
+                };
+                if !b {
+                    break;
+                }
+            }
+            Ok((scalar(JsUndef), None))
+        }
 
         Empty => Ok((scalar(JsUndef), None)),
 
