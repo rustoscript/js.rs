@@ -86,10 +86,10 @@ pub fn eval_binop(op: &BinOp, e1: &Exp, e2: &Exp,
         }
         Or  => JsBool(b!(val1) || b!(val2)),
 
-        Ge  => JsBool(b!(val1) >= b!(val2)),
-        Gt  => JsBool(b!(val1) >  b!(val2)),
-        Le  => JsBool(b!(val1) <= b!(val2)),
-        Lt  => JsBool(b!(val1) <  b!(val2)),
+        Ge  => JsBool(n!(val1) >= n!(val2)),
+        Gt  => JsBool(n!(val1) >  n!(val2)),
+        Le  => JsBool(n!(val1) <= n!(val2)),
+        Lt  => JsBool(n!(val1) <  n!(val2)),
 
         Neq => {
             if let Ok(JsBool(b)) = eval_binop(&Eql, e1, e2, state) {

@@ -79,9 +79,8 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>)
 
                     var.t = rhs_var.t.clone();
                     let old_binding = var.unique.clone();
-                    var.mangle(string);
                     let _ = state.borrow_mut().rename_closure(&old_binding, &var.unique);
-                    try!(state.borrow_mut().store(rhs_var.clone(), rhs_ptr.clone()));
+                    try!(state.borrow_mut().store(var.clone(), rhs_ptr.clone()));
                     var
                 }
                 &InstanceVar(ref e, ref string) => {
