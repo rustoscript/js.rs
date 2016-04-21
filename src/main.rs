@@ -263,7 +263,7 @@ fn main() {
             let ret = repl(scope_manager.clone());
             exit(ret)
         } else {
-            eval_file(args.arg_file, true, true, scope_manager.clone())
+            eval_file(args.arg_file, false, false, scope_manager.clone())
                 .expect("Error evaluating file");
         }
     }
