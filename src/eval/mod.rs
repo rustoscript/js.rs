@@ -58,7 +58,7 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>)
     match *s {
         // var_string = exp;
         Assign(ref lhs, ref exp) => {
-            let (rhs_var, rhs_ptr) = try!(eval_exp(exp, state.clone()));
+            let (mut rhs_var, rhs_ptr) = try!(eval_exp(exp, state.clone()));
 
             let var = match lhs {
                 &Var(ref string) => {
@@ -83,39 +83,15 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>)
                     try!(state.borrow_mut().store(var.clone(), rhs_ptr.clone()));
                     var
                 }
-                &InstanceVar(ref e, ref string) => {
-                    let (var, ptr) = try!(eval_exp(&e.clone(), state.clone()));
-
-                    let mut obj = match ptr.clone() {
-                        Some(JsPtrEnum::JsObj(obj)) => obj,
-                        _ => return Ok(((rhs_var, rhs_ptr), None))
-                    };
-
-
-                    let native_var = match obj.dict.get(&js_str_key(string)) {
-                        Some(ref var) => {
-                            let state_ref = state.borrow_mut();
-                            let alloc_box = state_ref.alloc_box.borrow_mut();
-                            alloc_box.find_id(&var.unique).map(|p| p.borrow().clone())
-                        }
-                        None => None
-                    };
-
-                    if let Some(JsPtrEnum::NativeVar(mut nv)) = native_var {
-                        nv.set(state.clone(), ptr.clone()
-                               .map(|x| (var.clone(), x)), rhs_var, rhs_ptr);
-                        return Ok(((nv.var.clone(), nv.clone().ptr.map(|x| *x)), None));
-                    }
-
-                    let mut state_ref = state.borrow_mut();
-                    obj.add_key(&var.unique,
-                                JsKey::JsStr(JsStrStruct::new(string)),
-                                rhs_var.clone(), rhs_ptr.clone(),
-                                &mut *(state_ref.alloc_box.borrow_mut()));
-                    rhs_var
+                &InstanceVar(ref e, ref string) => instance_var_assign!(e, state, rhs_var, rhs_ptr, string),
+                &KeyAccessor(ref e, ref exp) => {
+                    let (var, ptr) = try!(eval_exp(exp, state.clone()));
+                    let string = ptr.map(|p| p.as_string()).unwrap_or(var.t.as_string());
+                    instance_var_assign!(e, state, rhs_var, rhs_ptr, &string)
                 }
                 _ => return Err(JsError::invalid_lhs())
             };
+
 
             Ok(((var, rhs_ptr), None))
         },
@@ -204,7 +180,6 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>)
             }
         }
 
-        // while (condition) { block }
         VarDecl(ref s) => {
             let (mut var, ptr) = scalar(JsUndef);
             var.binding = Binding::new(s.clone());
@@ -219,7 +194,8 @@ pub fn eval_stmt(s: &Stmt, state: Rc<RefCell<ScopeManager>>)
         // while (condition) { block }
         While(ref condition, ref block) => {
             loop {
-                if try!(eval_exp(&condition, state.clone())).0.as_bool() {
+                let (var, ptr) = try!(eval_exp(&condition, state.clone()));
+                if ptr.map(|p| p.as_bool()).unwrap_or(var.as_bool()) {
                     let (js_var, js_ret_var) = try!(eval_stmt_block(block, state.clone()));
                     if let Some(..) = js_ret_var {
                         return Ok((js_var, js_ret_var));
@@ -260,10 +236,7 @@ pub fn eval_exp(e: &Exp, state: Rc<RefCell<ScopeManager>>) -> js_error::Result<J
             Ok(scalar(JsNum((!i) as f64)))
         }
         // e1 [op] e2
-        &BinExp(ref e1, ref op, ref e2) => {
-            let result = try!(eval_binop(op, e1, e2, state.clone()));
-            Ok(scalar(result))
-        }
+        &BinExp(ref e1, ref op, ref e2) => eval_binop(op, e1, e2, state.clone()),
         &Bool(b) => Ok(scalar(JsBool(b))),
 
         // fun_name([arg_exp1, arg_exps])

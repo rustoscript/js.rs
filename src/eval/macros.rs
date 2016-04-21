@@ -73,3 +73,41 @@ macro_rules! instance_var_eval {
         }
     }
 }
+
+macro_rules! instance_var_assign {
+    ($e:expr, $state:expr, $rhs_var:expr, $rhs_ptr:expr, $string:expr) => {{
+        let (var, ptr) = try!(eval_exp(&$e.clone(), $state.clone()));
+
+        let mut obj = match ptr.clone() {
+            Some(JsPtrEnum::JsObj(obj)) => obj,
+            _ => return Ok((($rhs_var, $rhs_ptr), None))
+        };
+
+
+        let native_var = match obj.dict.get(&js_str_key($string)) {
+            Some(ref var) => {
+                let state_ref = $state.borrow_mut();
+                let alloc_box = state_ref.alloc_box.borrow_mut();
+                alloc_box.find_id(&var.unique).map(|p| p.borrow().clone())
+            }
+            None => None
+        };
+
+
+        if let Some(JsPtrEnum::NativeVar(mut nv)) = native_var {
+            nv.set($state.clone(), ptr.clone()
+            .map(|x| (var.clone(), x)), $rhs_var, $rhs_ptr);
+            return Ok(((nv.var.clone(), nv.clone().ptr.map(|x| *x)), None));
+        }
+
+        $rhs_var.mangle($string);
+
+        let mut state_ref = $state.borrow_mut();
+        obj.add_key(&var.unique,
+            JsKey::JsStr(JsStrStruct::new($string)),
+            $rhs_var.clone(), $rhs_ptr.clone(),
+            &mut *(state_ref.alloc_box.borrow_mut()));
+        state_ref.store(var, Some(JsPtrEnum::JsObj(obj))).expect("Unable to store changed object");
+        $rhs_var
+    }}
+}

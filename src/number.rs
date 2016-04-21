@@ -10,9 +10,11 @@ use jsrs_common::types::coerce::{AsBool, AsNumber, AsString};
 use jsrs_common::types::js_var::{JsVar, JsType};
 use jsrs_common::types::js_var::JsPtrEnum::*;
 use jsrs_common::types::js_var::JsType::*;
-use jsrs_common::types::js_var::JsPtrTag;
+use jsrs_common::types::js_var::{JsPtrEnum, JsPtrTag};
+use jsrs_common::types::js_str::JsStrStruct;
 use jsrs_common::js_error::{self, JsError};
 
+use var::{JsVarValue, scalar};
 use eval::eval_exp;
 
 macro_rules! b { ($e: expr) => { $e.as_bool() } }
@@ -31,7 +33,7 @@ macro_rules! ni32 { ($e: expr) => { {
 macro_rules! nu32 { ($e: expr) => { $e.as_number() as u32 } }
 
 pub fn eval_binop(op: &BinOp, e1: &Exp, e2: &Exp,
-                  state: Rc<RefCell<ScopeManager>>) -> js_error::Result<JsType> {
+                  state: Rc<RefCell<ScopeManager>>) -> js_error::Result<JsVarValue> {
     if let &And = op {
         let val1: JsVar = try!(eval_exp(e1, state.clone())).0;
         let b = if b!(val1) == false {
@@ -40,7 +42,7 @@ pub fn eval_binop(op: &BinOp, e1: &Exp, e2: &Exp,
             let val2: JsVar = try!(eval_exp(e2, state.clone())).0;
             JsBool(b!(val2))
         };
-        return Ok(b);
+        return Ok(scalar(b));
     } else if let &Or = op {
         let val1: JsVar = try!(eval_exp(e1, state.clone())).0;
         let b = if b!(val1) == true {
@@ -49,7 +51,7 @@ pub fn eval_binop(op: &BinOp, e1: &Exp, e2: &Exp,
             let val2: JsVar = try!(eval_exp(e2, state.clone())).0;
             JsBool(b!(val2))
         };
-        return Ok(b);
+        return Ok(scalar(b));
     }
 
     let val1_is_instance_var = match e1 {
@@ -67,11 +69,11 @@ pub fn eval_binop(op: &BinOp, e1: &Exp, e2: &Exp,
     let (val1, ptr1) = try!(eval_exp(e1, state.clone()));
     let (val2, ptr2) = try!(eval_exp(e2, state.clone()));
 
-    if let Err(e) = state.borrow_mut().alloc(val1.clone(), ptr1) {
+    if let Err(e) = state.borrow_mut().alloc(val1.clone(), ptr1.clone()) {
         return Err(JsError::from(e));
     }
 
-    if let Err(e) = state.borrow_mut().alloc(val2.clone(), ptr2) {
+    if let Err(e) = state.borrow_mut().alloc(val2.clone(), ptr2.clone()) {
         return Err(JsError::from(e));
     }
 
@@ -92,7 +94,7 @@ pub fn eval_binop(op: &BinOp, e1: &Exp, e2: &Exp,
         Lt  => JsBool(n!(val1) <  n!(val2)),
 
         Neq => {
-            if let Ok(JsBool(b)) = eval_binop(&Eql, e1, e2, state) {
+            if let Ok(JsBool(b)) = eval_binop(&Eql, e1, e2, state).map(|(x, _)| x.t) {
                 JsBool(!b)
             } else {
                 JsBool(false)
@@ -155,7 +157,7 @@ pub fn eval_binop(op: &BinOp, e1: &Exp, e2: &Exp,
             JsBool(b)
         }
         NeqStrict => {
-            if let Ok(JsBool(b)) = eval_binop(&EqlStrict, e1, e2, state) {
+            if let Ok(JsBool(b)) = eval_binop(&EqlStrict, e1, e2, state).map(|(x, _)| x.t) {
                 JsBool(!b)
             } else {
                 JsBool(false)
@@ -175,7 +177,19 @@ pub fn eval_binop(op: &BinOp, e1: &Exp, e2: &Exp,
         //ShiftRightUnsigned => JsNum((nu32!(val1) >> ni32!(val2)) as f64),
 
         Minus => JsNum(n!(val1) - n!(val2)),
-        Plus  => JsNum(n!(val1) + n!(val2)),
+        Plus  => {
+            if let JsPtr(JsPtrTag::JsStr) = val1.t {
+                let mut s1 = ptr1.map(|p| p.as_string()).unwrap_or(val1.t.as_string());
+                let s2 = ptr2.map(|p| p.as_string()).unwrap_or(val2.t.as_string());
+                s1.push_str(&s2);
+
+                let var = JsVar::new(JsType::JsPtr(JsPtrTag::JsStr));
+                let ptr = JsPtrEnum::JsStr(JsStrStruct::new(&s1));
+                return Ok((var, Some(ptr)));
+            }
+
+            JsNum(n!(val1) + n!(val2))
+        }
         Slash => JsNum(n!(val1) / n!(val2)),
         Star  => JsNum(n!(val1) * n!(val2)),
         Mod   => JsNum(n!(val1) % n!(val2)),
@@ -197,5 +211,5 @@ pub fn eval_binop(op: &BinOp, e1: &Exp, e2: &Exp,
             JsBool(b)
         }
     };
-    Ok(v)
+    Ok(scalar(v))
 }
