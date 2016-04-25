@@ -2,6 +2,7 @@
 
 \usepackage[margin=1.5in]{geometry}
 \usepackage{titling}
+\usepackage{multicol}
 
 \usepackage{listings}
 \usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
@@ -53,9 +54,15 @@
 
 \setlength{\droptitle}{-7em}
 
-\title{js.rs -- A Rustic JavaScript Interpreter}
+
+\title{js.rs -- A Rustic JavaScript Interpreter \\
+  {\large CIS Department Senior Design 2015-2016 \textsuperscript{1}}
+}
 \date{April 25, 2016}
-\author{Terry Sun, Sam Rossi}
+\author{
+  Terry Sun\\ terrysun@seas.upenn.edu \and
+  Sam Rossi\\ samrossi@seas.upenn.edu
+}
 
 \setlength\parindent{0pt}
 
@@ -63,7 +70,9 @@
 
 \maketitle
 
-\section*{Introduction}
+\section*{Abstract}
+
+\footnotetext[1]{Advisor: Dr. Steve Zdancewic (stevez@cis.upenn.edu)}
 
 JavaScript is an incredibly widespread language, running on virtually every
 modern computer and browser, and interpreters such as NodeJS allow JavaScript to
@@ -72,7 +81,7 @@ JavaScript engines are typically written in C/C++, languages reliant on manual
 memory management. This results in countless memory leaks, bugs, and security
 vulnerabilities related to memory mismanagement. \newline
 
-We’ve chosen to build a prototype server-side JavaScript interpreter in Rust, a
+We've built a prototype server-side JavaScript interpreter in Rust, a
 new systems programming language for building programs with strong memory safety
 guarantees and speeds comparable to C++. Our interpreter runs code either from
 source files or an interactive REPL (read-evaluate-print-loop), similar to the
@@ -81,39 +90,96 @@ demonstrate the viability of using Rust to implement JavaScript by implementing
 a core subset of language features. To that end, we’ve tested our coverage using
 Google’s Sputnik test suite, an ECMAScript 5 conformance test suite.
 
-\subsection*{The Rust Language}
+\begin{multicols}{2}
 
-According to the official website, Rust is "systems programming language that
-runs blazingly fast, prevents segfaults, and guarantees thread
-safety"\cite{rust-lang}. Designed to be safer than
-traditional systems programming languages, Rust's creator described Rust as
-designed for "frustrated C++
-developers"\cite{interview}. To that
-end, Rust guarantees memory safety in a relatively unique way compared to most
-mainstream programming languages; while traditional memory-safe languages use
-garbage collection, which incurs significant runtime costs, Rust using a
-combination of compile-time techniques including a nuanced type system, tracking
-of pointer lifetimes, and several other cutting-edge techniques developed by
-by programming languages researchers over the years.
+\section{Background}
 
-\section*{Approach}
+\subsection{Rust}
 
-\subsection*{Parser}
+Rust is a programming language spearheaded by Mozilla. It is a
+general-purpose programming language emphasizing memory safety and speed
+concerns. Rust's initial stable release (version 1.0) was released in March
+2015. \newline
 
-The first part of the interpreter that we implemented was the parser, which
-takes in a string of JavaScript and generates an "Abstract Syntax Tree", or AST.
+Rust guarantees memory safety in a unique way compared to other commonly used
+programming languages. The compiler statically analyzes the source code,
+tracking the ``lifetime'' of any heap-allocated data. When all existant pointers
+to a piece of data has gone out of scope (e.g. at the end of a function), then
+the compiler determines that the data is no longer alive and the allocated space
+can be freed. (TODO: this simplifies a bit, do we want to go into more detail?)
+This memory management system prevents many classic memory errors by disallowing
+the programmer from accessing uninitialized or already-freed memory. \newline
+
+Compare this system to other memory-safe languages, which rely on garbage
+collection to find and free memory which is no longer relevant to the running
+program. Garbage collection incurs significant runtime performance costs.
+\newline
+
+Rust code compiles down to a native executable. The Rust compiler uses an
+LLVM-backend to emit assembly, taking advantage of LLVM's extensive optimization
+options. In addition, there is no runtime associated with executing Rust
+binaries; Rust is not run by a virtual machine (e.g. Java), nor does it use
+garbage collection during execution. \newline
+
+Rust also provides high-level programming language features, such as an type
+system based on interfaces (known as Traits) and generics, funtional programming
+and closures, and a set of concurrency primitives. This makes it a very
+attractive languages for people who are concerned about the performance of their
+program, but wish to use something more ergonomic than C or C++. The Rust
+standard library is written with both performance and ergonomics in mind.
+
+\subsection{JavaScript}
+
+JavaScript is an extremely widely used programming language. It is one of the
+core languages used on the Internet; it is included on the majority of the
+websites across the Internet, and is supported by all major web browsers. In
+addition, it has many desktop applications, e.g., used as a scripting
+language, or embedded in PDFs. \newline
+
+JavaScript has been deployed as a server-side language since late 1995. It has
+gained popularity as a server development language since Node.js was released in
+2006.\newline
+
+TODO: Language features \newline
+
+JavaScript was first developed at Netscape by Brendan Eich 1995 for inclusion
+with their internet browser. Today, JavaScript is defined by the ECMAScript
+specification, first released in 1997 by the European Computer Manufacturer
+Association (ECMA) in response to the emergence of a few forks of the JavaScript
+implementations. The current version is ECMAScript 6, released in June 2015;
+ECMAScript 7 is still under development.\newline
+
+Mozilla Developer Network's official JavaScript documentation\cite{mozdocs}.
+There is also a conformance test suite named Sputnik, released by Google in
+2009. Sputnik targets the ECMAScript 5 standard, but includes only those
+features which were present in ECMAScript 3. This arrangement was chosen due to
+the presence of numerous ambiguities in the third specification, which were
+resolved in ECMAScript 5.
+
+\subsection{Motivation}
+
+TODO
+
+\section{Design}
+
+\subsection{Parser}
+
+The first part of the interpreter is the parser,
+takes in a string of JavaScript and generates an Abstract Syntax Tree (AST).
 An AST contains the structure and the content of a program, but not the specific
 syntactic components such as whitespacing. \newline
 
-Traditionally, the canonical way of writing a parser is to use a "parser
-generator". Implementing a parser with a parser generator consists of defining
-the grammar of the language (i.e. the valid tokens of the language and what
-sequences of tokens are valid); the parser generator then generate code to parse
-the grammar, which is then used as a library. Although parser generators tend to
-be a bit slower in practice than writing an equivalent parser manually, using
+One very common way of writing a parser is to use a parser
+generator. This consists of defining
+the grammar of the language (i.e. the valid tokens of the language and the valid
+sequences of those tokens which have semantic meaning in the language);
+the parser generator then generates code to parse
+the grammar, which is then used as a library. Parser generators tend to
+be a bit slower in practice than writing an equivalent parser manually, but using
 a parser generate greatly increases the rate of development due to the ease of
-use. Because of the scope and time limitations of our project, we opted to use a
-parser generator rather than writing a custom parser. \newline
+use. We opted to use a
+parser generator rather than writing a custom parser, as we wanted to focus on
+language implementation rather than performance. \newline
 
 The two most widely used parser generators are YACC and Bison, which are
 implemented in C. Neither of these would be suitable for our project, as we
@@ -121,7 +187,7 @@ intended to use only Rust libraries in our interpreter to maximize the safety
 guarantees. After some research, we decided to use LALRPOP, a pure Rust LR(1)
 parser generator\cite{lalrpop}.
 
-\subsection*{Garbage Collector}
+\subsection{Garbage Collector}
 
 Like other interpreted languages, JavaScript relies on garbage collection to
 manage the memory used by a running program. Although it would have been
@@ -131,18 +197,11 @@ collection library in Rust for his thesis. Integrating with the garbage
 collection library seemed mutually beneficial, so we opted not to write our own
 garbage collector in favor of using French Press.
 
-\subsection*{Runtime}
+\subsection{Runtime}
 
 In terms of time and amount of code, the most signficant part of our work was
-the actual evaluation of the JavaScript code, which is generally referred to as
-the "runtime system", or juse the "runtime". In order to effectively follow the
-proper semantics of JavaScript code, we made heavy use of the Mozilla Developer
-Network's official JavaScript
-documentation\cite{mozdocs}.
-This greatly reduced the amount of effort we had to spend on determining things
-like the proper precendence of operators and the correct implementation of
-implicit type coercions.
-
+the actual evaluation of the JavaScript code, which we will refer to as the
+"runtime".
 \subsubsection*{Functions, Scoping, and Closures}
 
 One of the most difficult parts of implementing the runtime was ensuring that it
@@ -178,13 +237,12 @@ In order to correctly execute code cases like this, we had to add functionality
 for our code to detect when a function is a closure and inform the garbage
 collector of the special status of that function's scope.
 
-\section*{Results}
+\section{Results}
 
-Although we did not have time to implement 100\% of the JavaScript language, we
-implemented a significant subset of features which provide more than enough to
-write interesting and useful programs.
+We implemented a significant subset of features which provide more than enough
+coverage to write interesting and useful programs.
 
-\subsection*{Language Features}
+\subsection{Language Features}
 
 We successfully implemented parsing and evaluation of the following types of
 expressions and statements:
@@ -274,7 +332,7 @@ the majority of the other features could be easily implemented natively, we
 decided to build in a simple \texttt{Array} prototype to demonstrate our
 implementation of prototype functionality in our interpreter.
 
-\subsection*{Coverage}
+\subsection{Specification Coverage}
 
 To test how complete our coverage of the JavaScript standard was, we built a
 framework to run the Google Sputnik test
@@ -300,9 +358,10 @@ of the languages features.
 
 \subsubsection*{Raw coverage}
 
-[need to fill in stuff here]
+Sputnik provides a total of 2427 distinct tests. We pass 20\% (TODO) of those
+tests.
 
-\section*{Ethical and Privacy Considerations}
+\section{Ethics and Privacy}
 
 Although our project is novel in terms of its implementation, it isn't intended
 to provide any new functionality not present in existing solutions. Given that
@@ -310,7 +369,7 @@ the existing JavaScript interpreters that differ only in that they do not
 provide the same guarantees about memory leaks and segfaults, our project has
 essentially no impact on ethical concerns.
 
-\section*{Discussion}
+\section{Discussion}
 
 \subsubsection*{LALRPOP errata}
 
@@ -359,7 +418,11 @@ runtime both used the same version of the common package). Moreover, due to the
 slow speed at which the parser compiled, changes to the common package became
 rather undesirable, as each change would require the parser to recompile as
 well. In retrospect, using separate modules within a single package rather than
-multiple packages would have significantly increased our development efficiency.
+:ultiple packages would have significantly increased our development efficiency.
+
+\section{Conclusion}
+
+\end{multicols}
 
 \pagebreak
 
