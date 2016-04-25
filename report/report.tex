@@ -4,6 +4,7 @@
 \usepackage{titling}
 \usepackage{multicol}
 
+\usepackage{textcomp}
 \usepackage{listings}
 \usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
 
@@ -92,7 +93,19 @@ Google’s Sputnik test suite, an ECMAScript 5 conformance test suite.
 
 \begin{multicols}{2}
 
+\section{Introduction}
+
+\subsection{Project}
+
+TODO: define scope of project
+
+\subsection{Motivation}
+
+TODO
+
 \section{Background}
+
+TODO
 
 \subsection{Rust}
 
@@ -156,10 +169,6 @@ features which were present in ECMAScript 3. This arrangement was chosen due to
 the presence of numerous ambiguities in the third specification, which were
 resolved in ECMAScript 5.
 
-\subsection{Motivation}
-
-TODO
-
 \section{Design}
 
 \subsection{Parser}
@@ -169,39 +178,44 @@ takes in a string of JavaScript and generates an Abstract Syntax Tree (AST).
 An AST contains the structure and the content of a program, but not the specific
 syntactic components such as whitespacing. \newline
 
-One very common way of writing a parser is to use a parser
-generator. This consists of defining
-the grammar of the language (i.e. the valid tokens of the language and the valid
-sequences of those tokens which have semantic meaning in the language);
-the parser generator then generates code to parse
-the grammar, which is then used as a library. Parser generators tend to
-be a bit slower in practice than writing an equivalent parser manually, but using
-a parser generate greatly increases the rate of development due to the ease of
-use. We opted to use a
-parser generator rather than writing a custom parser, as we wanted to focus on
-language implementation rather than performance. \newline
+We wrote our parser using a parser generator, a common pattern in building
+parsers. This consists of defining the grammar of the language (i.e. the valid
+tokens of the language and the valid sequences of those tokens which have
+semantic meaning in the language); the parser generator takes this grammar
+specification as input and generates code to parse the grammar in the target
+language (in this case, Rust). Parser generators tend to be a bit slower in
+practice than writing an equivalent parser manually, but using a parser generate
+greatly increases the rate of development due to the ease of use. We opted to
+use a parser generator rather than writing a custom parser, as we wanted to
+focus on language implementation rather than performance. \newline
 
 The two most widely used parser generators are YACC and Bison, which are
 implemented in C. Neither of these would be suitable for our project, as we
-intended to use only Rust libraries in our interpreter to maximize the safety
+intended to use only Rust libraries in our interpreter to maintain the safety
 guarantees. After some research, we decided to use LALRPOP, a pure Rust LR(1)
 parser generator\cite{lalrpop}.
 
 \subsection{Garbage Collector}
 
-Like other interpreted languages, JavaScript relies on garbage collection to
-manage the memory used by a running program. Although it would have been
-possible for us to write our own garbage collector, a master's student
-with the same advisor as us was working on implementing a JavaScript garbage
-collection library in Rust for his thesis. Integrating with the garbage
-collection library seemed mutually beneficial, so we opted not to write our own
-garbage collector in favor of using French Press.
+JavaScript is a garbage collected language, as it relies on a runtime system to
+manage the memory used by a running program. This runtime must allocate memory
+when requested by the language, and free memory when it is determined that
+allocated data is no longer accessable by the running program. We used a garbage
+collection library, French Press. French Press was being developed concurrency
+by David Mally, a UPenn Masters student, for his Masters thesis. Js.rs is
+tightly coupled with French Press, sharing a common library defining a shared
+representation of the JavaScript type system.
+
+\subsubsection*{Type System}
+
+TODO
 
 \subsection{Runtime}
 
-In terms of time and amount of code, the most signficant part of our work was
-the actual evaluation of the JavaScript code, which we will refer to as the
-"runtime".
+The ``runtime'' is the most substantial portion of the interpreter, as it is
+what accepts the AST as input and evaluates the language semantics represented
+by each node.
+
 \subsubsection*{Functions, Scoping, and Closures}
 
 One of the most difficult parts of implementing the runtime was ensuring that it
@@ -247,31 +261,68 @@ coverage to write interesting and useful programs.
 We successfully implemented parsing and evaluation of the following types of
 expressions and statements:
 
+\subsubsection*{Assignment statements}
+
+There are two ways to assign values to variable bindings in JavaScript. A
+declaration (\texttt{var x = y}) will create a variable in the current scope and
+assign the value $y$ to it. An assignment (\texttt{x = y}) will modify the
+variable $x$ in the current scope or any parent scope if it already exists;
+otherwise, it will be allocated in the global program scope and set to the value
+$y$. Additionally, a variable can be declared but not set (\texttt{var x}),
+which sets it to the default value \texttt{undefined}.
+
 \subsubsection*{Literal expressions}
+
+Literal expressions evaluate to the value they represent, and are defined in
+JavaScript for each of the primitive types. For \texttt{null},
+\texttt{undefined}, boolean, and numeric literals, we simply create a variable
+containing the appropriate value. For more complex literals which must be
+allocated on the heap (Strings, Objects, and Arrays), we first evaluate the
+expression by constructing the appropriate type, then allocate heap space and
+store the value.
 
 \begin{itemize}
   \item Boolean: \texttt{true}, \texttt{false}
   \item Numeric: e.g. \texttt{-4}, \texttt{7.17}, \texttt{NaN}
-  \item String: e.g. \texttt{"abc\u1234"}, \texttt{'foo bar baz'}
-  \item Object: e.g. \texttt{\{ x: 3, y: \{ z: "hello" \} \} }
-  \item Array: e.g. \texttt{[1, "hello", x]}
   \item \texttt{null}
   \item \texttt{undefined}
+  \item String: e.g. \texttt{"abc\textbackslash u1234"},
+    \texttt{\textquotesingle foo bar baz \textquotesingle}
+  \item Object: e.g. \texttt{\{ x: 3, y: \{ z: "hello" \} \} }
+  \item Array: e.g. \texttt{[1, "hello", x]}
 \end{itemize}
 
 \subsubsection*{Operator expressions}
 
+JavaScript provides a set of unary (\texttt{a + b}) and binary operators
+(\texttt{++a}) to define expressions based on one or more variables. JavaScript
+does not enforce type bounds at all, so Js.rs must perform type coercion when an
+expression contains values of two different types. For example, in a logical
+and statement, both expressions are first coerced to an boolean value before the
+logical and is applied.\newline
+
+This may
+involve operator overloading, as in the case of \texttt{+}: in most cases, the
+interpreter must coerce both arguments to Number before evaluating the
+expression. However, if either argument is a String, then both
+arguments should instead be coerced to Strings and the operation results in the
+concatentation of those two Strings. \newline
+
+Additionally, all binary operators can be used as assignment operators (e.g.,
+\texttt{a += b}. This application in Js.rs is handled by the parser, which will
+produce an AST node identical to the \texttt{a = a + b} case.
+
 \begin{itemize}
-  \item Arithmetic: \texttt{+}, \texttt{-}, \texttt{*}, \texttt{/}, \texttt{\%}
   \item Incrementation: \texttt{++}, \texttt{--}
-  \item Boolean logical: \texttt{\&\&}, \texttt{||}, \texttt{!}
   \item Bitwise logical: \texttt{\&}, \texttt{|}, \texttt{~}, \texttt{\^}
+  \item \texttt{instanceof}
+  \item \texttt{typeof}
+  \item Arithmetic: \texttt{+}, \texttt{-}, \texttt{*}, \texttt{/}, \texttt{\%}
+  \item Boolean logical: \texttt{\&\&}, \texttt{||}, \texttt{!}
   \item Shifts: \texttt{>>>}, \texttt{>>}, \texttt{<<}
   \item Inequalties: \texttt{>}, \texttt{>=}, \texttt{<}, \texttt{<=}
   \item Equalities: \texttt{==}, \texttt{!=}, \texttt{===}, \texttt{!==}
   \item Assignment: \texttt{=}, \texttt{+=}, \texttt{\&\&=}, ...
-  \item \texttt{instanceof}
-  \item \texttt{typeof}
 \end{itemize}
 
 \subsubsection*{Function-related expressions}
@@ -290,13 +341,6 @@ expressions and statements:
   \item Constructors: e.g. \texttt{new foobar(x, y)}
 \end{itemize}
 
-\subsubsection*{Mutation statements}
-
-\begin{itemize}
-  \item Assignment: e.g. \texttt{x = y}, \texttt{foo[bar] = 23}
-  \item Declarations: e.g. \texttt{var x = z}
-\end{itemize}
-
 \subsubsection*{Control-flow statements}
 
 \begin{itemize}
@@ -313,7 +357,7 @@ expressions and statements:
 \subsection*{Standard library}
 
 We implemented a small standard library for our interpreter based on some of the
-most widely-used features the official JavaScript standard library
+most widely-used features provided by the official JavaScript standard library.
 
 \subsubsection*{Printing}
 
@@ -335,10 +379,11 @@ implementation of prototype functionality in our interpreter.
 \subsection{Specification Coverage}
 
 To test how complete our coverage of the JavaScript standard was, we built a
-framework to run the Google Sputnik test
-suite\cite{sputnik} on our
-interpreter. The test suite covers the ECMAScript 3 subset of the ECMAScript 5
-standard. We used two different metrics to analyze the coverage of our
+framework to run the Google Sputnik test suite\cite{sputnik} on our interpreter.
+Sputnik targets the ECMAScript 5 standard, but includes only those features
+which were present in ECMAScript 3. This arrangement was chosen due to the
+presence of numerous ambiguities in the third specification, which were resolved
+in ECMAScript 5. We used two different metrics to analyze the coverage of our
 interpreter.
 
 \subsubsection*{Category-based coverage}
@@ -349,12 +394,10 @@ Expressions" subcategory, which in turn contains the subcategories "Postfix
 Increment Operator" and "Postfix Decrement Operator"). Overall, there are 111
 leaf categories (i.e. categories which do not contain other categories). \newline
 
-In order to determine what percentage of the JavaScript language features we had
-implemented, we counted the number of leaf categories in which we had passed
-some of the tests. Of the 111, we found that we had coverage in 73 of the
-categories, or 65.8\% of them. This indicates that we while we had not
-implemented a full-fledged JavaScript interpreter, we covered a sizable portion
-of the languages features.
+We considered the number of leaf categories in which we had passed some of the
+tests. Of the 111 categories, we had coverage in 73 of the categories, or
+65.8\%. This indicates that we covered a sizable portion of the languages
+features.
 
 \subsubsection*{Raw coverage}
 
