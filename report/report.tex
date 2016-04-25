@@ -71,6 +71,21 @@ demonstrate the viability of using Rust to implement JavaScript by implementing
 a core subset of language features. To that end, we’ve tested our coverage using
 Google’s Sputnik test suite, an ECMAScript 5 conformance test suite.
 
+\subsection*{The Rust Language}
+
+According to the official website, Rust is "systems programming language that
+runs blazingly fast, prevents segfaults, and guarantees thread
+safety"\footnote{https://www.rust-lang.org/}. Designed to be safer than
+traditional systems programming languages, Rust's creator described Rust as
+designed for "frustrated C++
+developers"\footnote{http://www.infoq.com/news/2012/08/Interview-Rust}. To that
+end, Rust guarantees memory safety in a relatively unique way compared to most
+mainstream programming languages; while traditional memory-safe languages use
+garbage collection, which incurs significant runtime costs, Rust using a
+combination of compile-time techniques including a nuanced type system, tracking
+of pointer lifetimes, and several other cutting-edge techniques developed by
+by programming languages researchers over the years.
+
 \section*{Approach}
 
 \subsection*{Parser}
@@ -154,6 +169,126 @@ for our code to detect when a function is a closure and inform the garbage
 collector of the special status of that function's scope.
 
 \section*{Results}
+
+Although we did not have time to implement 100\% of the JavaScript language, we
+implemented a significant subset of features which provide more than enough to
+write interesting and useful programs.
+
+\subsection*{Language Features}
+
+We successfully implemented parsing and evaluation of the following types of
+expressions and statements:
+
+\subsubsection*{Literal expressions}
+
+\begin{itemize}
+  \item Boolean: \texttt{true}, \texttt{false}
+  \item Numeric: e.g. \texttt{-4}, \texttt{7.17}, \texttt{NaN}
+  \item String: e.g. \texttt{"abc\u1234"}, \texttt{'foo bar baz'}
+  \item Object: e.g. \texttt{\{ x: 3, y: \{ z: "hello" \} \} }
+  \item Array: e.g. \texttt{[1, "hello", x]}
+  \item \texttt{null}
+  \item \texttt{undefined}
+\end{itemize}
+
+\subsubsection*{Operator expressions}
+
+\begin{itemize}
+  \item Arithmetic: \texttt{+}, \texttt{-}, \texttt{*}, \texttt{/}, \texttt{\%}
+  \item Incrementation: \texttt{++}, \texttt{--}
+  \item Boolean logical: \texttt{\&\&}, \texttt{||}, \texttt{!}
+  \item Bitwise logical: \texttt{\&}, \texttt{|}, \texttt{~}, \texttt{\^}
+  \item Shifts: \texttt{>>>}, \texttt{>>}, \texttt{<<}
+  \item Inequalties: \texttt{>}, \texttt{>=}, \texttt{<}, \texttt{<=}
+  \item Equalities: \texttt{==}, \texttt{!=}, \texttt{===}, \texttt{!==}
+  \item Assignment: \texttt{=}, \texttt{+=}, \texttt{\&\&=}, ...
+  \item \texttt{instanceof}
+  \item \texttt{typeof}
+\end{itemize}
+
+\subsubsection*{Function-related expressions}
+
+\begin{itemize}
+  \item Named function definition: e.g. \texttt{function f(x) \{ return x + 1; \} }
+  \item Anonymous function definition: e.g. \texttt{function(x, y) \{ return x + y; \} }
+  \item Function calls: e.g. \texttt{foo(a, b)}
+\end{itemize}
+
+\subsubsection*{Object-related expressions}
+
+\begin{itemize}
+  \item Instance variable access: e.g. \texttt{foo.bar}
+  \item Key-indexed access: e.g. \texttt{foo[bar]}
+  \item Constructors: e.g. \texttt{new foobar(x, y)}
+\end{itemize}
+
+\subsubsection*{Mutation statements}
+
+\begin{itemize}
+  \item Assignment: e.g. \texttt{x = y}, \texttt{foo[bar] = 23}
+  \item Declarations: e.g. \texttt{var x = z}
+\end{itemize}
+
+\subsubsection*{Control-flow statements}
+
+\begin{itemize}
+  \item \texttt{if}/\texttt{else if}/\texttt{else}
+  \item \texttt{while}
+  \item \texttt{for}
+  \item \texttt{break}
+  \item \texttt{continue}
+  \item \texttt{return}
+  \item \texttt{try}/\texttt{catch}/\texttt{finally}
+  \item \texttt{throw}
+\end{itemize}
+
+\subsection*{Standard library}
+
+We implemented a small standard library for our interpreter based on some of the
+most widely-used features the official JavaScript standard library
+
+\subsubsection*{Printing}
+
+Official JavaScript interpreters do console-based I/O through the global
+\texttt{console} object, which has methods such as \texttt{log()} and
+\texttt{error}. Because implementing the entire native \texttt{console} object
+would have taken significant time and distracted us from implementing more
+widely-used features, we implemented a global \texttt{log()} function which
+behaves like \texttt{console.log()}.
+
+\subsubsection*{Prototypes}
+
+JavaScript typically provides a number of built-in prototypes, including
+\texttt{String}, \texttt{Array}, \texttt{Object}, and \texttt{Function}. Because
+the majority of the other features could be easily implemented natively, we
+decided to build in a simple \texttt{Array} prototype to demonstrate our
+implementation of prototype functionality in our interpreter.
+
+\subsection*{Coverage}
+
+To test how complete our coverage of the JavaScript standard was, we built a
+framework to run the Google Sputnik test
+suite\footnote{https://code.google.com/archive/p/sputniktests/} on our
+interpreter. The test suite covers the ECMAScript 3 subset of the ECMAScript 5
+standard. We used two different metrics to analyze the coverage of our
+interpreter.
+
+\subsubsection*{Category-based coverage}
+
+Sputnik defines several categories of tests, each with various depths of subcategories
+(for example, the "Expressions" category contains, among others, a "Postfix
+Expressions" subcategory, which in turn contains the subcategories "Postfix
+Increment Operator" and "Postfix Decrement Operator"). Overall, there are 111
+leaf categories (i.e. categories which do not contain other categories). \newline
+
+In order to determine what percentage of the JavaScript language features we had
+implemented, we counted the number of leaf categories in which we had passed
+some of the tests. Of the 111, we found that we had coverage in 73 of the
+categories, or 65.8\% of them. This indicates that we while we had not
+implemented a full-fledged JavaScript interpreter, we covered a sizable portion
+of the languages features.
+
+\subsubsection*{Raw coverage}
 
 \section*{Ethical and Privacy Considerations}
 
