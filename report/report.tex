@@ -6,6 +6,15 @@
 \usepackage{listings}
 \usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
 
+\usepackage{hyperref}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan,
+}
+
 % Define syntax for JavaScript
 \lstdefinelanguage{JavaScript}{
   keywords={typeof, new, true, false, catch, function, return, null, catch, switch, var, if, in, while, do, else, case, break},
@@ -75,10 +84,10 @@ Google’s Sputnik test suite, an ECMAScript 5 conformance test suite.
 
 According to the official website, Rust is "systems programming language that
 runs blazingly fast, prevents segfaults, and guarantees thread
-safety"\footnote{https://www.rust-lang.org/}. Designed to be safer than
+safety"\cite{rust-lang}. Designed to be safer than
 traditional systems programming languages, Rust's creator described Rust as
 designed for "frustrated C++
-developers"\footnote{http://www.infoq.com/news/2012/08/Interview-Rust}. To that
+developers"\cite{interview}. To that
 end, Rust guarantees memory safety in a relatively unique way compared to most
 mainstream programming languages; while traditional memory-safe languages use
 garbage collection, which incurs significant runtime costs, Rust using a
@@ -109,7 +118,7 @@ The two most widely used parser generators are YACC and Bison, which are
 implemented in C. Neither of these would be suitable for our project, as we
 intended to use only Rust libraries in our interpreter to maximize the safety
 guarantees. After some research, we decided to use LALRPOP, a pure Rust LR(1)
-parser generator\footnote{https://github.com/nikomatsakis/lalrpop}.
+parser generator\cite{lalrpop}.
 
 \subsection*{Garbage Collector}
 
@@ -128,7 +137,7 @@ the actual evaluation of the JavaScript code, which is generally referred to as
 the "runtime system", or juse the "runtime". In order to effectively follow the
 proper semantics of JavaScript code, we made heavy use of the Mozilla Developer
 Network's official JavaScript
-documentation\footnote{https://developer.mozilla.org/en-US/docs/Web/JavaScript}.
+documentation\cite{mozdocs}.
 This greatly reduced the amount of effort we had to spend on determining things
 like the proper precendence of operators and the correct implementation of
 implicit type coercions.
@@ -268,7 +277,7 @@ implementation of prototype functionality in our interpreter.
 
 To test how complete our coverage of the JavaScript standard was, we built a
 framework to run the Google Sputnik test
-suite\footnote{https://code.google.com/archive/p/sputniktests/} on our
+suite\cite{sputnik} on our
 interpreter. The test suite covers the ECMAScript 3 subset of the ECMAScript 5
 standard. We used two different metrics to analyze the coverage of our
 interpreter.
@@ -299,5 +308,29 @@ guarantees about memory leaks and segfaults, our project has essentially no
 impact on privacy or ethical concerns.
 
 \section*{Discussion}
+
+\pagebreak
+
+\begin{thebibliography}{9}
+  \bibitem{rust-lang}
+  Official Rust Language website
+  \href{https://www.rust-lang.org/}{https://www.rust-lang.org/}
+
+  \bibitem{interview}
+  Interview on Rust, a Systems Programming Language Developed by Mozilla
+  \href{http://www.infoq.com/news/2012/08/Interview-Rust}{http://www.infoq.com/news/2012/08/Interview-Rust}
+
+  \bibitem{lalrpop}
+  LALRPOP, LR(1) parser generator for Rust
+  \href{https://github.com/nikomatsakis/lalrpop}{https://github.com/nikomatsakis/lalrpop}
+
+  \bibitem{mozdocs}
+  Mozilla Developer Network JavaScript Documentation
+  \href{https://developer.mozilla.org/en-US/docs/Web/JavaScript}{https://developer.mozilla.org/en-US/docs/Web/JavaScript}
+
+  \bibitem{sputnik}
+  ECMAScript conformance test suite
+  \href{https://code.google.com/archive/p/sputniktests/}{https://code.google.com/archive/p/sputniktests/}
+\end{thebibliography}
 
 \end{document}
