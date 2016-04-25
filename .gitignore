@@ -6,4 +6,4 @@ errors.txt
 *.fls
 *.log
 *.synctex.gz
-
+*.out
