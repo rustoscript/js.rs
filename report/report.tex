@@ -9,6 +9,7 @@
 \usepackage{hyperref}
 
 \hypersetup{
+    citecolor=red,
     colorlinks=true,
     linkcolor=blue,
     filecolor=magenta,
@@ -112,7 +113,7 @@ the grammar, which is then used as a library. Although parser generators tend to
 be a bit slower in practice than writing an equivalent parser manually, using
 a parser generate greatly increases the rate of development due to the ease of
 use. Because of the scope and time limitations of our project, we opted to use a
-parser generator rather than writing a custom parser.
+parser generator rather than writing a custom parser. \newline
 
 The two most widely used parser generators are YACC and Bison, which are
 implemented in C. Neither of these would be suitable for our project, as we
@@ -299,15 +300,66 @@ of the languages features.
 
 \subsubsection*{Raw coverage}
 
+[need to fill in stuff here]
+
 \section*{Ethical and Privacy Considerations}
 
 Although our project is novel in terms of its implementation, it isn't intended
-to provide any functionality that does not exist. Given that there are existing
-JavaScript interpreters that differ only in that they do not provide the same
-guarantees about memory leaks and segfaults, our project has essentially no
-impact on privacy or ethical concerns.
+to provide any new functionality not present in existing solutions. Given that
+the existing JavaScript interpreters that differ only in that they do not
+provide the same guarantees about memory leaks and segfaults, our project has
+essentially no impact on ethical concerns.
 
 \section*{Discussion}
+
+\subsubsection*{LALRPOP errata}
+
+While LALRPOP generally worked quite well for our purposes, there were a few
+issues we ran into during the development process.
+
+\subsubsection*{Compilation speed}
+
+While parser generators greatly facilitate development, they tend to be less
+performant than custom parsers specifically written for the source language.
+Although we were not heavily concerned with the code execution speed of our
+interpreter, we were fairly inconvenienced by how long it would take LALRPOP to
+generate our parser. As LALRPOP only had a single author who was quite busy with
+other things, we understood that we would not be able to expect as good
+performance as more mainstream parser generators. Given more time to improve
+js.rs, we likely would have implemented a custom parser to alleviate the issue.
+That being said, several non-optimization related updates to LALRPOP released
+during the course of our project greatly improved the development process,
+including the addition of human-readable error messages for shift-reduce and
+reduce-reduce conflicts.
+
+\subsubsection*{Lexing}
+
+Unlike more mainstream parser generators, LALRPOP does not provide any built-in
+way to use a custom lexer. By default, LALRPOP will tokenize the input by
+splitting on any whitespace (and throwing out the whitespace itself). While this
+would work well in many scenarios, JavaScript interpreters typically allow
+newlines to be used in place of trailing semicolons. Additionally, correctly
+parsing single-line comments logically requires the detection of newline
+characters. In order to replicate this behavior as closely as possible with
+LALRPOP, we resorted to preprocessing the code run through js.rs before parsing
+it. Like the issue with compilation speed, we likely would have solved this by
+writing a custom parser if we had had enough time.
+
+\subsection*{Multi-package architecture}
+
+One of the choices we made early on in the development of js.rs was to split the
+interpreter into multiple packages. Although this originally was intended to
+separate the code of French Press from the rest of the interpreter, soon decided
+to split out other parts of the interpreter as well. We ended up with four
+different packages, namely a "common" package with code needed by all other
+packages, French Press, the parser, and the runtime. Although this logical
+separation made sense in the abstract, it quickly became cumbersome to ensure
+that each crate's dependencies were in sync (e.g. that the parser and the
+runtime both used the same version of the common package). Moreover, due to the
+slow speed at which the parser compiled, changes to the common package became
+rather undesirable, as each change would require the parser to recompile as
+well. In retrospect, using separate modules within a single package rather than
+multiple packages would have significantly increased our development efficiency.
 
 \pagebreak
 
