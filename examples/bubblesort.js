@@ -15,6 +15,8 @@ function bubblesort(array) {
 
 	    i += 1;
 	}
+
+	log(a);
     }
 }
 
@@ -22,6 +24,7 @@ var a = [3,5,7,9,1,2,4,8,0];
 
 log("Original array:");
 log(a);
+log("");
 
 bubblesort(a);
 
