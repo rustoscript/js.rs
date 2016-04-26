@@ -444,14 +444,19 @@ categories). \newline
 We considered the number of leaf categories in which we had passed some of the
 tests. Of the 111 categories, we had coverage in 73 of the categories, or
 65.8\%. This indicates that we covered a sizable portion of the languages
-features.
+features. This metric represents breadth of JavaScript that out interpreter can
+handle.
 
 \subsubsection*{Raw coverage}
 
 Sputnik provides a total of 2427 distinct tests. In the end, Js.rs passes 18.2\%
-of those tests. Despite having implemented a large subset of the commonly used
-JavaScript features, there were some features that we did not have time to
-implement. Some of these included:
+of those tests. Js.rs implements a large subset of the commonly used
+JavaScript features; however, the Sputnik test suite does not isolate individual
+features for each test but commonly includes many parts of the language in a
+single test. Furthermore, a single edge case may be present multiple times under
+several unrelated feature categories.\newline
+
+Some features which we did not implement include:
 
 \begin{itemize}
   \item The global \texttt{Arguments} object
@@ -553,6 +558,11 @@ to implement additional prototypes found in the standard library.
 We were dissatisfied with the current Rust ecosystem, but we believe that the
 availability and stability of libraries will improve as Rust continues to mature
 as a programming language. \newline
+
+On the whole, we believe that Js.rs achieved our original goal of building a
+proof of concept JavaScript interpreter. It is an easily extensible framework
+that could be expanded on in the future, showing that Rust is a powerful
+language suitable for such a project.
 
 \end{multicols}
 
