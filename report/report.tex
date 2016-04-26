@@ -119,7 +119,7 @@ concerns. Rust's initial stable release (version 1.0) was released in May
 
 Rust guarantees memory safety in a unique way compared to other commonly used
 programming languages. The compiler statically analyzes the source code,
-tracking the ``lifetime'' of any heap-allocated data. When all existant pointers
+tracking the ``lifetime'' of any heap-allocated data. When all existent pointers
 to a piece of data has gone out of scope (e.g. at the end of a function), then
 the compiler determines that the data is no longer alive and the allocated space
 can be freed.
@@ -138,7 +138,7 @@ binaries; Rust is not run by a virtual machine (e.g. Java), nor does it use
 garbage collection during execution. \newline
 
 Rust also provides high-level programming language features, such as an type
-system based on interfaces (known as Traits) and generics, funtional programming
+system based on interfaces (known as ``traits") and generics, funtional programming
 and closures, and a set of concurrency primitives. This makes it a very
 attractive languages for people who are concerned about the performance of their
 program, but wish to use something more ergonomic than C or C++. The Rust
@@ -157,7 +157,7 @@ interpreted, and is loosely typed; any variable can be passed into any function
 or operator. The type system is composed of seven primitives types (Number,
 Boolean, \texttt{null}, \texttt{undefined}, String, Object, Symbol). Custom
 types can be created by inheriting from Object, using a prototype-based
-inheritance system. JavaScript has many function features, such as first class
+inheritance system. JavaScript has many functional features, such as first class
 functions, anonymous functions, and closures. \newline
 
 JavaScript was first developed at Netscape by Brendan Eich 1995 for inclusion
@@ -211,7 +211,7 @@ parser generator\cite{lalrpop}.
 JavaScript is a garbage collected language, as it relies on a runtime system to
 manage the memory used by a running program. This runtime must allocate memory
 when requested by the language, and free memory when it is determined that
-allocated data is no longer accessable by the running program. We used a garbage
+allocated data is no longer accessible by the running program. We used a garbage
 collection library, French Press. French Press was being developed concurrency
 by David Mally, a UPenn Masters student, for his Masters thesis. Js.rs is
 tightly coupled with French Press, sharing a common library defining a shared
@@ -314,7 +314,7 @@ allocated on the heap (Strings, Objects, and Arrays), we first evaluate the
 expression by constructing the appropriate type. For Strings, this includes
 parsing escaped values and translating escaped Unicode values to their
 corresponding Unicode characters. For Objects and Arrays, each sub-component in
-theliteral must be iteratively parsed, and the value constructed. Then, we
+the literal must be iteratively parsed, and the value constructed. Then, we
 allocate heap space and store the value.
 
 \begin{itemize}
@@ -391,7 +391,7 @@ support the Prototype inheritance model.
 \subsubsection*{Control-flow statements}
 
 Many JavaScript constructions change the execution flow of the program.
-Typically, the interpretere will linearly execute the AST nodes as returned by
+Typically, the interpreter will linearly execute the AST nodes as returned by
 the parser. However, the interpreter may traverse into previously encountered
 nodes (e.g., a function call), repeat the current node until a condition is met
 (e.g., for and while loops), or skip certain AST nodes (e.g., an if statement).
@@ -537,7 +537,7 @@ One of the choices we made early on in the development of js.rs was to split the
 interpreter into multiple packages. Although this originally was intended to
 separate the code of French Press from the rest of the interpreter, soon decided
 to split out other parts of the interpreter as well. We ended up with four
-different packages, namely a \"common\" package with code needed by all other
+different packages, namely a ``common" package with code needed by all other
 packages, French Press, the parser, and the runtime. Although this logical
 separation made sense in the abstract, it quickly became cumbersome to ensure
 that each crate's dependencies were in sync (e.g. that the parser and the
