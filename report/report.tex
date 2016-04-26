@@ -211,7 +211,15 @@ representation of the JavaScript type system.
 
 \subsubsection*{Type System}
 
-TODO
+In JavaScript, a value can either be located on the stack or on the heap.
+Primitive values (e.g. numbers, boolean) are located on
+the stack, whereas as all references (such as objects or anything created from
+a constructor) are located on the heap. To model this properly, our type system
+used a paiVr of types for each value. \texttt{JsVar} contains the type of the
+value, as well as any stack-related value (such as the Rust number or boolean
+containing the value itself); additionally, each \texttt{JsVar} can optionally
+be paired with a \texttt{JsPtrEnum}, which contains a reference to any heap
+allocated data that the value may require.
 
 \subsection{Runtime}
 
