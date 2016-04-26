@@ -301,8 +301,7 @@ expression contains values of two different types. For example, in a logical
 and statement, both expressions are first coerced to an boolean value before the
 logical and is applied.\newline
 
-This may
-involve operator overloading, as in the case of \texttt{+}: in most cases, the
+This may involve operator overloading, as in the case of \texttt{+}: in most cases, the
 interpreter must coerce both arguments to Number before evaluating the
 expression. However, if either argument is a String, then both
 arguments should instead be coerced to Strings and the operation results in the
@@ -388,11 +387,12 @@ interpreter.
 
 \subsubsection*{Category-based coverage}
 
-Sputnik defines several categories of tests, each with various depths of subcategories
-(for example, the "Expressions" category contains, among others, a "Postfix
-Expressions" subcategory, which in turn contains the subcategories "Postfix
-Increment Operator" and "Postfix Decrement Operator"). Overall, there are 111
-leaf categories (i.e. categories which do not contain other categories). \newline
+Sputnik defines several categories of tests, each with various depths of
+subcategories (for example, the ``Expressions" category contains, among others,
+a ``Postfix Expressions" subcategory, which in turn contains the subcategories
+``Postfix Increment Operator" and ``Postfix Decrement Operator"). Overall, there
+are 111 leaf categories (i.e. categories which do not contain other
+categories). \newline
 
 We considered the number of leaf categories in which we had passed some of the
 tests. Of the 111 categories, we had coverage in 73 of the categories, or
@@ -453,7 +453,7 @@ One of the choices we made early on in the development of js.rs was to split the
 interpreter into multiple packages. Although this originally was intended to
 separate the code of French Press from the rest of the interpreter, soon decided
 to split out other parts of the interpreter as well. We ended up with four
-different packages, namely a "common" package with code needed by all other
+different packages, namely a \"common\" package with code needed by all other
 packages, French Press, the parser, and the runtime. Although this logical
 separation made sense in the abstract, it quickly became cumbersome to ensure
 that each crate's dependencies were in sync (e.g. that the parser and the
