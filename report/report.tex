@@ -66,31 +66,34 @@
 
 \setlength\parindent{0pt}
 
+\usepackage[hang]{footmisc}
+\setlength{\footnotemargin}{0pt}
+
 \begin{document}
 
 \maketitle
 
+\begin{multicols}{2}
+
 \section*{Abstract}
 
-\footnotetext[1]{Advisor: Dr. Steve Zdancewic (stevez@cis.upenn.edu)}
+\footnotetext[1]{Advised by Dr. Zdancewic (stevez@cis.upenn.edu)}
 
 JavaScript is an incredibly widespread language, running on virtually every
 modern computer and browser, and interpreters such as NodeJS allow JavaScript to
 be used as a server-side language. Unfortunately, modern implementations of
 JavaScript engines are typically written in C/C++, languages reliant on manual
 memory management. This results in countless memory leaks, bugs, and security
-vulnerabilities related to memory mismanagement. \newline
+vulnerabilities related to memory mis-management. \newline
 
-We've built a prototype server-side JavaScript interpreter in Rust, a
-new systems programming language for building programs with strong memory safety
-guarantees and speeds comparable to C++. Our interpreter runs code either from
-source files or an interactive REPL (read-evaluate-print-loop), similar to the
-functionality of existing server-side JavaScript interpreters. We intend to
-demonstrate the viability of using Rust to implement JavaScript by implementing
-a core subset of language features. To that end, we’ve tested our coverage using
-Google’s Sputnik test suite, an ECMAScript 5 conformance test suite.
-
-\begin{multicols}{2}
+Js.rs is a prototype server-side JavaScript interpreter in Rust, a new systems
+programming language for building programs with strong memory safety guarantees
+and speeds comparable to C++. Our interpreter runs code either from source files
+or an interactive REPL (read-evaluate-print-loop), similar to the functionality
+of existing server-side JavaScript interpreters. We intend to demonstrate the
+viability of using Rust to implement JavaScript by implementing a core subset of
+language features. To that end, we’ve tested our coverage using Google’s Sputnik
+test suite, an ECMAScript 5 conformance test suite.
 
 \section{Introduction}
 
@@ -235,11 +238,11 @@ binding which can be used to look up the heap data.
 
 The ``runtime'' is the most substantial portion of the interpreter, as it is
 what accepts the AST as input and evaluates the language semantics represented
-by each node.
+by each node. TODO
 
 \subsubsection*{Functions, Scoping, and Closures}
 
-One of the most difficult parts of implementing the runtime was ensuring that it
+One of the most complex parts of implementing the runtime was ensuring that it
 exhibited the correct behavior with regards to functions and scoping. For simple
 cases, French Press handled the correct scoping for local variables. However,
 in the case of closures, the standard scoping rules would not suffice. The
@@ -410,13 +413,14 @@ outputs it to the screen.
 JavaScript packages a number of built-in prototypes, such as \texttt{String},
 \texttt{Array}, \texttt{Object}, and \texttt{Function}. A value of a given
 prototype can be created with the \texttt{new} keyword, e.g., \texttt{new
-Object()}. Many of these prototypes are simply wrapper types around the
-primitive \texttt{String}, \texttt{Number}, and \texttt{Boolean} types. We
-implemented the \texttt{new} keyword by executing a call to the appropriate
-constructor. \newline
+Object()}. Js.rs implements many of these prototypes as simply wrapper types
+around the primitive \texttt{String}, \texttt{Number}, and \texttt{Boolean}
+types. We implemented the \texttt{new} keyword by executing a call to the
+appropriate constructor. \newline
 
 Additionally, Js.rs packages a basic \texttt{Array} prototype, with support for
-constructing Array objects from literals, \texttt{push}
+constructing Array objects from literals, \texttt{push}, accessing elements by
+index, and re-sizing by setting the length property.
 
 \subsection{Specification Coverage}
 
@@ -464,10 +468,8 @@ Js.rs is developed as a free and open source software project, hosted on GitHub.
 Potential users do not have to blindly trust that the interpreter is not
 malicious, but can audit it for themselves. As running this project on a
 JavaScript program would require revealing the full source to the interpreter,
-it is important that Js.rs does not contain any information exfiltration system
-or other backdoors. \newline
-
-TODO?
+it is important that Js.rs does not contain any information exfiltration systems
+or other backdoors.
 
 \section{Discussion}
 
@@ -532,10 +534,6 @@ TODO
   \bibitem{rust-lang}
   Official Rust Language website
   \href{https://www.rust-lang.org/}{https://www.rust-lang.org/}
-
-  \bibitem{interview}
-  Interview on Rust, a Systems Programming Language Developed by Mozilla
-  \href{http://www.infoq.com/news/2012/08/Interview-Rust}{http://www.infoq.com/news/2012/08/Interview-Rust}
 
   \bibitem{lalrpop}
   LALRPOP, LR(1) parser generator for Rust
