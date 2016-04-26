@@ -350,6 +350,15 @@ produce an AST node identical to the \texttt{a = a + b} case.
 
 \subsubsection*{Function-related expressions}
 
+Functions are stored into the current scope as a special meta-level type which
+contains the function name and the AST node for the function body. When a
+function is called, the interpreter allocates a new scope as a child of the
+current scope, and will then execute the semantics stored in the function's
+AST node. \newline
+
+As discussed above, anonymous functions may contain references to its parent
+scope, creating a closure environment.
+
 \begin{itemize}
   \item Named function definition: e.g. \texttt{function f(x) \{ return x + 1; \} }
   \item Anonymous function definition: e.g. \texttt{function(x, y) \{ return x + y; \} }
@@ -357,6 +366,9 @@ produce an AST node identical to the \texttt{a = a + b} case.
 \end{itemize}
 
 \subsubsection*{Object-related expressions}
+
+Js.rs supports simple Object functionality as a key-value store. Js.rs does not
+support the Prototype inheritance model.
 
 \begin{itemize}
   \item Instance variable access: e.g. \texttt{foo.bar}
@@ -366,15 +378,18 @@ produce an AST node identical to the \texttt{a = a + b} case.
 
 \subsubsection*{Control-flow statements}
 
+Many JavaScript constructions change the execution flow of the program.
+Typically, the interpretere will linearly execute the AST nodes as returned by
+the parser. However, the interpreter may traverse into previously encountered
+nodes (e.g., a function call), repeat the current node until a condition is met
+(e.g., for and while loops), or skip certain AST nodes (e.g., an if statement).
+
 \begin{itemize}
   \item \texttt{if}/\texttt{else if}/\texttt{else}
-  \item \texttt{while}
-  \item \texttt{for}
-  \item \texttt{break}
-  \item \texttt{continue}
+  \item \texttt{while}, \texttt{for} loops
+  \item \texttt{break}, \texttt{continue}
   \item \texttt{return}
-  \item \texttt{try}/\texttt{catch}/\texttt{finally}
-  \item \texttt{throw}
+  \item \texttt{throw}, \texttt{try}/\texttt{catch}/\texttt{finally}
 \end{itemize}
 
 \subsection*{Standard library}
@@ -400,7 +415,8 @@ primitive \texttt{String}, \texttt{Number}, and \texttt{Boolean} types. We
 implemented the \texttt{new} keyword by executing a call to the appropriate
 constructor. \newline
 
-Additionally, we built in a simple \texttt{Array} prototype.
+Additionally, Js.rs packages a basic \texttt{Array} prototype, with support for
+constructing Array objects from literals, \texttt{push}
 
 \subsection{Specification Coverage}
 
@@ -428,8 +444,8 @@ features.
 
 \subsubsection*{Raw coverage}
 
-Sputnik provides a total of 2427 distinct tests. We pass 20\% (TODO) of those
-tests.
+Sputnik provides a total of 2427 distinct tests. In the end, Js.rs passes 18.2\%
+of those tests.
 
 \section{Ethics and Privacy}
 
@@ -438,7 +454,7 @@ Potential users do not have to blindly trust that the interpreter is not
 malicious, but can audit it for themselves. As running this project on a
 JavaScript program would require revealing the full source to the interpreter,
 it is important that Js.rs does not contain any information exfiltration system
-or other backdoors.
+or other backdoors. \newline
 
 TODO?
 
