@@ -97,13 +97,16 @@ test suite, an ECMAScript 5 conformance test suite.
 
 \section{Introduction}
 
-\subsection{Project}
+Js.rs is a prototype JavaScript interpreter, targeting core language features.
+This includes variable assignment, expression literals, unary and
+binary operators, function calls, code blocks, and different types of control
+flow modifying statements. We aimed for correctness in any language feature that
+we implemented. \newline
 
-TODO: define scope of project
-
-\subsection{Motivation}
-
-TODO
+This project aimed for breadth of coverage: Js.rs supports more common language
+features at the cost of excluding certain edge cases. Additionally, Js.rs does
+not focus on achieving optimal performance nor memory usage, as it is a
+proof-of-concept project.
 
 \section{Background}
 
@@ -226,7 +229,7 @@ value itself); additionally, each \texttt{JsVar} can optionally be paired with a
 \texttt{JsPtrEnum}, which contains a reference to any heap allocated data that
 the value may require. Each \texttt{JsVar} also contains an optional unique
 binding, which acts as a lookup identifier for use with heap datatype provided
-by French Press \newline
+by French Press. \newline
 
 For example, for the object \texttt{\{ x: 3.5, y: "foo" \}}, the \texttt{JsVar}
 would indicate that the value is of type ``object". The \texttt{JsPtrEnum} for
@@ -240,7 +243,11 @@ binding which can be used to look up the heap data.
 
 The ``runtime'' is the most substantial portion of the interpreter, as it is
 what accepts the AST as input and evaluates the language semantics represented
-by each node. TODO
+by each node. The runtime is broken down into many modular components; each
+module handles a particular type of expression or functionality, such as
+coercion between JavaScript types or evaluation of literal expressions. Then,
+higher-level components handle larger pieces of code, such as code blocks
+embedded within function definitions or try-catch constructs.
 
 \subsubsection*{Functions, Scoping, and Closures}
 
