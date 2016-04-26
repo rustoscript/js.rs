@@ -92,7 +92,7 @@ and speeds comparable to C++. Our interpreter runs code either from source files
 or an interactive REPL (read-evaluate-print-loop), similar to the functionality
 of existing server-side JavaScript interpreters. We intend to demonstrate the
 viability of using Rust to implement JavaScript by implementing a core subset of
-language features. To that end, we’ve tested our coverage using Google’s Sputnik
+language features. To that end, we've tested our coverage using Google's Sputnik
 test suite, an ECMAScript 5 conformance test suite.
 
 \section{Introduction}
@@ -314,8 +314,8 @@ allocate heap space and store the value.
   \item \texttt{null}
   \item \texttt{undefined}
   \item String: e.g. \texttt{"abc\textbackslash u1234"},
-    \texttt{\textquotesingle foo bar baz\textquotesingle}
-  \item Object: e.g. \texttt{\{ x: 3, y: \{ z: "hello" \} \} }
+    \texttt{\textquotesingle foo bar\textquotesingle}
+  \item Object: e.g. \texttt{\{ x:3, y:\{ z:"x" \} \} }
   \item Array: e.g. \texttt{[1, "hello", x]}
 \end{itemize}
 
@@ -506,6 +506,17 @@ LALRPOP, we resorted to preprocessing the code run through js.rs before parsing
 it. Like the issue with compilation speed, we likely would have solved this by
 writing a custom parser if we had had enough time.
 
+\subsection*{Rust Package Ecosystem}
+
+Overall, we found that the Rust ecosystem was lacking. It was missing many
+packages that we were looking for, such as a Readline library that was
+compatible with the stable Rust toolchain. (Ultimately, we used
+Rustyline\cite{rustyline}, which only worked with the Nightly release channel.)
+With regards to stability, almost every major dependency we used in our project
+had compilation errors at some point during the development period, whether due
+to breaking changes in the Rust compiler from upstream, or due to bugs
+introduced in the dependency themselves.
+
 \subsection*{Multi-package architecture}
 
 One of the choices we made early on in the development of js.rs was to split the
@@ -524,7 +535,24 @@ multiple packages would have significantly increased our development efficiency.
 
 \section{Conclusion}
 
-TODO
+In the end, we found that Rust was an enjoyable and robust language to build an
+interpreter in. The high-level abstractions and type system that Rust provides
+made it easy to bulld the structure of our interpreter, and Rust's standard
+library helped set up a thorough error handling system in the inteprreter.
+\newline
+
+We believe we have achieved our goal of implementing a proof of concept
+JavaScript interpreter, covering roughly 65\% of categories in the Sputnik
+conformance test suite and a significant portion of core language features. We
+have set up a robust interpreter framework, which could be easily extended to
+handle further edge cases and less-often used features. Js.rs packages a simple
+object system and implemented a basic \texttt{Array} prototype; we believe it
+would be straightforward to implement the full prototype inheritance model and
+to implement additional prototypes found in the standard library.
+
+We were dissatisfied with the current Rust ecosystem, but we believe that the
+availability and stability of libraries will improve as Rust continues to mature
+as a programming language. \newline
 
 \end{multicols}
 
@@ -538,6 +566,10 @@ TODO
   \bibitem{lalrpop}
   LALRPOP, LR(1) parser generator for Rust
   \href{https://github.com/nikomatsakis/lalrpop}{https://github.com/nikomatsakis/lalrpop}
+
+  \bibitem{rustyline}
+  Rustyline, a pure-Rust implementation of Readline\\
+  \href{https://github.com/kkawakam/rustyline}{https://github.com/kkawakam/rustyline}
 
   \bibitem{mozdocs}
   Mozilla Developer Network JavaScript Documentation
