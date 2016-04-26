@@ -8,7 +8,7 @@
 \usepackage{listings}
 \usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
 
-\usepackage{hyperref}
+\usepackage[pdftitle={A Rustic JavaScript Interpreter}]{hyperref}
 
 \hypersetup{
     citecolor=red,
@@ -54,7 +54,6 @@
 }
 
 \setlength{\droptitle}{-7em}
-
 
 \title{js.rs -- A Rustic JavaScript Interpreter \\
   {\large CIS Department Senior Design 2015-2016 \textsuperscript{1}}
@@ -105,8 +104,6 @@ TODO
 
 \section{Background}
 
-TODO
-
 \subsection{Rust}
 
 Rust is a programming language spearheaded by Mozilla. It is a
@@ -149,11 +146,13 @@ websites across the Internet, and is supported by all major web browsers. In
 addition, it has many desktop applications, e.g., used as a scripting
 language, or embedded in PDFs. \newline
 
-JavaScript has been deployed as a server-side language since late 1995. It has
-gained popularity as a server development language since Node.js was released in
-2006.\newline
-
-TODO: Language features \newline
+JavaScript is a high-level, imperative programming language. It is typically
+interpreted, and is loosely typed; any variable can be passed into any function
+or operator. The type system is composed of seven primitives types (Number,
+Boolean, \texttt{null}, \texttt{undefined}, String, Object, Symbol). Custom
+types can be created by inheriting from Object, using a prototype-based
+inheritance system. JavaScript has many function features, such as first class
+functions, anonymous functions, and closures. \newline
 
 JavaScript was first developed at Netscape by Brendan Eich 1995 for inclusion
 with their internet browser. Today, JavaScript is defined by the ECMAScript
@@ -162,7 +161,11 @@ Association (ECMA) in response to the emergence of a few forks of the JavaScript
 implementations. The current version is ECMAScript 6, released in June 2015;
 ECMAScript 7 is still under development.\newline
 
-Mozilla Developer Network's official JavaScript documentation\cite{mozdocs}.
+JavaScript has been deployed as a server-side language since late 1995. It has
+gained popularity as a server development language since Node.js was released in
+2006.\newline
+
+TODO: Mozilla Developer Network's official JavaScript documentation\cite{mozdocs}.
 There is also a conformance test suite named Sputnik, released by Google in
 2009. Sputnik targets the ECMAScript 5 standard, but includes only those
 features which were present in ECMAScript 3. This arrangement was chosen due to
@@ -406,11 +409,14 @@ tests.
 
 \section{Ethics and Privacy}
 
-Although our project is novel in terms of its implementation, it isn't intended
-to provide any new functionality not present in existing solutions. Given that
-the existing JavaScript interpreters that differ only in that they do not
-provide the same guarantees about memory leaks and segfaults, our project has
-essentially no impact on ethical concerns.
+Js.rs is developed as a free and open source software project, hosted on GitHub.
+Potential users do not have to blindly trust that the interpreter is not
+malicious, but can audit it for themselves. As running this project on a
+JavaScript program would require revealing the full source to the interpreter,
+it is important that Js.rs does not contain any information exfiltration system
+or other backdoors.
+
+TODO?
 
 \section{Discussion}
 
@@ -461,9 +467,11 @@ runtime both used the same version of the common package). Moreover, due to the
 slow speed at which the parser compiled, changes to the common package became
 rather undesirable, as each change would require the parser to recompile as
 well. In retrospect, using separate modules within a single package rather than
-:ultiple packages would have significantly increased our development efficiency.
+multiple packages would have significantly increased our development efficiency.
 
 \section{Conclusion}
+
+TODO
 
 \end{multicols}
 
