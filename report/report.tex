@@ -445,7 +445,18 @@ features.
 \subsubsection*{Raw coverage}
 
 Sputnik provides a total of 2427 distinct tests. In the end, Js.rs passes 18.2\%
-of those tests.
+of those tests. Despite having implemented a large subset of the commonly used
+JavaScript features, there were some features that we did not have time to
+implement. Some of these included:
+
+\begin{itemize}
+  \item The global \texttt{Arguments} object
+  \item The conditional operator (\texttt{ ? : })
+  \item The \texttt{void} operator
+  \item The \texttt{delete} operator
+  \item The \texttt{in} operator
+  \item The \texttt{with} statement
+\end{itemize}
 
 \section{Ethics and Privacy}
 
